@@ -1,0 +1,485 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Picklijsten · Ronald Verdult</title>
+
+  <link rel="stylesheet" href="/css/theme.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <style>
+    .line-grid{
+      display:grid;
+      grid-template-columns: 1.3fr 1.6fr .8fr .9fr auto;
+      gap:12px;
+      align-items:end;
+    }
+    .manage-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+    }
+    .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
+    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
+    .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+    .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
+    .line-row-danger{
+      background:#fff7ed;
+    }
+    @media(max-width:1100px){
+      .line-grid{
+        grid-template-columns:1fr 1fr;
+      }
+      .line-grid > div:last-child{
+        grid-column:1 / -1;
+      }
+    }
+    @media(max-width:700px){
+      .line-grid{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body data-page="picklists">
+
+<div class="topbar no-print">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo">o</div>
+      <div class="title">
+        Oegema Logistics
+        <small>Ronald Verdult Design · Voorraadbeheer</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a href="/stock.html">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html">Picklijsten</a>
+    </nav>
+
+    <div class="rightbar">
+      <span class="pill"><span id="userEmail"></span></span>
+      <button class="btn" id="btnLogout" type="button">Uitloggen</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="toast" class="notice"></div>
+
+  <div class="card">
+    <h2>Nieuwe picklijst</h2>
+    <div class="muted">
+      Maak een picklijst op <b>SKU-niveau</b>. De picker kan later willekeurige colli van die SKU pakken. De echte unieke colli worden pas later gescand/uitgeboekt.
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div>
+        <label for="orderNo">Ordernummer</label>
+        <input id="orderNo" placeholder="Bijv. ORD-24015"/>
+      </div>
+      <div>
+        <label for="customerName">Klant</label>
+        <input id="customerName" value="Ronald Verdult Design"/>
+      </div>
+    </div>
+
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label for="deliveryDate">Afleverdatum</label>
+        <input id="deliveryDate" type="date"/>
+      </div>
+      <div>
+        <label for="pickStatus">Status</label>
+        <select id="pickStatus">
+          <option value="CONCEPT">CONCEPT</option>
+          <option value="RELEASED">RELEASED</option>
+        </select>
+      </div>
+    </div>
+
+    <label for="orderNote" style="margin-top:12px">Opmerking</label>
+    <textarea id="orderNote" placeholder="Bijvoorbeeld showroom, spoed, controle op kleur..."></textarea>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Orderregels toevoegen</h3>
+
+    <div class="line-grid" style="margin-top:12px">
+      <div>
+        <label for="skuSelect">SKU</label>
+        <select id="skuSelect"></select>
+      </div>
+
+      <div>
+        <label for="skuName">Omschrijving</label>
+        <input id="skuName" disabled/>
+      </div>
+
+      <div>
+        <label for="skuStock">Voorraad nu</label>
+        <input id="skuStock" disabled/>
+      </div>
+
+      <div>
+        <label for="qtyNeeded">Aantal</label>
+        <input id="qtyNeeded" type="number" min="1" value="1"/>
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Regel toevoegen</button>
+      </div>
+    </div>
+
+    <div class="small" id="skuLocationsHint" style="margin-top:10px">Locatiesuggestie: -</div>
+
+    <div class="table-wrap" style="margin-top:16px">
+      <table>
+        <thead>
+          <tr>
+            <th>SKU</th>
+            <th>Omschrijving</th>
+            <th>Voorraad</th>
+            <th>Aantal nodig</th>
+            <th>Locatiesuggestie</th>
+            <th>Actie</th>
+          </tr>
+        </thead>
+        <tbody id="orderLines"></tbody>
+      </table>
+    </div>
+
+    <div class="btnRow" style="margin-top:16px">
+      <button class="btn primary" id="btnSaveOrder" type="button">Opslaan picklijst</button>
+      <button class="btn" id="btnClearOrder" type="button">Leegmaken</button>
+    </div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h3>Open picklijsten</h3>
+
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label for="pickSearch">Zoeken</label>
+        <input id="pickSearch" placeholder="Zoek op ordernummer of klant"/>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn primary" id="btnRefreshOrders" type="button" style="width:100%">Verversen</button>
+      </div>
+    </div>
+
+    <div class="table-wrap" style="margin-top:16px">
+      <table>
+        <thead>
+          <tr>
+            <th>Order</th>
+            <th>Klant</th>
+            <th>Status</th>
+            <th>Regels</th>
+            <th>Totaal colli</th>
+            <th>Datum</th>
+            <th>Acties</th>
+          </tr>
+        </thead>
+        <tbody id="pickOrderList"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<script>
+setActiveNav();
+const client = sb();
+
+let productMap = new Map();
+let stockSummaryMap = new Map();
+let locationHintMap = new Map();
+let currentLines = [];
+
+async function loadProductsAndStock(){
+  const [{data:products, error:pErr}, {data:summary, error:sErr}, {data:stockItems, error:iErr}] = await Promise.all([
+    client.from('products').select('id, sku_base, name, description').order('sku_base'),
+    client.from('v_stock_summary').select('*'),
+    client.from('v_stock_items').select('sku_base, location')
+  ]);
+
+  if(pErr) throw pErr;
+  if(sErr) throw sErr;
+  if(iErr) throw iErr;
+
+  productMap = new Map();
+  (products || []).forEach(p => productMap.set(p.sku_base, p));
+
+  stockSummaryMap = new Map();
+  (summary || []).forEach(s => stockSummaryMap.set(s.sku_base, s.qty || 0));
+
+  const locMap = new Map();
+  (stockItems || []).forEach(it => {
+    const key = it.sku_base || '';
+    const loc = (it.location || '').trim();
+    if(!loc) return;
+    if(!locMap.has(key)) locMap.set(key, new Map());
+    const sub = locMap.get(key);
+    sub.set(loc, (sub.get(loc) || 0) + 1);
+  });
+
+  locationHintMap = new Map();
+  for(const [sku, locs] of locMap.entries()){
+    const txt = Array.from(locs.entries())
+      .sort((a,b) => a[0].localeCompare(b[0], 'nl'))
+      .map(([loc, qty]) => `${loc} (${qty})`)
+      .join(', ');
+    locationHintMap.set(sku, txt);
+  }
+
+  const sel = byId('skuSelect');
+  sel.innerHTML = '<option value="">Selecteer SKU</option>';
+
+  Array.from(productMap.values())
+    .sort((a,b) => String(a.sku_base).localeCompare(String(b.sku_base), 'nl'))
+    .forEach(p => {
+      const opt = document.createElement('option');
+      opt.value = p.sku_base;
+      opt.textContent = `${p.sku_base} — ${p.name}`;
+      sel.appendChild(opt);
+    });
+}
+
+function updateSkuInfo(){
+  const sku = byId('skuSelect').value;
+  const p = productMap.get(sku);
+
+  byId('skuName').value = p?.name || '';
+  byId('skuStock').value = String(stockSummaryMap.get(sku) || 0);
+  byId('skuLocationsHint').textContent = `Locatiesuggestie: ${locationHintMap.get(sku) || '-'}`;
+}
+
+function renderLines(){
+  const el = byId('orderLines');
+
+  if(!currentLines.length){
+    el.innerHTML = `<tr><td colspan="6" class="muted">Nog geen regels toegevoegd.</td></tr>`;
+    return;
+  }
+
+  el.innerHTML = currentLines.map((line, i) => {
+    const shortage = Number(line.qty_needed) > Number(line.stock_now || 0);
+    return `
+      <tr class="${shortage ? 'line-row-danger' : ''}">
+        <td><b>${escapeHtml(line.sku_base)}</b></td>
+        <td>${escapeHtml(line.product_name)}</td>
+        <td>${line.stock_now}</td>
+        <td><b>${line.qty_needed}</b></td>
+        <td>${escapeHtml(line.location_hint || '-')}</td>
+        <td>
+          <button class="btn danger" type="button" onclick="removeLine(${i})">Verwijderen</button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+}
+
+function removeLine(index){
+  currentLines.splice(index, 1);
+  renderLines();
+}
+
+function addOrMergeLine(){
+  const sku = byId('skuSelect').value;
+  const qty = Number(byId('qtyNeeded').value || 0);
+
+  if(!sku) return toast('Kies eerst een SKU.', 'err');
+  if(!qty || qty < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
+
+  const product = productMap.get(sku);
+  if(!product) return toast('Product niet gevonden.', 'err');
+
+  const existing = currentLines.find(l => l.sku_base === sku);
+  if(existing){
+    existing.qty_needed += qty;
+  } else {
+    currentLines.push({
+      sku_base: sku,
+      product_name: product.name || sku,
+      qty_needed: qty,
+      stock_now: Number(stockSummaryMap.get(sku) || 0),
+      location_hint: locationHintMap.get(sku) || ''
+    });
+  }
+
+  renderLines();
+  byId('qtyNeeded').value = '1';
+  byId('skuSelect').focus();
+}
+
+function clearOrderForm(){
+  byId('orderNo').value = '';
+  byId('customerName').value = 'Ronald Verdult Design';
+  byId('deliveryDate').value = '';
+  byId('orderNote').value = '';
+  byId('pickStatus').value = 'CONCEPT';
+  byId('skuSelect').value = '';
+  byId('skuName').value = '';
+  byId('skuStock').value = '';
+  byId('qtyNeeded').value = '1';
+  byId('skuLocationsHint').textContent = 'Locatiesuggestie: -';
+  currentLines = [];
+  renderLines();
+}
+
+async function saveOrder(){
+  const orderNo = (byId('orderNo').value || '').trim();
+  const customerName = (byId('customerName').value || '').trim();
+  const deliveryDate = byId('deliveryDate').value || null;
+  const note = (byId('orderNote').value || '').trim();
+  const status = byId('pickStatus').value || 'CONCEPT';
+
+  if(!orderNo) return toast('Ordernummer ontbreekt.', 'err');
+  if(!customerName) return toast('Klant ontbreekt.', 'err');
+  if(!currentLines.length) return toast('Voeg eerst minimaal 1 orderregel toe.', 'err');
+
+  const { data:existing, error:checkErr } = await client
+    .from('pick_orders')
+    .select('id')
+    .eq('order_no', orderNo)
+    .maybeSingle();
+
+  if(checkErr) return toast(checkErr.message || String(checkErr), 'err');
+  if(existing) return toast('Dit ordernummer bestaat al.', 'err');
+
+  const { data:order, error:orderErr } = await client
+    .from('pick_orders')
+    .insert([{
+      order_no: orderNo,
+      customer_name: customerName,
+      delivery_date: deliveryDate,
+      note,
+      status
+    }])
+    .select()
+    .single();
+
+  if(orderErr) return toast(orderErr.message || String(orderErr), 'err');
+
+  const linePayload = currentLines.map(line => ({
+    pick_order_id: order.id,
+    sku_base: line.sku_base,
+    product_name: line.product_name,
+    qty_needed: line.qty_needed,
+    qty_picked: 0
+  }));
+
+  const { error:lineErr } = await client
+    .from('pick_order_lines')
+    .insert(linePayload);
+
+  if(lineErr) return toast(lineErr.message || String(lineErr), 'err');
+
+  toast(`Picklijst ${orderNo} opgeslagen.`, 'ok');
+  clearOrderForm();
+  await loadOrders();
+}
+
+async function loadOrders(){
+  const q = (byId('pickSearch').value || '').trim().toLowerCase();
+
+  const { data:orders, error:oErr } = await client
+    .from('pick_orders')
+    .select('*')
+    .order('created_at', { ascending:false });
+
+  if(oErr) throw oErr;
+
+  const { data:lines, error:lErr } = await client
+    .from('pick_order_lines')
+    .select('*');
+
+  if(lErr) throw lErr;
+
+  const grouped = new Map();
+  (lines || []).forEach(line => {
+    if(!grouped.has(line.pick_order_id)) grouped.set(line.pick_order_id, []);
+    grouped.get(line.pick_order_id).push(line);
+  });
+
+  let rows = (orders || []).map(order => {
+    const orderLines = grouped.get(order.id) || [];
+    return {
+      ...order,
+      line_count: orderLines.length,
+      total_qty: orderLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0)
+    };
+  });
+
+  if(q){
+    rows = rows.filter(r =>
+      String(r.order_no || '').toLowerCase().includes(q) ||
+      String(r.customer_name || '').toLowerCase().includes(q)
+    );
+  }
+
+  const el = byId('pickOrderList');
+
+  if(!rows.length){
+    el.innerHTML = `<tr><td colspan="7" class="muted">Nog geen picklijsten gevonden.</td></tr>`;
+    return;
+  }
+
+  el.innerHTML = rows.map(r => `
+    <tr>
+      <td><b>${escapeHtml(r.order_no)}</b></td>
+      <td>${escapeHtml(r.customer_name || '')}</td>
+      <td><span class="status-badge status-${escapeHtml(r.status || 'CONCEPT')}">${escapeHtml(r.status || 'CONCEPT')}</span></td>
+      <td>${r.line_count}</td>
+      <td><b>${r.total_qty}</b></td>
+      <td>${nlTime(r.created_at)}</td>
+      <td>
+        <div class="manage-actions">
+          <a class="btn" href="/picklist-detail.html?id=${encodeURIComponent(r.id)}">Openen</a>
+        </div>
+      </td>
+    </tr>
+  `).join('');
+}
+
+byId('skuSelect').addEventListener('change', updateSkuInfo);
+byId('btnAddLine').addEventListener('click', addOrMergeLine);
+byId('btnSaveOrder').addEventListener('click', () => saveOrder().catch(e => toast(e.message || String(e), 'err')));
+byId('btnClearOrder').addEventListener('click', clearOrderForm);
+byId('btnRefreshOrders').addEventListener('click', () => loadOrders().catch(e => toast(e.message || String(e), 'err')));
+byId('pickSearch').addEventListener('keydown', e => {
+  if(e.key === 'Enter') loadOrders().catch(err => toast(err.message || String(err), 'err'));
+});
+
+loadProductsAndStock()
+  .then(() => {
+    renderLines();
+    return loadOrders();
+  })
+  .catch(e => toast(e.message || String(e), 'err'));
+</script>
+
+</body>
+</html>
