@@ -1,0 +1,373 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Picklijst detail · Ronald Verdult</title>
+
+  <link rel="stylesheet" href="/css/theme.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <style>
+    .print-sheet{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      box-shadow:var(--shadow);
+      padding:28px;
+    }
+    .print-head{
+      display:flex;
+      justify-content:space-between;
+      gap:20px;
+      align-items:flex-start;
+      border-bottom:2px solid #e5e7eb;
+      padding-bottom:18px;
+      margin-bottom:20px;
+    }
+    .print-brand{
+      font-size:28px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.05;
+    }
+    .print-brand small{
+      display:block;
+      font-size:13px;
+      color:var(--muted);
+      margin-top:6px;
+      font-weight:700;
+    }
+    .print-meta{
+      text-align:right;
+      font-size:14px;
+      line-height:1.6;
+    }
+    .print-title{
+      font-size:24px;
+      font-weight:900;
+      color:var(--navy);
+      margin:0 0 16px;
+    }
+    .meta-grid{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+      margin-bottom:18px;
+    }
+    .meta-box{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fafbfc;
+      padding:12px;
+      line-height:1.5;
+      font-size:14px;
+    }
+    .print-note{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:12px;
+      margin-bottom:18px;
+      min-height:60px;
+      line-height:1.5;
+      font-size:14px;
+    }
+    .print-footer{
+      margin-top:22px;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:24px;
+    }
+    .sign-box{
+      border-top:2px solid #111827;
+      padding-top:8px;
+      min-height:50px;
+      font-size:14px;
+    }
+    @media(max-width:900px){
+      .meta-grid,
+      .print-footer{
+        grid-template-columns:1fr;
+      }
+      .print-head{
+        flex-direction:column;
+      }
+      .print-meta{
+        text-align:left;
+      }
+    }
+    @media print{
+      body{background:#fff}
+      .topbar,.no-print{display:none !important}
+      .container{padding:0 !important;max-width:none}
+      .card,.print-sheet{
+        box-shadow:none !important;
+        border:none !important;
+        border-radius:0 !important;
+      }
+      .print-sheet{
+        padding:14mm 12mm !important;
+      }
+      @page{
+        size:A4 portrait;
+        margin:10mm;
+      }
+    }
+  </style>
+</head>
+<body data-page="picklist_detail">
+
+<div class="topbar no-print">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo">o</div>
+      <div class="title">
+        Oegema Logistics
+        <small>Ronald Verdult Design · Voorraadbeheer</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a href="/stock.html">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html">Picklijsten</a>
+    </nav>
+
+    <div class="rightbar">
+      <span class="pill"><span id="userEmail"></span></span>
+      <button class="btn" id="btnLogout" type="button">Uitloggen</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="toast" class="notice"></div>
+
+  <div class="card no-print">
+    <div class="btnRow">
+      <a class="btn" href="/picklists.html">← Terug naar picklijsten</a>
+      <button class="btn primary" id="btnPrint" type="button">A4 PDF / Print</button>
+      <button class="btn" id="btnSetReleased" type="button">Status RELEASED</button>
+      <button class="btn" id="btnSetPicking" type="button">Status PICKING</button>
+      <button class="btn accent" id="btnSetDone" type="button">Status DONE</button>
+    </div>
+  </div>
+
+  <div class="print-sheet" id="printSheet">
+    <div class="print-head">
+      <div>
+        <div class="print-brand">
+          Oegema Logistics
+          <small>Ronald Verdult Design · Picklijst</small>
+        </div>
+      </div>
+
+      <div class="print-meta" id="printMeta"></div>
+    </div>
+
+    <h2 class="print-title">Picklijst</h2>
+
+    <div class="meta-grid">
+      <div class="meta-box" id="metaLeft"></div>
+      <div class="meta-box" id="metaRight"></div>
+    </div>
+
+    <div class="print-note" id="printNote"></div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Pickvolgorde</th>
+            <th>Locatie</th>
+            <th>SKU</th>
+            <th>Omschrijving</th>
+            <th>Aantal</th>
+            <th>Voorraad</th>
+          </tr>
+        </thead>
+        <tbody id="detailLines"></tbody>
+      </table>
+    </div>
+
+    <div class="print-footer">
+      <div class="sign-box">
+        Picker naam / handtekening
+      </div>
+      <div class="sign-box">
+        Controle / gereedmelding
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+setActiveNav();
+const client = sb();
+
+const params = new URLSearchParams(location.search);
+const orderId = params.get('id');
+
+let currentOrder = null;
+let currentLines = [];
+
+function normalizeLocationSort(loc){
+  return String(loc || '').trim().toUpperCase();
+}
+
+async function updateOrderStatus(status){
+  if(!orderId) return;
+
+  const { error } = await client
+    .from('pick_orders')
+    .update({ status })
+    .eq('id', orderId);
+
+  if(error) return toast(error.message || String(error), 'err');
+
+  toast(`Status gewijzigd naar ${status}.`, 'ok');
+  await loadOrder();
+}
+
+async function loadOrder(){
+  if(!orderId){
+    toast('Geen picklijst id meegegeven.', 'err');
+    return;
+  }
+
+  const { data:order, error:oErr } = await client
+    .from('pick_orders')
+    .select('*')
+    .eq('id', orderId)
+    .single();
+
+  if(oErr) throw oErr;
+
+  currentOrder = order;
+
+  const { data:lines, error:lErr } = await client
+    .from('pick_order_lines')
+    .select('*')
+    .eq('pick_order_id', orderId)
+    .order('created_at', { ascending:true });
+
+  if(lErr) throw lErr;
+
+  const { data:stockItems, error:sErr } = await client
+    .from('v_stock_items')
+    .select('sku_base, location');
+
+  if(sErr) throw sErr;
+
+  const { data:summary, error:sumErr } = await client
+    .from('v_stock_summary')
+    .select('*');
+
+  if(sumErr) throw sumErr;
+
+  const stockQtyMap = new Map();
+  (summary || []).forEach(s => stockQtyMap.set(s.sku_base, Number(s.qty || 0)));
+
+  const locMap = new Map();
+  (stockItems || []).forEach(it => {
+    const sku = it.sku_base || '';
+    const loc = (it.location || '').trim();
+    if(!loc) return;
+    if(!locMap.has(sku)) locMap.set(sku, new Map());
+    const sub = locMap.get(sku);
+    sub.set(loc, (sub.get(loc) || 0) + 1);
+  });
+
+  currentLines = (lines || []).map(line => {
+    const locs = locMap.get(line.sku_base) || new Map();
+    const locationHint = Array.from(locs.entries())
+      .sort((a,b) => a[0].localeCompare(b[0], 'nl'))
+      .map(([loc, qty]) => `${loc} (${qty})`)
+      .join(', ');
+
+    const firstLocation = Array.from(locs.keys())
+      .sort((a,b) => normalizeLocationSort(a).localeCompare(normalizeLocationSort(b), 'nl'))[0] || '-';
+
+    return {
+      ...line,
+      stock_now: Number(stockQtyMap.get(line.sku_base) || 0),
+      location_hint: locationHint || '-',
+      first_location: firstLocation
+    };
+  });
+
+  currentLines.sort((a,b) => {
+    const l = normalizeLocationSort(a.first_location).localeCompare(normalizeLocationSort(b.first_location), 'nl');
+    if(l !== 0) return l;
+    return String(a.sku_base || '').localeCompare(String(b.sku_base || ''), 'nl');
+  });
+
+  renderOrder();
+}
+
+function renderOrder(){
+  if(!currentOrder) return;
+
+  byId('printMeta').innerHTML = `
+    <div><b>Order:</b> ${escapeHtml(currentOrder.order_no || '')}</div>
+    <div><b>Status:</b> ${escapeHtml(currentOrder.status || '')}</div>
+    <div><b>Datum:</b> ${nlTime(currentOrder.created_at)}</div>
+  `;
+
+  byId('metaLeft').innerHTML = `
+    <div><b>Klant:</b> ${escapeHtml(currentOrder.customer_name || '')}</div>
+    <div><b>Afleverdatum:</b> ${escapeHtml(currentOrder.delivery_date || '-')}</div>
+    <div><b>Ordernummer:</b> ${escapeHtml(currentOrder.order_no || '')}</div>
+  `;
+
+  byId('metaRight').innerHTML = `
+    <div><b>Status:</b> ${escapeHtml(currentOrder.status || '')}</div>
+    <div><b>Aantal regels:</b> ${currentLines.length}</div>
+    <div><b>Totaal colli:</b> ${currentLines.reduce((s, l) => s + Number(l.qty_needed || 0), 0)}</div>
+  `;
+
+  byId('printNote').innerHTML = `
+    <b>Opmerking:</b><br>
+    ${escapeHtml(currentOrder.note || '-')}
+  `;
+
+  const body = byId('detailLines');
+
+  if(!currentLines.length){
+    body.innerHTML = `<tr><td colspan="6" class="muted">Geen orderregels gevonden.</td></tr>`;
+    return;
+  }
+
+  body.innerHTML = currentLines.map((line, idx) => `
+    <tr>
+      <td><b>${idx + 1}</b></td>
+      <td>${escapeHtml(line.first_location || '-')}</td>
+      <td><b>${escapeHtml(line.sku_base || '')}</b></td>
+      <td>
+        ${escapeHtml(line.product_name || '')}
+        <div class="small">Alle locaties: ${escapeHtml(line.location_hint || '-')}</div>
+      </td>
+      <td><b>${line.qty_needed}</b></td>
+      <td>${line.stock_now}</td>
+    </tr>
+  `).join('');
+}
+
+byId('btnPrint').addEventListener('click', () => window.print());
+byId('btnSetReleased').addEventListener('click', () => updateOrderStatus('RELEASED'));
+byId('btnSetPicking').addEventListener('click', () => updateOrderStatus('PICKING'));
+byId('btnSetDone').addEventListener('click', () => updateOrderStatus('DONE'));
+
+loadOrder().catch(e => toast(e.message || String(e), 'err'));
+</script>
+
+</body>
+</html>
