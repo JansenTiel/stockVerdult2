@@ -247,7 +247,7 @@ function isValidUniqueSku(s){
 
 function getSkuBaseFromUnique(skuUnique){
   const s = normalizeScan(skuUnique);
-  const match = s.match(/^(.*)-(\d{5})$/);
+  const match = s.match(/^(.*)-(\d{4,5})$/);
   if(match){
     return match[1].toUpperCase();
   }
