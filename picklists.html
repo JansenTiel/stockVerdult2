@@ -12,6 +12,9 @@
   <script src="/js/app.js"></script>
   <script src="/js/auth.js"></script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
   <style>
     .page-stack{
       display:grid;
@@ -44,8 +47,7 @@
       border-bottom:none;
     }
 
-    .product-result:hover,
-    .product-result.active{
+    .product-result:hover{
       background:#f8fafc;
     }
 
@@ -85,6 +87,140 @@
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
 
+    .build-header{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
+    .order-group{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .order-group-top{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      flex-wrap:wrap;
+    }
+
+    .order-left{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .order-check{
+      width:18px;
+      height:18px;
+    }
+
+    .order-title{
+      font-weight:900;
+      color:var(--navy);
+      font-size:16px;
+      word-break:break-word;
+    }
+
+    .order-meta{
+      color:var(--muted);
+      font-size:12px;
+      font-weight:700;
+    }
+
+    .order-actions{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .order-line-head,
+    .order-line{
+      display:grid;
+      grid-template-columns:150px 1fr 90px 1.2fr 140px;
+      gap:12px;
+      padding:12px 14px;
+      align-items:center;
+    }
+
+    .order-line-head{
+      background:#fff;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+    }
+
+    .order-line{
+      border-bottom:1px solid #edf2f7;
+    }
+
+    .order-line:last-child{
+      border-bottom:none;
+    }
+
+    .build-summary{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:14px;
+      margin-top:14px;
+    }
+
+    .detail-summary{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .detail-group{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .detail-group-head,
+    .detail-group-line{
+      display:grid;
+      grid-template-columns:150px 130px 1fr 90px 90px 1.2fr 210px;
+      gap:12px;
+      padding:12px 14px;
+      align-items:center;
+    }
+
+    .detail-group-head{
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+    }
+
+    .detail-group-line{
+      border-bottom:1px solid #edf2f7;
+    }
+
+    .detail-group-line:last-child{
+      border-bottom:none;
+    }
+
+    .line-ok{
+      background:#f0fdf4;
+    }
+
+    .line-warn{
+      background:#fff7ed;
+    }
+
     .saved-grid{
       display:grid;
       gap:12px;
@@ -99,7 +235,7 @@
 
     .saved-row-head{
       display:grid;
-      grid-template-columns:170px 1fr 130px 110px 120px 150px;
+      grid-template-columns:36px 170px 1fr 130px 110px 120px 150px;
       gap:12px;
       padding:14px 16px;
       align-items:center;
@@ -108,6 +244,11 @@
 
     .saved-row-head:hover{
       background:#fafbfc;
+    }
+
+    .saved-check{
+      width:18px;
+      height:18px;
     }
 
     .saved-title{
@@ -140,92 +281,6 @@
       text-transform:uppercase;
       letter-spacing:.04em;
       margin-top:4px;
-    }
-
-    .detail-summary{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      padding:16px;
-      margin-bottom:14px;
-    }
-
-    .detail-group{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      margin-bottom:12px;
-    }
-
-    .detail-group-head{
-      display:grid;
-      grid-template-columns:150px 130px 1fr 90px 90px 1.2fr 210px;
-      gap:12px;
-      padding:12px 14px;
-      background:#f8fafc;
-      border-bottom:1px solid var(--border);
-      font-weight:800;
-      align-items:center;
-    }
-
-    .detail-group-line{
-      display:grid;
-      grid-template-columns:150px 130px 1fr 90px 90px 1.2fr 210px;
-      gap:12px;
-      padding:12px 14px;
-      border-bottom:1px solid #edf2f7;
-      align-items:center;
-    }
-
-    .detail-group-line:last-child{
-      border-bottom:none;
-    }
-
-    .line-ok{
-      background:#f0fdf4;
-    }
-
-    .line-warn{
-      background:#fff7ed;
-    }
-
-    .draft-group{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      margin-bottom:12px;
-    }
-
-    .draft-group-head{
-      display:grid;
-      grid-template-columns:150px 150px 1fr 90px 1.2fr 150px;
-      gap:12px;
-      padding:12px 14px;
-      background:#f8fafc;
-      border-bottom:1px solid var(--border);
-      font-weight:800;
-      align-items:center;
-    }
-
-    .draft-group-line{
-      display:grid;
-      grid-template-columns:150px 150px 1fr 90px 1.2fr 150px;
-      gap:12px;
-      padding:12px 14px;
-      border-bottom:1px solid #edf2f7;
-      align-items:center;
-    }
-
-    .draft-group-line:last-child{
-      border-bottom:none;
-    }
-
-    .draft-order-label{
-      font-weight:900;
-      color:var(--navy);
-      word-break:break-word;
     }
 
     .modal-backdrop{
@@ -307,24 +362,89 @@
       line-height:1.35;
     }
 
+    .print-sheet{
+      width:794px;
+      background:#fff;
+      padding:28px;
+      color:#111827;
+      font-family:Segoe UI, Arial, sans-serif;
+    }
+
+    .print-header{
+      border-bottom:2px solid #0f2f4f;
+      padding-bottom:12px;
+      margin-bottom:18px;
+    }
+
+    .print-title{
+      font-size:24px;
+      font-weight:900;
+      color:#0f2f4f;
+      margin-bottom:6px;
+    }
+
+    .print-sub{
+      font-size:13px;
+      color:#475569;
+      line-height:1.45;
+    }
+
+    .print-order{
+      margin-bottom:18px;
+      border:1px solid #dbe2ea;
+      border-radius:10px;
+      overflow:hidden;
+    }
+
+    .print-order-top{
+      background:#f8fafc;
+      padding:10px 12px;
+      font-weight:900;
+      color:#0f2f4f;
+      border-bottom:1px solid #dbe2ea;
+    }
+
+    .print-table{
+      width:100%;
+      border-collapse:collapse;
+    }
+
+    .print-table th,
+    .print-table td{
+      border-bottom:1px solid #edf2f7;
+      padding:10px 12px;
+      text-align:left;
+      font-size:13px;
+      vertical-align:top;
+    }
+
+    .print-table th{
+      background:#fff;
+      font-size:11px;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      color:#475569;
+    }
+
+    .hidden-print-sheet{
+      position:absolute;
+      left:-99999px;
+      top:0;
+    }
+
     @media(max-width:1100px){
-      .saved-row-head,
+      .order-line-head,
+      .order-line,
       .detail-group-head,
       .detail-group-line,
-      .draft-group-head,
-      .draft-group-line{
+      .saved-row-head{
         grid-template-columns:1fr;
       }
     }
 
     @media(max-width:900px){
-      .pick-toolbar{
-        grid-template-columns:1fr 1fr;
-      }
-    }
-
-    @media(max-width:700px){
-      .pick-toolbar{
+      .pick-toolbar,
+      .build-header{
         grid-template-columns:1fr;
       }
     }
@@ -364,45 +484,12 @@
   <div class="page-stack">
 
     <div class="card">
-      <h2>Picklijsten</h2>
+      <h2>Nieuwe picklijst in opbouw</h2>
       <div class="muted">
-        Maak picklijsten op basis van SKU en omschrijving. De echte unieke colli worden pas gekozen op het moment van picken en afboeken.
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>Bestaande picklijsten</h3>
-
-      <div class="row" style="margin-top:14px">
-        <div>
-          <label for="picklistSearch">Zoeken</label>
-          <input id="picklistSearch" placeholder="Zoek op picklijstnummer"/>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
-        </div>
+        Voeg regels toe per order. Vink daarna de gewenste orders aan om ze samen op één picklijst te zetten en op één PDF te printen.
       </div>
 
-      <div id="savedPicklists" class="saved-grid" style="margin-top:16px"></div>
-    </div>
-
-    <div class="card">
-      <h3>Detail geselecteerde picklijst</h3>
-      <div class="muted">
-        Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.
-      </div>
-
-      <div id="activePicklistDetail" style="margin-top:16px"></div>
-    </div>
-
-    <div class="card">
-      <h3>Nieuwe picklijst</h3>
-      <div class="muted">
-        Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
-      </div>
-
-      <div class="row" style="margin-top:16px">
+      <div class="build-header" style="margin-top:16px">
         <div>
           <label for="picklistNo">Picklijstnummer</label>
           <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
@@ -441,15 +528,61 @@
 
       <div id="productResults" class="product-search-results" style="display:none"></div>
 
-      <div style="margin-top:18px">
-        <h3>Huidige pickregels</h3>
-        <div id="draftOrders"></div>
+      <div class="build-summary">
+        <div class="row">
+          <div>
+            <b>Aantal orders in opbouw:</b> <span id="buildOrderCount">0</span>
+          </div>
+          <div>
+            <b>Totaal colli in opbouw:</b> <span id="buildQtyCount">0</span>
+          </div>
+        </div>
+
+        <div class="btnRow" style="margin-top:14px">
+          <button class="btn" id="btnSelectAllOrders" type="button">Alle orders aanvinken</button>
+          <button class="btn" id="btnSelectNoOrders" type="button">Alle vinkjes uit</button>
+          <button class="btn accent" id="btnPrintSelectedOrders" type="button">PDF geselecteerde orders</button>
+          <button class="btn primary" id="btnSavePicklist" type="button">Picklijst opslaan van geselecteerde orders</button>
+          <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
+        </div>
       </div>
 
-      <div class="btnRow" style="margin-top:16px">
-        <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
-        <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
+      <div style="margin-top:18px">
+        <h3>Orders in opbouw</h3>
+        <div id="draftOrders"></div>
       </div>
+    </div>
+
+    <div class="card">
+      <h3>Huidig geselecteerde picklijst</h3>
+      <div class="muted">
+        Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.
+      </div>
+
+      <div id="activePicklistDetail" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Oude picklijsten</h3>
+
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="picklistSearch">Zoeken</label>
+          <input id="picklistSearch" placeholder="Zoek op picklijstnummer"/>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
+        </div>
+      </div>
+
+      <div class="btnRow" style="margin-top:14px">
+        <button class="btn" id="btnSelectAllSaved" type="button">Alle picklijsten aanvinken</button>
+        <button class="btn" id="btnSelectNoneSaved" type="button">Alle vinkjes uit</button>
+        <button class="btn danger" id="btnDeleteSelectedPicklists" type="button">Geselecteerde picklijsten verwijderen</button>
+      </div>
+
+      <div id="savedPicklists" class="saved-grid" style="margin-top:16px"></div>
     </div>
 
   </div>
@@ -473,6 +606,8 @@
   </div>
 </div>
 
+<div id="hiddenPrintMount" class="hidden-print-sheet"></div>
+
 <script>
 setActiveNav();
 const client = sb();
@@ -481,22 +616,36 @@ let allProducts = [];
 let stockSummary = new Map();
 let stockItems = [];
 let selectedProduct = null;
+
 let draftLines = [];
 let savedPicklists = [];
 let activePicklist = null;
 let activePicklistLines = [];
 let currentPickModalLine = null;
 
-function groupDraftLines(lines){
+function getDraftGroups(){
   const groups = new Map();
 
-  (lines || []).forEach(line => {
+  (draftLines || []).forEach(line => {
     const orderNo = line.source_order_no || 'ZONDER ORDER';
-    if(!groups.has(orderNo)) groups.set(orderNo, []);
-    groups.get(orderNo).push(line);
+    if(!groups.has(orderNo)){
+      groups.set(orderNo, {
+        orderNo,
+        checked: true,
+        rows: []
+      });
+    }
+    groups.get(orderNo).rows.push(line);
   });
 
-  return Array.from(groups.entries()).map(([orderNo, rows]) => ({ orderNo, rows }));
+  return Array.from(groups.values()).map(group => {
+    group.checked = isDraftOrderChecked(group.orderNo);
+    return group;
+  });
+}
+
+function getSelectedDraftGroups(){
+  return getDraftGroups().filter(g => g.checked);
 }
 
 function getLocationCountsForSku(skuBase){
@@ -516,7 +665,7 @@ function getLocationSummaryForSku(skuBase){
   const counts = getLocationCountsForSku(skuBase);
 
   return Array.from(counts.entries())
-    .sort((a, b) => {
+    .sort((a,b) => {
       if(a[1] !== b[1]) return a[1] - b[1];
       return String(a[0]).localeCompare(String(b[0]), 'nl');
     })
@@ -526,6 +675,20 @@ function getLocationSummaryForSku(skuBase){
 
 function getStockCountForSku(skuBase){
   return Number(stockSummary.get(skuBase) || 0);
+}
+
+function isDraftOrderChecked(orderNo){
+  const checks = document.querySelectorAll('.draft-order-check');
+  const found = Array.from(checks).find(c => c.getAttribute('data-order') === orderNo);
+  return found ? found.checked : true;
+}
+
+function setAllDraftOrderChecks(value){
+  document.querySelectorAll('.draft-order-check').forEach(cb => cb.checked = value);
+}
+
+function setAllSavedChecks(value){
+  document.querySelectorAll('.saved-picklist-check').forEach(cb => cb.checked = value);
 }
 
 function renderProductResults(query){
@@ -616,43 +779,70 @@ function addDraftLine(){
   renderDraftOrders();
 }
 
+function updateBuildSummary(){
+  const groups = getDraftGroups();
+  const totalQty = groups.reduce((sum, g) => sum + g.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0), 0);
+
+  byId('buildOrderCount').textContent = String(groups.length);
+  byId('buildQtyCount').textContent = String(totalQty);
+}
+
 function renderDraftOrders(){
   const el = byId('draftOrders');
-  const groups = groupDraftLines(draftLines);
+  const groups = getDraftGroups();
+
+  updateBuildSummary();
 
   if(!groups.length){
-    el.innerHTML = `<div class="muted">Nog geen regels toegevoegd.</div>`;
+    el.innerHTML = `<div class="muted">Nog geen orders in opbouw.</div>`;
     return;
   }
 
-  el.innerHTML = groups.map(group => `
-    <div class="draft-group">
-      <div class="draft-group-head">
-        <div>Order</div>
-        <div>SKU</div>
-        <div>Product</div>
-        <div>Aantal</div>
-        <div>Locaties</div>
-        <div>Actie</div>
-      </div>
+  el.innerHTML = groups.map(group => {
+    const totalQty = group.rows.reduce((sum, r) => sum + Number(r.qty_needed || 0), 0);
 
-      ${group.rows.map(line => {
-        const globalIndex = draftLines.indexOf(line);
-        return `
-          <div class="draft-group-line">
-            <div class="draft-order-label">${escapeHtml(group.orderNo)}</div>
-            <div><b>${escapeHtml(line.sku_base)}</b></div>
-            <div>${escapeHtml(line.product_name)}</div>
-            <div><b>${line.qty_needed}</b></div>
-            <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
+    return `
+      <div class="order-group">
+        <div class="order-group-top">
+          <div class="order-left">
+            <input class="draft-order-check order-check" type="checkbox" data-order="${escapeHtml(group.orderNo)}" checked>
             <div>
-              <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
+              <div class="order-title">${escapeHtml(group.orderNo)}</div>
+              <div class="order-meta">${group.rows.length} regels · ${totalQty} colli</div>
             </div>
           </div>
-        `;
-      }).join('')}
-    </div>
-  `).join('');
+
+          <div class="order-actions">
+            <button class="btn" type="button" onclick="printSingleDraftOrder('${escapeHtml(group.orderNo)}')">PDF deze order</button>
+            <button class="btn danger" type="button" onclick="removeDraftOrder('${escapeHtml(group.orderNo)}')">Order verwijderen</button>
+          </div>
+        </div>
+
+        <div class="order-line-head">
+          <div>SKU</div>
+          <div>Product</div>
+          <div>Aantal</div>
+          <div>Locaties</div>
+          <div>Actie</div>
+        </div>
+
+        ${group.rows.map(line => {
+          const globalIndex = draftLines.indexOf(line);
+          return `
+            <div class="order-line">
+              <div><b>${escapeHtml(line.sku_base)}</b></div>
+              <div>${escapeHtml(line.product_name)}</div>
+              <div><b>${line.qty_needed}</b></div>
+              <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
+              <div>
+                <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Regel verwijderen</button>
+              </div>
+            </div>
+          `;
+        }).join('')}
+      </div>
+    `;
+  }).join('');
 }
 
 function removeDraftLine(index){
@@ -660,12 +850,143 @@ function removeDraftLine(index){
   renderDraftOrders();
 }
 
+function removeDraftOrder(orderNo){
+  draftLines = draftLines.filter(l => l.source_order_no !== orderNo);
+  renderDraftOrders();
+}
+
+function buildPrintHtml(groups){
+  const picklistNo = (byId('picklistNo').value || '').trim() || 'Concept picklijst';
+  const note = (byId('picklistNote').value || '').trim();
+  const totalOrders = groups.length;
+  const totalQty = groups.reduce((sum, g) => sum + g.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0), 0);
+
+  return `
+    <div class="print-sheet" id="printSheet">
+      <div class="print-header">
+        <div class="print-title">Picklijst ${escapeHtml(picklistNo)}</div>
+        <div class="print-sub">
+          Ronald Verdult Design · Oegema Logistics<br>
+          Orders: <b>${totalOrders}</b> · Totaal colli: <b>${totalQty}</b><br>
+          ${note ? `Opmerking: ${escapeHtml(note)}` : ''}
+        </div>
+      </div>
+
+      ${groups.map(group => `
+        <div class="print-order">
+          <div class="print-order-top">Order ${escapeHtml(group.orderNo)}</div>
+          <table class="print-table">
+            <thead>
+              <tr>
+                <th>SKU</th>
+                <th>Product</th>
+                <th>Aantal</th>
+                <th>Locaties</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${group.rows.map(line => `
+                <tr>
+                  <td><b>${escapeHtml(line.sku_base)}</b></td>
+                  <td>${escapeHtml(line.product_name)}</td>
+                  <td>${line.qty_needed}</td>
+                  <td>${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        </div>
+      `).join('')}
+    </div>
+  `;
+}
+
+async function printGroupsToPdf(groups, filenameBase){
+  if(!groups.length){
+    toast('Selecteer eerst minimaal 1 order.', 'err');
+    return;
+  }
+
+  const mount = byId('hiddenPrintMount');
+  mount.innerHTML = buildPrintHtml(groups);
+
+  const node = byId('printSheet');
+  const canvas = await html2canvas(node, {
+    scale: 2,
+    backgroundColor: '#ffffff',
+    useCORS: true
+  });
+
+  const img = canvas.toDataURL('image/png');
+  const { jsPDF } = window.jspdf;
+  const pdf = new jsPDF({
+    orientation: 'portrait',
+    unit: 'mm',
+    format: 'a4'
+  });
+
+  const pageW = 210;
+  const pageH = 297;
+  const imgRatio = canvas.width / canvas.height;
+  const drawW = pageW - 20;
+  const drawH = drawW / imgRatio;
+
+  if(drawH <= (pageH - 20)){
+    pdf.addImage(img, 'PNG', 10, 10, drawW, drawH);
+  } else {
+    const fullHeightPx = canvas.height;
+    const pageHeightPx = Math.floor((canvas.width * (pageH - 20)) / drawW);
+    let renderedHeight = 0;
+    let first = true;
+
+    while(renderedHeight < fullHeightPx){
+      const pageCanvas = document.createElement('canvas');
+      pageCanvas.width = canvas.width;
+      pageCanvas.height = Math.min(pageHeightPx, fullHeightPx - renderedHeight);
+
+      const ctx = pageCanvas.getContext('2d');
+      ctx.drawImage(
+        canvas,
+        0, renderedHeight, canvas.width, pageCanvas.height,
+        0, 0, canvas.width, pageCanvas.height
+      );
+
+      const pageImg = pageCanvas.toDataURL('image/png');
+
+      if(!first) pdf.addPage();
+      const h = (pageCanvas.height * drawW) / pageCanvas.width;
+      pdf.addImage(pageImg, 'PNG', 10, 10, drawW, h);
+
+      first = false;
+      renderedHeight += pageCanvas.height;
+    }
+  }
+
+  pdf.save(`${filenameBase}.pdf`);
+  mount.innerHTML = '';
+}
+
+async function printSelectedDraftOrders(){
+  const groups = getSelectedDraftGroups();
+  const picklistNo = (byId('picklistNo').value || '').trim() || 'picklijst';
+  await printGroupsToPdf(groups, `${picklistNo}_geselecteerde_orders`);
+}
+
+async function printSingleDraftOrder(orderNo){
+  const group = getDraftGroups().find(g => g.orderNo === orderNo);
+  if(!group) return;
+  await printGroupsToPdf([group], `order_${orderNo}`);
+}
+
 async function savePicklist(){
   const picklistNo = (byId('picklistNo').value || '').trim();
   const note = (byId('picklistNote').value || '').trim();
+  const selectedGroups = getSelectedDraftGroups();
 
   if(!picklistNo) return toast('Vul eerst een picklijstnummer in.', 'err');
-  if(!draftLines.length) return toast('Voeg eerst regels toe.', 'err');
+  if(!selectedGroups.length) return toast('Vink eerst minimaal 1 order aan.', 'err');
+
+  const selectedLines = selectedGroups.flatMap(g => g.rows);
 
   const { data: exists, error: checkErr } = await client
     .from('pick_orders')
@@ -689,7 +1010,7 @@ async function savePicklist(){
 
   if(orderErr) return toast(orderErr.message || String(orderErr), 'err');
 
-  const payload = draftLines.map(line => ({
+  const payload = selectedLines.map(line => ({
     pick_order_id: order.id,
     source_order_no: line.source_order_no,
     sku_base: line.sku_base,
@@ -704,19 +1025,21 @@ async function savePicklist(){
 
   if(lineErr) return toast(lineErr.message || String(lineErr), 'err');
 
-  toast(`Picklijst ${picklistNo} opgeslagen.`, 'ok');
+  draftLines = draftLines.filter(line =>
+    !selectedLines.includes(line)
+  );
 
-  byId('picklistNo').value = '';
-  byId('picklistNote').value = '';
   byId('sourceOrderNo').value = '';
   byId('productSearch').value = '';
   byId('qtyNeeded').value = '1';
   selectedProduct = null;
-  draftLines = [];
   renderSelectedProductInfo();
   renderDraftOrders();
 
+  toast(`Picklijst ${picklistNo} opgeslagen.`, 'ok');
+
   await loadSavedPicklists();
+  await openPicklist(order.id);
 }
 
 async function loadBaseData(){
@@ -785,6 +1108,10 @@ async function loadSavedPicklists(){
   el.innerHTML = rows.map(row => `
     <div class="saved-row">
       <div class="saved-row-head">
+        <div>
+          <input class="saved-picklist-check saved-check" type="checkbox" data-id="${escapeHtml(row.id)}">
+        </div>
+
         <div class="saved-title">${escapeHtml(row.order_no)}</div>
 
         <div class="saved-note">
@@ -814,6 +1141,41 @@ async function loadSavedPicklists(){
       </div>
     </div>
   `).join('');
+}
+
+function getSelectedSavedPicklistIds(){
+  return Array.from(document.querySelectorAll('.saved-picklist-check:checked'))
+    .map(cb => cb.getAttribute('data-id'))
+    .filter(Boolean);
+}
+
+async function deleteSelectedPicklists(){
+  const ids = getSelectedSavedPicklistIds();
+
+  if(!ids.length) return toast('Vink eerst minimaal 1 picklijst aan.', 'err');
+
+  const ok = confirm(`Weet je zeker dat je ${ids.length} picklijst(en) wilt verwijderen?`);
+  if(!ok) return;
+
+  try{
+    const { error } = await client
+      .from('pick_orders')
+      .delete()
+      .in('id', ids);
+
+    if(error) throw error;
+
+    if(activePicklist && ids.includes(activePicklist.id)){
+      activePicklist = null;
+      activePicklistLines = [];
+      renderActivePicklist();
+    }
+
+    toast(`${ids.length} picklijst(en) verwijderd.`, 'ok');
+    await loadSavedPicklists();
+  } catch(e){
+    toast(e.message || String(e), 'err');
+  }
 }
 
 async function openPicklist(id){
@@ -937,7 +1299,7 @@ async function openPickModal(lineId){
         loc_qty: locQty
       };
     })
-    .sort((a, b) => {
+    .sort((a,b) => {
       if(a.loc_qty !== b.loc_qty) return a.loc_qty - b.loc_qty;
       const l = String(a.location || '').localeCompare(String(b.location || ''), 'nl');
       if(l !== 0) return l;
@@ -1008,7 +1370,7 @@ async function confirmPickedAndBookOut(){
       const itemId = ch.value;
       const skuUnique = ch.getAttribute('data-sku');
 
-      const { data: item, error: itemErr } = await client
+      const { data:item, error:itemErr } = await client
         .from('items')
         .select('id, product_id, sku_unique, status, location')
         .eq('id', itemId)
@@ -1018,23 +1380,23 @@ async function confirmPickedAndBookOut(){
       if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
       if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
 
-      const { error: updateErr } = await client
+      const { error:updateErr } = await client
         .from('items')
         .update({
-          status: 'OUT',
-          out_at: new Date().toISOString()
+          status:'OUT',
+          out_at:new Date().toISOString()
         })
         .eq('id', item.id);
 
       if(updateErr) throw updateErr;
 
-      const { error: moveErr } = await client
+      const { error:moveErr } = await client
         .from('movements')
         .insert([{
-          type: 'OUT',
-          product_id: item.product_id,
-          sku_unique: item.sku_unique,
-          location: item.location || null,
+          type:'OUT',
+          product_id:item.product_id,
+          sku_unique:item.sku_unique,
+          location:item.location || null,
           order_no: currentPickModalLine.source_order_no || activePicklist.order_no
         }]);
 
@@ -1043,7 +1405,7 @@ async function confirmPickedAndBookOut(){
 
     const newPicked = Number(currentPickModalLine.qty_picked || 0) + qtySelected;
 
-    const { error: lineErr } = await client
+    const { error:lineErr } = await client
       .from('pick_order_lines')
       .update({ qty_picked: newPicked })
       .eq('id', currentPickModalLine.id);
@@ -1052,7 +1414,7 @@ async function confirmPickedAndBookOut(){
 
     closePickModal();
 
-    const { data: allLines, error: allErr } = await client
+    const { data:allLines, error:allErr } = await client
       .from('pick_order_lines')
       .select('id, qty_needed, qty_picked')
       .eq('pick_order_id', activePicklist.id);
@@ -1064,12 +1426,12 @@ async function confirmPickedAndBookOut(){
     if(allDone){
       await client
         .from('pick_orders')
-        .update({ status: 'DONE' })
+        .update({ status:'DONE' })
         .eq('id', activePicklist.id);
     } else {
       await client
         .from('pick_orders')
-        .update({ status: 'PICKING' })
+        .update({ status:'PICKING' })
         .eq('id', activePicklist.id);
     }
 
@@ -1110,6 +1472,13 @@ byId('btnClearDraft').addEventListener('click', () => {
   byId('productResults').innerHTML = '';
 });
 
+byId('btnPrintSelectedOrders').addEventListener('click', () =>
+  printSelectedDraftOrders().catch(e => toast(e.message || String(e), 'err'))
+);
+
+byId('btnSelectAllOrders').addEventListener('click', () => setAllDraftOrderChecks(true));
+byId('btnSelectNoOrders').addEventListener('click', () => setAllDraftOrderChecks(false));
+
 byId('btnRefreshPicklists').addEventListener('click', () =>
   loadSavedPicklists().catch(e => toast(e.message || String(e), 'err'))
 );
@@ -1119,6 +1488,12 @@ byId('picklistSearch').addEventListener('keydown', e => {
     loadSavedPicklists().catch(err => toast(err.message || String(err), 'err'));
   }
 });
+
+byId('btnSelectAllSaved').addEventListener('click', () => setAllSavedChecks(true));
+byId('btnSelectNoneSaved').addEventListener('click', () => setAllSavedChecks(false));
+byId('btnDeleteSelectedPicklists').addEventListener('click', () =>
+  deleteSelectedPicklists().catch(e => toast(e.message || String(e), 'err'))
+);
 
 byId('btnCancelPicked').addEventListener('click', closePickModal);
 byId('btnConfirmPicked').addEventListener('click', () =>
@@ -1133,6 +1508,7 @@ loadBaseData()
   .then(() => {
     renderSelectedProductInfo();
     renderDraftOrders();
+    renderActivePicklist();
     return loadSavedPicklists();
   })
   .catch(e => toast(e.message || String(e), 'err'));
