@@ -21,6 +21,12 @@
       gap:16px;
     }
 
+    .build-header{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:14px;
+    }
+
     .pick-toolbar{
       display:grid;
       grid-template-columns:180px 1fr 120px auto;
@@ -33,7 +39,7 @@
       border:1px solid var(--border);
       border-radius:14px;
       background:#fff;
-      max-height:260px;
+      max-height:280px;
       overflow:auto;
     }
 
@@ -64,6 +70,13 @@
       margin-top:2px;
     }
 
+    .product-result .stock{
+      margin-top:6px;
+      font-size:12px;
+      font-weight:800;
+      color:var(--ok);
+    }
+
     .small-stock{
       font-size:12px;
       color:var(--muted);
@@ -87,10 +100,12 @@
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
 
-    .build-header{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:14px;
+    .build-summary{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:14px;
+      margin-top:14px;
     }
 
     .order-group{
@@ -146,7 +161,7 @@
     .order-line-head,
     .order-line{
       display:grid;
-      grid-template-columns:150px 1fr 90px 1.2fr 140px;
+      grid-template-columns:150px 1fr 90px 90px 1.2fr 140px;
       gap:12px;
       padding:12px 14px;
       align-items:center;
@@ -164,14 +179,6 @@
 
     .order-line:last-child{
       border-bottom:none;
-    }
-
-    .build-summary{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      padding:14px;
-      margin-top:14px;
     }
 
     .detail-summary{
@@ -486,7 +493,7 @@
     <div class="card">
       <h2>Nieuwe picklijst in opbouw</h2>
       <div class="muted">
-        Voeg regels toe per order. Vink daarna de gewenste orders aan om ze samen op één picklijst te zetten en op één PDF te printen.
+        Voeg regels toe per order. Alleen artikelen die nu op voorraad staan zijn selecteerbaar. Vink daarna de gewenste orders aan om ze samen op één picklijst te zetten en op één PDF te printen.
       </div>
 
       <div class="build-header" style="margin-top:16px">
@@ -618,35 +625,11 @@ let stockItems = [];
 let selectedProduct = null;
 
 let draftLines = [];
+let draftOrderChecks = {};
 let savedPicklists = [];
 let activePicklist = null;
 let activePicklistLines = [];
 let currentPickModalLine = null;
-
-function getDraftGroups(){
-  const groups = new Map();
-
-  (draftLines || []).forEach(line => {
-    const orderNo = line.source_order_no || 'ZONDER ORDER';
-    if(!groups.has(orderNo)){
-      groups.set(orderNo, {
-        orderNo,
-        checked: true,
-        rows: []
-      });
-    }
-    groups.get(orderNo).rows.push(line);
-  });
-
-  return Array.from(groups.values()).map(group => {
-    group.checked = isDraftOrderChecked(group.orderNo);
-    return group;
-  });
-}
-
-function getSelectedDraftGroups(){
-  return getDraftGroups().filter(g => g.checked);
-}
 
 function getLocationCountsForSku(skuBase){
   const counts = new Map();
@@ -677,18 +660,46 @@ function getStockCountForSku(skuBase){
   return Number(stockSummary.get(skuBase) || 0);
 }
 
-function isDraftOrderChecked(orderNo){
-  const checks = document.querySelectorAll('.draft-order-check');
-  const found = Array.from(checks).find(c => c.getAttribute('data-order') === orderNo);
-  return found ? found.checked : true;
+function getPlannedQtyForSku(skuBase){
+  return draftLines
+    .filter(l => l.sku_base === skuBase)
+    .reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
 }
 
-function setAllDraftOrderChecks(value){
-  document.querySelectorAll('.draft-order-check').forEach(cb => cb.checked = value);
+function getRemainingAvailableForSku(skuBase){
+  return Math.max(0, getStockCountForSku(skuBase) - getPlannedQtyForSku(skuBase));
 }
 
-function setAllSavedChecks(value){
-  document.querySelectorAll('.saved-picklist-check').forEach(cb => cb.checked = value);
+function ensureDraftCheckState(orderNo){
+  if(typeof draftOrderChecks[orderNo] === 'undefined'){
+    draftOrderChecks[orderNo] = true;
+  }
+}
+
+function getDraftGroups(){
+  const groups = new Map();
+
+  (draftLines || []).forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!groups.has(orderNo)){
+      groups.set(orderNo, {
+        orderNo,
+        checked: true,
+        rows: []
+      });
+    }
+    groups.get(orderNo).rows.push(line);
+  });
+
+  return Array.from(groups.values()).map(group => {
+    ensureDraftCheckState(group.orderNo);
+    group.checked = !!draftOrderChecks[group.orderNo];
+    return group;
+  });
+}
+
+function getSelectedDraftGroups(){
+  return getDraftGroups().filter(g => g.checked);
 }
 
 function renderProductResults(query){
@@ -702,30 +713,36 @@ function renderProductResults(query){
   }
 
   const results = allProducts.filter(p => {
-  const matchesSearch =
-    String(p.sku_base || '').toLowerCase().includes(q) ||
-    String(p.name || '').toLowerCase().includes(q) ||
-    String(p.description || '').toLowerCase().includes(q);
+    const matchesSearch =
+      String(p.sku_base || '').toLowerCase().includes(q) ||
+      String(p.name || '').toLowerCase().includes(q) ||
+      String(p.description || '').toLowerCase().includes(q);
 
-  const inStock = getStockCountForSku(p.sku_base) > 0;
-
-  return matchesSearch && inStock;
-}).slice(0, 25);
+    const inStock = getStockCountForSku(p.sku_base) > 0;
+    return matchesSearch && inStock;
+  }).slice(0, 25);
 
   if(!results.length){
-  box.style.display = 'block';
-  box.innerHTML = `<div class="product-result">Geen artikelen op voorraad gevonden voor deze zoekopdracht.</div>`;
-  return;
-}
+    box.style.display = 'block';
+    box.innerHTML = `<div class="product-result">Geen artikelen op voorraad gevonden voor deze zoekopdracht.</div>`;
+    return;
+  }
 
   box.style.display = 'block';
-  box.innerHTML = results.map(p => `
-    <div class="product-result" data-sku="${escapeHtml(p.sku_base)}">
-      <span class="sku">${escapeHtml(p.sku_base)}</span>
-      <span class="name">${escapeHtml(p.name || '')}</span>
-      <div class="muted-line">${escapeHtml(p.description || '')}</div>
-    </div>
-  `).join('');
+  box.innerHTML = results.map(p => {
+    const stockNow = getStockCountForSku(p.sku_base);
+    const planned = getPlannedQtyForSku(p.sku_base);
+    const free = Math.max(0, stockNow - planned);
+
+    return `
+      <div class="product-result" data-sku="${escapeHtml(p.sku_base)}">
+        <span class="sku">${escapeHtml(p.sku_base)}</span>
+        <span class="name">${escapeHtml(p.name || '')}</span>
+        <div class="muted-line">${escapeHtml(p.description || '')}</div>
+        <div class="stock">Voorraad: ${stockNow} · Al ingepland: ${planned} · Beschikbaar: ${free}</div>
+      </div>
+    `;
+  }).join('');
 
   box.querySelectorAll('.product-result[data-sku]').forEach(el => {
     el.addEventListener('click', () => {
@@ -746,9 +763,15 @@ function renderSelectedProductInfo(){
     return;
   }
 
+  const stockNow = getStockCountForSku(selectedProduct.sku_base);
+  const planned = getPlannedQtyForSku(selectedProduct.sku_base);
+  const free = Math.max(0, stockNow - planned);
+
   el.innerHTML = `
     <b>${escapeHtml(selectedProduct.sku_base)}</b> — ${escapeHtml(selectedProduct.name || '')}<br>
-    Voorraad nu: <b>${getStockCountForSku(selectedProduct.sku_base)}</b><br>
+    Voorraad nu: <b>${stockNow}</b><br>
+    Al ingepland in opbouw: <b>${planned}</b><br>
+    Nog beschikbaar voor picklijst: <b>${free}</b><br>
     Locaties: ${escapeHtml(getLocationSummaryForSku(selectedProduct.sku_base) || '-')}
   `;
 }
@@ -760,6 +783,16 @@ function addDraftLine(){
   if(!sourceOrderNo) return toast('Vul eerst een ordernummer in.', 'err');
   if(!selectedProduct) return toast('Selecteer eerst een artikel.', 'err');
   if(!qtyNeeded || qtyNeeded < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
+
+  const stockNow = getStockCountForSku(selectedProduct.sku_base);
+  if(stockNow < 1){
+    return toast('Dit artikel staat niet op voorraad en kan niet aan de picklijst worden toegevoegd.', 'err');
+  }
+
+  const alreadyPlannedForSku = getPlannedQtyForSku(selectedProduct.sku_base);
+  if((alreadyPlannedForSku + qtyNeeded) > stockNow){
+    return toast(`Te weinig voorraad. Beschikbaar: ${stockNow}, al ingepland: ${alreadyPlannedForSku}.`, 'err');
+  }
 
   const existing = draftLines.find(l =>
     l.source_order_no === sourceOrderNo &&
@@ -776,6 +809,8 @@ function addDraftLine(){
       qty_needed: qtyNeeded
     });
   }
+
+  ensureDraftCheckState(sourceOrderNo);
 
   byId('qtyNeeded').value = '1';
   byId('productSearch').value = '';
@@ -810,7 +845,7 @@ function renderDraftOrders(){
       <div class="order-group">
         <div class="order-group-top">
           <div class="order-left">
-            <input class="draft-order-check order-check" type="checkbox" data-order="${escapeHtml(group.orderNo)}" checked>
+            <input class="draft-order-check order-check" type="checkbox" data-order="${escapeHtml(group.orderNo)}" ${group.checked ? 'checked' : ''}>
             <div>
               <div class="order-title">${escapeHtml(group.orderNo)}</div>
               <div class="order-meta">${group.rows.length} regels · ${totalQty} colli</div>
@@ -827,6 +862,7 @@ function renderDraftOrders(){
           <div>SKU</div>
           <div>Product</div>
           <div>Aantal</div>
+          <div>Voorraad</div>
           <div>Locaties</div>
           <div>Actie</div>
         </div>
@@ -838,6 +874,7 @@ function renderDraftOrders(){
               <div><b>${escapeHtml(line.sku_base)}</b></div>
               <div>${escapeHtml(line.product_name)}</div>
               <div><b>${line.qty_needed}</b></div>
+              <div>${getStockCountForSku(line.sku_base)}</div>
               <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
               <div>
                 <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Regel verwijderen</button>
@@ -848,16 +885,45 @@ function renderDraftOrders(){
       </div>
     `;
   }).join('');
+
+  document.querySelectorAll('.draft-order-check').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const orderNo = cb.getAttribute('data-order');
+      draftOrderChecks[orderNo] = cb.checked;
+    });
+  });
 }
 
 function removeDraftLine(index){
+  const line = draftLines[index];
+  if(!line) return;
+
+  const orderNo = line.source_order_no;
   draftLines.splice(index, 1);
+
+  const exists = draftLines.some(l => l.source_order_no === orderNo);
+  if(!exists){
+    delete draftOrderChecks[orderNo];
+  }
+
   renderDraftOrders();
 }
 
 function removeDraftOrder(orderNo){
   draftLines = draftLines.filter(l => l.source_order_no !== orderNo);
+  delete draftOrderChecks[orderNo];
   renderDraftOrders();
+}
+
+function setAllDraftOrderChecks(value){
+  getDraftGroups().forEach(g => {
+    draftOrderChecks[g.orderNo] = value;
+  });
+  renderDraftOrders();
+}
+
+function setAllSavedChecks(value){
+  document.querySelectorAll('.saved-picklist-check').forEach(cb => cb.checked = value);
 }
 
 function buildPrintHtml(groups){
@@ -1030,9 +1096,9 @@ async function savePicklist(){
 
   if(lineErr) return toast(lineErr.message || String(lineErr), 'err');
 
-  draftLines = draftLines.filter(line =>
-    !selectedLines.includes(line)
-  );
+  const selectedOrderNos = new Set(selectedGroups.map(g => g.orderNo));
+  draftLines = draftLines.filter(line => !selectedOrderNos.has(line.source_order_no));
+  selectedOrderNos.forEach(orderNo => delete draftOrderChecks[orderNo]);
 
   byId('sourceOrderNo').value = '';
   byId('productSearch').value = '';
@@ -1445,6 +1511,7 @@ async function confirmPickedAndBookOut(){
     await loadBaseData();
     await loadSavedPicklists();
     await openPicklist(activePicklist.id);
+    renderDraftOrders();
 
   } catch(e){
     toast(e.message || String(e), 'err');
@@ -1465,6 +1532,7 @@ byId('btnSavePicklist').addEventListener('click', () =>
 
 byId('btnClearDraft').addEventListener('click', () => {
   draftLines = [];
+  draftOrderChecks = {};
   byId('picklistNo').value = '';
   byId('picklistNote').value = '';
   byId('sourceOrderNo').value = '';
