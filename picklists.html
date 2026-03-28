@@ -701,17 +701,22 @@ function renderProductResults(query){
     return;
   }
 
-  const results = allProducts.filter(p =>
+  const results = allProducts.filter(p => {
+  const matchesSearch =
     String(p.sku_base || '').toLowerCase().includes(q) ||
     String(p.name || '').toLowerCase().includes(q) ||
-    String(p.description || '').toLowerCase().includes(q)
-  ).slice(0, 25);
+    String(p.description || '').toLowerCase().includes(q);
+
+  const inStock = getStockCountForSku(p.sku_base) > 0;
+
+  return matchesSearch && inStock;
+}).slice(0, 25);
 
   if(!results.length){
-    box.style.display = 'block';
-    box.innerHTML = `<div class="product-result">Geen artikelen gevonden.</div>`;
-    return;
-  }
+  box.style.display = 'block';
+  box.innerHTML = `<div class="product-result">Geen artikelen op voorraad gevonden voor deze zoekopdracht.</div>`;
+  return;
+}
 
   box.style.display = 'block';
   box.innerHTML = results.map(p => `
