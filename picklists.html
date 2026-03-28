@@ -739,7 +739,7 @@ function renderProductResults(query){
         <span class="sku">${escapeHtml(p.sku_base)}</span>
         <span class="name">${escapeHtml(p.name || '')}</span>
         <div class="muted-line">${escapeHtml(p.description || '')}</div>
-        <div class="stock">Voorraad: ${stockNow} · Al ingepland: ${planned} · Beschikbaar: ${free}</div>
+        <div class="stock">Voorraad: ${stockNow} · Al ingepland: ${planned} · Nog vrij: ${free}</div>
       </div>
     `;
   }).join('');
@@ -759,6 +759,7 @@ function renderSelectedProductInfo(){
   const el = byId('selectedProductInfo');
 
   if(!selectedProduct){
+    byId('qtyNeeded').removeAttribute('max');
     el.innerHTML = 'Nog geen artikel geselecteerd.';
     return;
   }
@@ -766,6 +767,8 @@ function renderSelectedProductInfo(){
   const stockNow = getStockCountForSku(selectedProduct.sku_base);
   const planned = getPlannedQtyForSku(selectedProduct.sku_base);
   const free = Math.max(0, stockNow - planned);
+
+  byId('qtyNeeded').max = String(Math.max(1, free));
 
   el.innerHTML = `
     <b>${escapeHtml(selectedProduct.sku_base)}</b> — ${escapeHtml(selectedProduct.name || '')}<br>
@@ -784,19 +787,24 @@ function addDraftLine(){
   if(!selectedProduct) return toast('Selecteer eerst een artikel.', 'err');
   if(!qtyNeeded || qtyNeeded < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
 
-  const stockNow = getStockCountForSku(selectedProduct.sku_base);
+  const skuBase = selectedProduct.sku_base;
+  const stockNow = getStockCountForSku(skuBase);
+
   if(stockNow < 1){
     return toast('Dit artikel staat niet op voorraad en kan niet aan de picklijst worden toegevoegd.', 'err');
   }
 
-  const alreadyPlannedForSku = getPlannedQtyForSku(selectedProduct.sku_base);
-  if((alreadyPlannedForSku + qtyNeeded) > stockNow){
-    return toast(`Te weinig voorraad. Beschikbaar: ${stockNow}, al ingepland: ${alreadyPlannedForSku}.`, 'err');
+  const alreadyPlannedForSku = getPlannedQtyForSku(skuBase);
+  const totalAfterAdd = alreadyPlannedForSku + qtyNeeded;
+
+  if(totalAfterAdd > stockNow){
+    const remaining = Math.max(0, stockNow - alreadyPlannedForSku);
+    return toast(`Niet voldoende meer op voorraad. Op voorraad: ${stockNow}, al ingepland: ${alreadyPlannedForSku}, nog vrij: ${remaining}.`, 'err');
   }
 
   const existing = draftLines.find(l =>
     l.source_order_no === sourceOrderNo &&
-    l.sku_base === selectedProduct.sku_base
+    l.sku_base === skuBase
   );
 
   if(existing){
@@ -804,8 +812,8 @@ function addDraftLine(){
   } else {
     draftLines.push({
       source_order_no: sourceOrderNo,
-      sku_base: selectedProduct.sku_base,
-      product_name: selectedProduct.name || selectedProduct.sku_base,
+      sku_base: skuBase,
+      product_name: selectedProduct.name || skuBase,
       qty_needed: qtyNeeded
     });
   }
@@ -906,12 +914,14 @@ function removeDraftLine(index){
     delete draftOrderChecks[orderNo];
   }
 
+  renderSelectedProductInfo();
   renderDraftOrders();
 }
 
 function removeDraftOrder(orderNo){
   draftLines = draftLines.filter(l => l.source_order_no !== orderNo);
   delete draftOrderChecks[orderNo];
+  renderSelectedProductInfo();
   renderDraftOrders();
 }
 
@@ -974,8 +984,7 @@ function buildPrintHtml(groups){
 
 async function printGroupsToPdf(groups, filenameBase){
   if(!groups.length){
-    toast('Selecteer eerst minimaal 1 order.', 'err');
-    return;
+    return toast('Selecteer eerst minimaal 1 order.', 'err');
   }
 
   const mount = byId('hiddenPrintMount');
