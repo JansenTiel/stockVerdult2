@@ -11,7 +11,7 @@ async function requireAuth(){
 
 document.addEventListener('DOMContentLoaded', async ()=>{
   const page = document.body.dataset.page || '';
-  if(['dashboard','products','scan','stock','outscans','picklists','picklist_detail'].includes(page)){
+ if(['dashboard','products','scan','stock','outscans','picklists','picklist_detail'].includes(page)){
     try{ await requireAuth(); authNav(); }catch(e){ console.error(e); location.href='/login.html'; }
   }
   if(page === 'login') initLogin();
