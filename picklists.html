@@ -666,8 +666,15 @@ function getPlannedQtyForSku(skuBase){
     .reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
 }
 
-function getRemainingAvailableForSku(skuBase){
-  return Math.max(0, getStockCountForSku(skuBase) - getPlannedQtyForSku(skuBase));
+async function getLiveStockCountForSku(skuBase){
+  const { data, error } = await client
+    .from('v_stock_summary')
+    .select('qty')
+    .eq('sku_base', skuBase)
+    .maybeSingle();
+
+  if(error) throw error;
+  return Number(data?.qty || 0);
 }
 
 function ensureDraftCheckState(orderNo){
@@ -745,17 +752,21 @@ function renderProductResults(query){
   }).join('');
 
   box.querySelectorAll('.product-result[data-sku]').forEach(el => {
-    el.addEventListener('click', () => {
+    el.addEventListener('click', async () => {
       const sku = el.getAttribute('data-sku');
       selectedProduct = allProducts.find(p => p.sku_base === sku) || null;
       byId('productSearch').value = selectedProduct ? `${selectedProduct.sku_base} — ${selectedProduct.name}` : '';
       box.style.display = 'none';
-      renderSelectedProductInfo();
+      try{
+        await renderSelectedProductInfo();
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }
     });
   });
 }
 
-function renderSelectedProductInfo(){
+async function renderSelectedProductInfo(){
   const el = byId('selectedProductInfo');
 
   if(!selectedProduct){
@@ -764,22 +775,24 @@ function renderSelectedProductInfo(){
     return;
   }
 
-  const stockNow = getStockCountForSku(selectedProduct.sku_base);
+  const liveStock = await getLiveStockCountForSku(selectedProduct.sku_base);
+  stockSummary.set(selectedProduct.sku_base, liveStock);
+
   const planned = getPlannedQtyForSku(selectedProduct.sku_base);
-  const free = Math.max(0, stockNow - planned);
+  const free = Math.max(0, liveStock - planned);
 
   byId('qtyNeeded').max = String(Math.max(1, free));
 
   el.innerHTML = `
     <b>${escapeHtml(selectedProduct.sku_base)}</b> — ${escapeHtml(selectedProduct.name || '')}<br>
-    Voorraad nu: <b>${stockNow}</b><br>
+    Voorraad nu: <b>${liveStock}</b><br>
     Al ingepland in opbouw: <b>${planned}</b><br>
     Nog beschikbaar voor picklijst: <b>${free}</b><br>
     Locaties: ${escapeHtml(getLocationSummaryForSku(selectedProduct.sku_base) || '-')}
   `;
 }
 
-function addDraftLine(){
+async function addDraftLine(){
   const sourceOrderNo = (byId('sourceOrderNo').value || '').trim();
   const qtyNeeded = Number(byId('qtyNeeded').value || 0);
 
@@ -788,43 +801,53 @@ function addDraftLine(){
   if(!qtyNeeded || qtyNeeded < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
 
   const skuBase = selectedProduct.sku_base;
-  const stockNow = getStockCountForSku(skuBase);
 
-  if(stockNow < 1){
-    return toast('Dit artikel staat niet op voorraad en kan niet aan de picklijst worden toegevoegd.', 'err');
+  try{
+    const liveStock = await getLiveStockCountForSku(skuBase);
+    stockSummary.set(skuBase, liveStock);
+
+    if(liveStock < 1){
+      return toast('Dit artikel staat niet op voorraad en kan niet aan de picklijst worden toegevoegd.', 'err');
+    }
+
+    const alreadyPlanned = draftLines
+      .filter(l => l.sku_base === skuBase)
+      .reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
+
+    const remaining = liveStock - alreadyPlanned;
+
+    if(qtyNeeded > remaining){
+      return toast(`Niet voldoende meer op voorraad. Op voorraad: ${liveStock}, al ingepland: ${alreadyPlanned}, nog vrij: ${Math.max(0, remaining)}.`, 'err');
+    }
+
+    const existing = draftLines.find(l =>
+      l.source_order_no === sourceOrderNo &&
+      l.sku_base === skuBase
+    );
+
+    if(existing){
+      existing.qty_needed += qtyNeeded;
+    } else {
+      draftLines.push({
+        source_order_no: sourceOrderNo,
+        sku_base: skuBase,
+        product_name: selectedProduct.name || skuBase,
+        qty_needed: qtyNeeded
+      });
+    }
+
+    ensureDraftCheckState(sourceOrderNo);
+
+    byId('qtyNeeded').value = '1';
+    byId('productSearch').value = '';
+    selectedProduct = null;
+
+    await renderSelectedProductInfo();
+    renderDraftOrders();
+
+  } catch(e){
+    toast(e.message || String(e), 'err');
   }
-
-  const alreadyPlannedForSku = getPlannedQtyForSku(skuBase);
-  const totalAfterAdd = alreadyPlannedForSku + qtyNeeded;
-
-  if(totalAfterAdd > stockNow){
-    const remaining = Math.max(0, stockNow - alreadyPlannedForSku);
-    return toast(`Niet voldoende meer op voorraad. Op voorraad: ${stockNow}, al ingepland: ${alreadyPlannedForSku}, nog vrij: ${remaining}.`, 'err');
-  }
-
-  const existing = draftLines.find(l =>
-    l.source_order_no === sourceOrderNo &&
-    l.sku_base === skuBase
-  );
-
-  if(existing){
-    existing.qty_needed += qtyNeeded;
-  } else {
-    draftLines.push({
-      source_order_no: sourceOrderNo,
-      sku_base: skuBase,
-      product_name: selectedProduct.name || skuBase,
-      qty_needed: qtyNeeded
-    });
-  }
-
-  ensureDraftCheckState(sourceOrderNo);
-
-  byId('qtyNeeded').value = '1';
-  byId('productSearch').value = '';
-  selectedProduct = null;
-  renderSelectedProductInfo();
-  renderDraftOrders();
 }
 
 function updateBuildSummary(){
@@ -902,7 +925,7 @@ function renderDraftOrders(){
   });
 }
 
-function removeDraftLine(index){
+async function removeDraftLine(index){
   const line = draftLines[index];
   if(!line) return;
 
@@ -914,14 +937,23 @@ function removeDraftLine(index){
     delete draftOrderChecks[orderNo];
   }
 
-  renderSelectedProductInfo();
+  try{
+    await renderSelectedProductInfo();
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }
   renderDraftOrders();
 }
 
-function removeDraftOrder(orderNo){
+async function removeDraftOrder(orderNo){
   draftLines = draftLines.filter(l => l.source_order_no !== orderNo);
   delete draftOrderChecks[orderNo];
-  renderSelectedProductInfo();
+
+  try{
+    await renderSelectedProductInfo();
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }
   renderDraftOrders();
 }
 
@@ -1113,7 +1145,13 @@ async function savePicklist(){
   byId('productSearch').value = '';
   byId('qtyNeeded').value = '1';
   selectedProduct = null;
-  renderSelectedProductInfo();
+
+  try{
+    await renderSelectedProductInfo();
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }
+
   renderDraftOrders();
 
   toast(`Picklijst ${picklistNo} opgeslagen.`, 'ok');
@@ -1520,6 +1558,12 @@ async function confirmPickedAndBookOut(){
     await loadBaseData();
     await loadSavedPicklists();
     await openPicklist(activePicklist.id);
+
+    try{
+      await renderSelectedProductInfo();
+    }catch(e){
+      toast(e.message || String(e), 'err');
+    }
     renderDraftOrders();
 
   } catch(e){
@@ -1527,19 +1571,25 @@ async function confirmPickedAndBookOut(){
   }
 }
 
-byId('productSearch').addEventListener('input', e => {
+byId('productSearch').addEventListener('input', async e => {
   selectedProduct = null;
-  renderSelectedProductInfo();
+  try{
+    await renderSelectedProductInfo();
+  }catch(err){
+    toast(err.message || String(err), 'err');
+  }
   renderProductResults(e.target.value);
 });
 
-byId('btnAddLine').addEventListener('click', addDraftLine);
+byId('btnAddLine').addEventListener('click', () => {
+  addDraftLine().catch(e => toast(e.message || String(e), 'err'));
+});
 
 byId('btnSavePicklist').addEventListener('click', () =>
   savePicklist().catch(e => toast(e.message || String(e), 'err'))
 );
 
-byId('btnClearDraft').addEventListener('click', () => {
+byId('btnClearDraft').addEventListener('click', async () => {
   draftLines = [];
   draftOrderChecks = {};
   byId('picklistNo').value = '';
@@ -1548,7 +1598,13 @@ byId('btnClearDraft').addEventListener('click', () => {
   byId('productSearch').value = '';
   byId('qtyNeeded').value = '1';
   selectedProduct = null;
-  renderSelectedProductInfo();
+
+  try{
+    await renderSelectedProductInfo();
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }
+
   renderDraftOrders();
   byId('productResults').style.display = 'none';
   byId('productResults').innerHTML = '';
@@ -1587,8 +1643,12 @@ byId('pickModal').addEventListener('click', e => {
 });
 
 loadBaseData()
-  .then(() => {
-    renderSelectedProductInfo();
+  .then(async () => {
+    try{
+      await renderSelectedProductInfo();
+    }catch(e){
+      toast(e.message || String(e), 'err');
+    }
     renderDraftOrders();
     renderActivePicklist();
     return loadSavedPicklists();
