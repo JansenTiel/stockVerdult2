@@ -13,17 +13,93 @@
   <script src="/js/auth.js"></script>
 
   <style>
-    .line-grid{
+    .pick-layout{
       display:grid;
-      grid-template-columns: 1.3fr 1.6fr .8fr .9fr auto;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+    }
+
+    .product-search-results{
+      margin-top:10px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      max-height:240px;
+      overflow:auto;
+    }
+
+    .product-result{
+      padding:12px 14px;
+      border-bottom:1px solid #edf2f7;
+      cursor:pointer;
+    }
+
+    .product-result:last-child{
+      border-bottom:none;
+    }
+
+    .product-result:hover,
+    .product-result.active{
+      background:#f8fafc;
+    }
+
+    .product-result .sku{
+      font-weight:900;
+      color:var(--navy);
+      display:block;
+    }
+
+    .product-result .name{
+      font-size:14px;
+      color:var(--text);
+      margin-top:2px;
+    }
+
+    .compact-order{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .compact-order-head{
+      display:grid;
+      grid-template-columns:150px 1fr 100px 120px 160px;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+      align-items:center;
+    }
+
+    .compact-order-line{
+      display:grid;
+      grid-template-columns:150px 140px 1fr 80px 1.2fr 160px;
+      gap:12px;
+      padding:12px 14px;
+      border-bottom:1px solid #edf2f7;
+      align-items:center;
+    }
+
+    .compact-order-line:last-child{
+      border-bottom:none;
+    }
+
+    .pick-toolbar{
+      display:grid;
+      grid-template-columns:160px 1fr 110px auto;
       gap:12px;
       align-items:end;
     }
-    .manage-actions{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
+
+    .small-stock{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
     }
+
     .status-badge{
       display:inline-flex;
       align-items:center;
@@ -33,24 +109,146 @@
       font-weight:800;
       border:1px solid var(--border);
       background:#fff;
+      white-space:nowrap;
     }
+
     .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
-    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
-    .line-row-danger{
+
+    .picklist-row{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      margin-bottom:12px;
+      overflow:hidden;
+    }
+
+    .picklist-row-head{
+      display:grid;
+      grid-template-columns:150px 1fr 120px 100px 120px 160px;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+      align-items:center;
+    }
+
+    .picklist-row-line{
+      display:grid;
+      grid-template-columns:150px 130px 1fr 80px 80px 1.2fr 200px;
+      gap:12px;
+      padding:12px 14px;
+      border-bottom:1px solid #edf2f7;
+      align-items:center;
+    }
+
+    .picklist-row-line:last-child{
+      border-bottom:none;
+    }
+
+    .line-ok{
+      background:#f0fdf4;
+    }
+
+    .line-warn{
       background:#fff7ed;
     }
-    @media(max-width:1100px){
-      .line-grid{
-        grid-template-columns:1fr 1fr;
-      }
-      .line-grid > div:last-child{
-        grid-column:1 / -1;
+
+    .modal-backdrop{
+      position:fixed;
+      inset:0;
+      background:rgba(15,47,79,.35);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:1000;
+    }
+
+    .modal-backdrop.show{
+      display:flex;
+    }
+
+    .modal-card{
+      width:min(760px,100%);
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:20px;
+      box-shadow:0 20px 50px rgba(0,0,0,.18);
+      padding:22px;
+      max-height:90vh;
+      overflow:auto;
+    }
+
+    .modal-title{
+      font-size:22px;
+      font-weight:900;
+      color:var(--navy);
+      margin:0 0 6px 0;
+    }
+
+    .modal-sub{
+      color:var(--muted);
+      margin-bottom:16px;
+      line-height:1.45;
+    }
+
+    .pick-item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px 12px;
+      margin-bottom:10px;
+      background:#fff;
+    }
+
+    .pick-item label{
+      display:flex;
+      gap:10px;
+      align-items:flex-start;
+      margin:0;
+      cursor:pointer;
+    }
+
+    .pick-item input[type="checkbox"]{
+      width:18px;
+      height:18px;
+      margin-top:2px;
+      flex:0 0 auto;
+    }
+
+    .pick-item-main{
+      flex:1;
+    }
+
+    .pick-item-main b{
+      display:block;
+      color:var(--navy);
+      margin-bottom:2px;
+    }
+
+    .muted-line{
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    @media(max-width:1200px){
+      .pick-layout{
+        grid-template-columns:1fr;
       }
     }
-    @media(max-width:700px){
-      .line-grid{
+
+    @media(max-width:960px){
+      .pick-toolbar{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .compact-order-head,
+      .compact-order-line,
+      .picklist-row-head,
+      .picklist-row-line{
         grid-template-columns:1fr;
       }
     }
@@ -87,124 +285,108 @@
 <div class="container">
   <div id="toast" class="notice"></div>
 
-  <div class="card">
-    <h2>Nieuwe picklijst</h2>
-    <div class="muted">
-      Maak een picklijst op <b>SKU-niveau</b>. De picker kan later willekeurige colli van die SKU pakken. De echte unieke colli worden pas later gescand/uitgeboekt.
+  <div class="pick-layout">
+
+    <div>
+      <div class="card">
+        <h2>Nieuwe picklijst</h2>
+        <div class="muted">
+          Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
+        </div>
+
+        <div class="row" style="margin-top:16px">
+          <div>
+            <label for="picklistNo">Picklijstnummer</label>
+            <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
+          </div>
+          <div>
+            <label for="picklistNote">Opmerking</label>
+            <input id="picklistNote" placeholder="Bijv. vandaag laden / spoed"/>
+          </div>
+        </div>
+
+        <div class="pick-toolbar" style="margin-top:16px">
+          <div>
+            <label for="sourceOrderNo">Ordernummer</label>
+            <input id="sourceOrderNo" placeholder="Bijv. ORD-10025"/>
+          </div>
+
+          <div>
+            <label for="productSearch">Artikel zoeken</label>
+            <input id="productSearch" placeholder="Zoek op SKU of omschrijving"/>
+          </div>
+
+          <div>
+            <label for="qtyNeeded">Aantal colli</label>
+            <input id="qtyNeeded" type="number" min="1" value="1"/>
+          </div>
+
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Toevoegen</button>
+          </div>
+        </div>
+
+        <div id="selectedProductInfo" class="small-stock" style="margin-top:10px">
+          Nog geen artikel geselecteerd.
+        </div>
+
+        <div id="productResults" class="product-search-results" style="display:none"></div>
+
+        <div style="margin-top:18px">
+          <h3>Huidige pickregels</h3>
+          <div id="draftOrders"></div>
+        </div>
+
+        <div class="btnRow" style="margin-top:16px">
+          <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
+          <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
+        </div>
+      </div>
     </div>
 
-    <div class="row" style="margin-top:16px">
-      <div>
-        <label for="orderNo">Ordernummer</label>
-        <input id="orderNo" placeholder="Bijv. ORD-24015"/>
-      </div>
-      <div>
-        <label for="customerName">Klant</label>
-        <input id="customerName" value="Ronald Verdult Design"/>
+    <div>
+      <div class="card">
+        <h3>Bestaande picklijsten</h3>
+
+        <div class="row" style="margin-top:12px">
+          <div>
+            <label for="picklistSearch">Zoeken</label>
+            <input id="picklistSearch" placeholder="Zoek picklijstnummer"/>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
+          </div>
+        </div>
+
+        <div style="margin-top:16px" id="savedPicklists"></div>
       </div>
     </div>
 
-    <div class="row" style="margin-top:12px">
-      <div>
-        <label for="deliveryDate">Afleverdatum</label>
-        <input id="deliveryDate" type="date"/>
-      </div>
-      <div>
-        <label for="pickStatus">Status</label>
-        <select id="pickStatus">
-          <option value="CONCEPT">CONCEPT</option>
-          <option value="RELEASED">RELEASED</option>
-        </select>
-      </div>
-    </div>
-
-    <label for="orderNote" style="margin-top:12px">Opmerking</label>
-    <textarea id="orderNote" placeholder="Bijvoorbeeld showroom, spoed, controle op kleur..."></textarea>
   </div>
 
   <div class="card" style="margin-top:16px">
-    <h3>Orderregels toevoegen</h3>
+    <h3>Detail geselecteerde picklijst</h3>
+    <div class="muted">Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.</div>
+    <div id="activePicklistDetail" style="margin-top:16px"></div>
+  </div>
+</div>
 
-    <div class="line-grid" style="margin-top:12px">
-      <div>
-        <label for="skuSelect">SKU</label>
-        <select id="skuSelect"></select>
-      </div>
-
-      <div>
-        <label for="skuName">Omschrijving</label>
-        <input id="skuName" disabled/>
-      </div>
-
-      <div>
-        <label for="skuStock">Voorraad nu</label>
-        <input id="skuStock" disabled/>
-      </div>
-
-      <div>
-        <label for="qtyNeeded">Aantal</label>
-        <input id="qtyNeeded" type="number" min="1" value="1"/>
-      </div>
-
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Regel toevoegen</button>
-      </div>
+<div id="pickModal" class="modal-backdrop">
+  <div class="modal-card">
+    <h3 class="modal-title">Gepickt en afboeken</h3>
+    <div class="modal-sub">
+      Selecteer de echte volgnummers die gepickt zijn. Alleen deze worden uitgeboekt.
     </div>
 
-    <div class="small" id="skuLocationsHint" style="margin-top:10px">Locatiesuggestie: -</div>
+    <div id="pickModalInfo" class="small-stock" style="margin-bottom:12px"></div>
 
-    <div class="table-wrap" style="margin-top:16px">
-      <table>
-        <thead>
-          <tr>
-            <th>SKU</th>
-            <th>Omschrijving</th>
-            <th>Voorraad</th>
-            <th>Aantal nodig</th>
-            <th>Locatiesuggestie</th>
-            <th>Actie</th>
-          </tr>
-        </thead>
-        <tbody id="orderLines"></tbody>
-      </table>
-    </div>
+    <div id="pickModalItems"></div>
 
     <div class="btnRow" style="margin-top:16px">
-      <button class="btn primary" id="btnSaveOrder" type="button">Opslaan picklijst</button>
-      <button class="btn" id="btnClearOrder" type="button">Leegmaken</button>
-    </div>
-  </div>
-
-  <div class="card" style="margin-top:16px">
-    <h3>Open picklijsten</h3>
-
-    <div class="row" style="margin-top:12px">
-      <div>
-        <label for="pickSearch">Zoeken</label>
-        <input id="pickSearch" placeholder="Zoek op ordernummer of klant"/>
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn primary" id="btnRefreshOrders" type="button" style="width:100%">Verversen</button>
-      </div>
-    </div>
-
-    <div class="table-wrap" style="margin-top:16px">
-      <table>
-        <thead>
-          <tr>
-            <th>Order</th>
-            <th>Klant</th>
-            <th>Status</th>
-            <th>Regels</th>
-            <th>Totaal colli</th>
-            <th>Datum</th>
-            <th>Acties</th>
-          </tr>
-        </thead>
-        <tbody id="pickOrderList"></tbody>
-      </table>
+      <button class="btn primary" id="btnConfirmPicked" type="button">Afboeken</button>
+      <button class="btn" id="btnCancelPicked" type="button">Annuleren</button>
     </div>
   </div>
 </div>
@@ -213,178 +395,223 @@
 setActiveNav();
 const client = sb();
 
-let productMap = new Map();
-let stockSummaryMap = new Map();
-let locationHintMap = new Map();
-let currentLines = [];
+let allProducts = [];
+let stockSummary = new Map();
+let stockItems = [];
+let selectedProduct = null;
+let draftLines = [];
+let savedPicklists = [];
+let activePicklist = null;
+let activePicklistLines = [];
+let currentPickModalLine = null;
 
-async function loadProductsAndStock(){
-  const [{data:products, error:pErr}, {data:summary, error:sErr}, {data:stockItems, error:iErr}] = await Promise.all([
-    client.from('products').select('id, sku_base, name, description').order('sku_base'),
-    client.from('v_stock_summary').select('*'),
-    client.from('v_stock_items').select('sku_base, location')
-  ]);
+function groupDraftLines(lines){
+  const groups = new Map();
 
-  if(pErr) throw pErr;
-  if(sErr) throw sErr;
-  if(iErr) throw iErr;
-
-  productMap = new Map();
-  (products || []).forEach(p => productMap.set(p.sku_base, p));
-
-  stockSummaryMap = new Map();
-  (summary || []).forEach(s => stockSummaryMap.set(s.sku_base, s.qty || 0));
-
-  const locMap = new Map();
-  (stockItems || []).forEach(it => {
-    const key = it.sku_base || '';
-    const loc = (it.location || '').trim();
-    if(!loc) return;
-    if(!locMap.has(key)) locMap.set(key, new Map());
-    const sub = locMap.get(key);
-    sub.set(loc, (sub.get(loc) || 0) + 1);
+  (lines || []).forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!groups.has(orderNo)) groups.set(orderNo, []);
+    groups.get(orderNo).push(line);
   });
 
-  locationHintMap = new Map();
-  for(const [sku, locs] of locMap.entries()){
-    const txt = Array.from(locs.entries())
-      .sort((a,b) => a[0].localeCompare(b[0], 'nl'))
-      .map(([loc, qty]) => `${loc} (${qty})`)
-      .join(', ');
-    locationHintMap.set(sku, txt);
-  }
+  return Array.from(groups.entries()).map(([orderNo, rows]) => ({ orderNo, rows }));
+}
 
-  const sel = byId('skuSelect');
-  sel.innerHTML = '<option value="">Selecteer SKU</option>';
+function getLocationCountsForSku(skuBase){
+  const counts = new Map();
 
-  Array.from(productMap.values())
-    .sort((a,b) => String(a.sku_base).localeCompare(String(b.sku_base), 'nl'))
-    .forEach(p => {
-      const opt = document.createElement('option');
-      opt.value = p.sku_base;
-      opt.textContent = `${p.sku_base} — ${p.name}`;
-      sel.appendChild(opt);
+  (stockItems || [])
+    .filter(it => it.sku_base === skuBase)
+    .forEach(it => {
+      const loc = (it.location || '').trim() || '-';
+      counts.set(loc, (counts.get(loc) || 0) + 1);
     });
+
+  return counts;
 }
 
-function updateSkuInfo(){
-  const sku = byId('skuSelect').value;
-  const p = productMap.get(sku);
+function getLocationSummaryForSku(skuBase){
+  const counts = getLocationCountsForSku(skuBase);
 
-  byId('skuName').value = p?.name || '';
-  byId('skuStock').value = String(stockSummaryMap.get(sku) || 0);
-  byId('skuLocationsHint').textContent = `Locatiesuggestie: ${locationHintMap.get(sku) || '-'}`;
+  return Array.from(counts.entries())
+    .sort((a,b) => {
+      if(a[1] !== b[1]) return a[1] - b[1];
+      return String(a[0]).localeCompare(String(b[0]), 'nl');
+    })
+    .map(([loc, qty]) => `${loc} (${qty})`)
+    .join(', ');
 }
 
-function renderLines(){
-  const el = byId('orderLines');
+function getStockCountForSku(skuBase){
+  return Number(stockSummary.get(skuBase) || 0);
+}
 
-  if(!currentLines.length){
-    el.innerHTML = `<tr><td colspan="6" class="muted">Nog geen regels toegevoegd.</td></tr>`;
+function renderProductResults(query){
+  const box = byId('productResults');
+  const q = String(query || '').trim().toLowerCase();
+
+  if(!q){
+    box.style.display = 'none';
+    box.innerHTML = '';
     return;
   }
 
-  el.innerHTML = currentLines.map((line, i) => {
-    const shortage = Number(line.qty_needed) > Number(line.stock_now || 0);
-    return `
-      <tr class="${shortage ? 'line-row-danger' : ''}">
-        <td><b>${escapeHtml(line.sku_base)}</b></td>
-        <td>${escapeHtml(line.product_name)}</td>
-        <td>${line.stock_now}</td>
-        <td><b>${line.qty_needed}</b></td>
-        <td>${escapeHtml(line.location_hint || '-')}</td>
-        <td>
-          <button class="btn danger" type="button" onclick="removeLine(${i})">Verwijderen</button>
-        </td>
-      </tr>
-    `;
-  }).join('');
+  const results = allProducts.filter(p =>
+    String(p.sku_base || '').toLowerCase().includes(q) ||
+    String(p.name || '').toLowerCase().includes(q) ||
+    String(p.description || '').toLowerCase().includes(q)
+  ).slice(0, 25);
+
+  if(!results.length){
+    box.style.display = 'block';
+    box.innerHTML = `<div class="product-result">Geen artikelen gevonden.</div>`;
+    return;
+  }
+
+  box.style.display = 'block';
+  box.innerHTML = results.map((p, idx) => `
+    <div class="product-result" data-idx="${idx}" data-sku="${escapeHtml(p.sku_base)}">
+      <span class="sku">${escapeHtml(p.sku_base)}</span>
+      <span class="name">${escapeHtml(p.name || '')}</span>
+      <div class="muted-line">${escapeHtml(p.description || '')}</div>
+    </div>
+  `).join('');
+
+  box.querySelectorAll('.product-result[data-sku]').forEach(el => {
+    el.addEventListener('click', () => {
+      const sku = el.getAttribute('data-sku');
+      selectedProduct = allProducts.find(p => p.sku_base === sku) || null;
+      byId('productSearch').value = selectedProduct ? `${selectedProduct.sku_base} — ${selectedProduct.name}` : '';
+      box.style.display = 'none';
+      renderSelectedProductInfo();
+    });
+  });
 }
 
-function removeLine(index){
-  currentLines.splice(index, 1);
-  renderLines();
+function renderSelectedProductInfo(){
+  const el = byId('selectedProductInfo');
+
+  if(!selectedProduct){
+    el.innerHTML = 'Nog geen artikel geselecteerd.';
+    return;
+  }
+
+  el.innerHTML = `
+    <b>${escapeHtml(selectedProduct.sku_base)}</b> — ${escapeHtml(selectedProduct.name || '')}<br>
+    Voorraad nu: <b>${getStockCountForSku(selectedProduct.sku_base)}</b><br>
+    Locaties: ${escapeHtml(getLocationSummaryForSku(selectedProduct.sku_base) || '-')}
+  `;
 }
 
-function addOrMergeLine(){
-  const sku = byId('skuSelect').value;
-  const qty = Number(byId('qtyNeeded').value || 0);
+function addDraftLine(){
+  const sourceOrderNo = (byId('sourceOrderNo').value || '').trim();
+  const qtyNeeded = Number(byId('qtyNeeded').value || 0);
 
-  if(!sku) return toast('Kies eerst een SKU.', 'err');
-  if(!qty || qty < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
+  if(!sourceOrderNo) return toast('Vul eerst een ordernummer in.', 'err');
+  if(!selectedProduct) return toast('Selecteer eerst een artikel.', 'err');
+  if(!qtyNeeded || qtyNeeded < 1) return toast('Aantal moet minimaal 1 zijn.', 'err');
 
-  const product = productMap.get(sku);
-  if(!product) return toast('Product niet gevonden.', 'err');
+  const existing = draftLines.find(l =>
+    l.source_order_no === sourceOrderNo &&
+    l.sku_base === selectedProduct.sku_base
+  );
 
-  const existing = currentLines.find(l => l.sku_base === sku);
   if(existing){
-    existing.qty_needed += qty;
+    existing.qty_needed += qtyNeeded;
   } else {
-    currentLines.push({
-      sku_base: sku,
-      product_name: product.name || sku,
-      qty_needed: qty,
-      stock_now: Number(stockSummaryMap.get(sku) || 0),
-      location_hint: locationHintMap.get(sku) || ''
+    draftLines.push({
+      source_order_no: sourceOrderNo,
+      sku_base: selectedProduct.sku_base,
+      product_name: selectedProduct.name || selectedProduct.sku_base,
+      qty_needed: qtyNeeded
     });
   }
 
-  renderLines();
   byId('qtyNeeded').value = '1';
-  byId('skuSelect').focus();
+  byId('productSearch').value = '';
+  selectedProduct = null;
+  renderSelectedProductInfo();
+  renderDraftOrders();
 }
 
-function clearOrderForm(){
-  byId('orderNo').value = '';
-  byId('customerName').value = 'Ronald Verdult Design';
-  byId('deliveryDate').value = '';
-  byId('orderNote').value = '';
-  byId('pickStatus').value = 'CONCEPT';
-  byId('skuSelect').value = '';
-  byId('skuName').value = '';
-  byId('skuStock').value = '';
-  byId('qtyNeeded').value = '1';
-  byId('skuLocationsHint').textContent = 'Locatiesuggestie: -';
-  currentLines = [];
-  renderLines();
+function renderDraftOrders(){
+  const el = byId('draftOrders');
+  const groups = groupDraftLines(draftLines);
+
+  if(!groups.length){
+    el.innerHTML = `<div class="muted">Nog geen regels toegevoegd.</div>`;
+    return;
+  }
+
+  el.innerHTML = groups.map(group => `
+    <div class="compact-order">
+      <div class="compact-order-head">
+        <div>Order</div>
+        <div>Product</div>
+        <div>Aantal</div>
+        <div>Voorraad</div>
+        <div>Locaties</div>
+      </div>
+
+      ${group.rows.map((line, idx) => {
+        const globalIndex = draftLines.indexOf(line);
+        return `
+          <div class="compact-order-line">
+            <div><b>${escapeHtml(group.orderNo)}</b></div>
+            <div>
+              <b>${escapeHtml(line.sku_base)}</b><br>
+              <span class="small">${escapeHtml(line.product_name)}</span>
+            </div>
+            <div><b>${line.qty_needed}</b></div>
+            <div>${getStockCountForSku(line.sku_base)}</div>
+            <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
+            <div>
+              <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
+            </div>
+          </div>
+        `;
+      }).join('')}
+    </div>
+  `).join('');
 }
 
-async function saveOrder(){
-  const orderNo = (byId('orderNo').value || '').trim();
-  const customerName = (byId('customerName').value || '').trim();
-  const deliveryDate = byId('deliveryDate').value || null;
-  const note = (byId('orderNote').value || '').trim();
-  const status = byId('pickStatus').value || 'CONCEPT';
+function removeDraftLine(index){
+  draftLines.splice(index, 1);
+  renderDraftOrders();
+}
 
-  if(!orderNo) return toast('Ordernummer ontbreekt.', 'err');
-  if(!customerName) return toast('Klant ontbreekt.', 'err');
-  if(!currentLines.length) return toast('Voeg eerst minimaal 1 orderregel toe.', 'err');
+async function savePicklist(){
+  const picklistNo = (byId('picklistNo').value || '').trim();
+  const note = (byId('picklistNote').value || '').trim();
 
-  const { data:existing, error:checkErr } = await client
+  if(!picklistNo) return toast('Vul eerst een picklijstnummer in.', 'err');
+  if(!draftLines.length) return toast('Voeg eerst regels toe.', 'err');
+
+  const { data:exists, error:checkErr } = await client
     .from('pick_orders')
     .select('id')
-    .eq('order_no', orderNo)
+    .eq('order_no', picklistNo)
     .maybeSingle();
 
   if(checkErr) return toast(checkErr.message || String(checkErr), 'err');
-  if(existing) return toast('Dit ordernummer bestaat al.', 'err');
+  if(exists) return toast('Dit picklijstnummer bestaat al.', 'err');
 
   const { data:order, error:orderErr } = await client
     .from('pick_orders')
     .insert([{
-      order_no: orderNo,
-      customer_name: customerName,
-      delivery_date: deliveryDate,
+      order_no: picklistNo,
+      customer_name: 'Ronald Verdult Design',
       note,
-      status
+      status: 'CONCEPT'
     }])
     .select()
     .single();
 
   if(orderErr) return toast(orderErr.message || String(orderErr), 'err');
 
-  const linePayload = currentLines.map(line => ({
+  const payload = draftLines.map(line => ({
     pick_order_id: order.id,
+    source_order_no: line.source_order_no,
     sku_base: line.sku_base,
     product_name: line.product_name,
     qty_needed: line.qty_needed,
@@ -393,17 +620,46 @@ async function saveOrder(){
 
   const { error:lineErr } = await client
     .from('pick_order_lines')
-    .insert(linePayload);
+    .insert(payload);
 
   if(lineErr) return toast(lineErr.message || String(lineErr), 'err');
 
-  toast(`Picklijst ${orderNo} opgeslagen.`, 'ok');
-  clearOrderForm();
-  await loadOrders();
+  toast(`Picklijst ${picklistNo} opgeslagen.`, 'ok');
+
+  byId('picklistNo').value = '';
+  byId('picklistNote').value = '';
+  byId('sourceOrderNo').value = '';
+  byId('productSearch').value = '';
+  byId('qtyNeeded').value = '1';
+  selectedProduct = null;
+  draftLines = [];
+  renderSelectedProductInfo();
+  renderDraftOrders();
+
+  await loadSavedPicklists();
 }
 
-async function loadOrders(){
-  const q = (byId('pickSearch').value || '').trim().toLowerCase();
+async function loadBaseData(){
+  const [{data:products, error:pErr}, {data:summary, error:sErr}, {data:items, error:iErr}] = await Promise.all([
+    client.from('products').select('id, sku_base, name, description').order('sku_base'),
+    client.from('v_stock_summary').select('*'),
+    client.from('v_stock_items').select('*')
+  ]);
+
+  if(pErr) throw pErr;
+  if(sErr) throw sErr;
+  if(iErr) throw iErr;
+
+  allProducts = products || [];
+
+  stockSummary = new Map();
+  (summary || []).forEach(s => stockSummary.set(s.sku_base, Number(s.qty || 0)));
+
+  stockItems = items || [];
+}
+
+async function loadSavedPicklists(){
+  const q = (byId('picklistSearch').value || '').trim().toLowerCase();
 
   const { data:orders, error:oErr } = await client
     .from('pick_orders')
@@ -425,58 +681,341 @@ async function loadOrders(){
   });
 
   let rows = (orders || []).map(order => {
-    const orderLines = grouped.get(order.id) || [];
+    const ls = grouped.get(order.id) || [];
     return {
       ...order,
-      line_count: orderLines.length,
-      total_qty: orderLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0)
+      line_count: ls.length,
+      total_qty: ls.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0)
     };
   });
 
   if(q){
-    rows = rows.filter(r =>
-      String(r.order_no || '').toLowerCase().includes(q) ||
-      String(r.customer_name || '').toLowerCase().includes(q)
-    );
+    rows = rows.filter(r => String(r.order_no || '').toLowerCase().includes(q));
   }
 
-  const el = byId('pickOrderList');
+  savedPicklists = rows;
+
+  const el = byId('savedPicklists');
 
   if(!rows.length){
-    el.innerHTML = `<tr><td colspan="7" class="muted">Nog geen picklijsten gevonden.</td></tr>`;
+    el.innerHTML = `<div class="muted">Nog geen picklijsten gevonden.</div>`;
     return;
   }
 
-  el.innerHTML = rows.map(r => `
-    <tr>
-      <td><b>${escapeHtml(r.order_no)}</b></td>
-      <td>${escapeHtml(r.customer_name || '')}</td>
-      <td><span class="status-badge status-${escapeHtml(r.status || 'CONCEPT')}">${escapeHtml(r.status || 'CONCEPT')}</span></td>
-      <td>${r.line_count}</td>
-      <td><b>${r.total_qty}</b></td>
-      <td>${nlTime(r.created_at)}</td>
-      <td>
-        <div class="manage-actions">
-          <a class="btn" href="/picklist-detail.html?id=${encodeURIComponent(r.id)}">Openen</a>
-        </div>
-      </td>
-    </tr>
+  el.innerHTML = rows.map(row => `
+    <div class="picklist-row">
+      <div class="picklist-row-head">
+        <div><b>${escapeHtml(row.order_no)}</b></div>
+        <div>${escapeHtml(row.note || '-')}</div>
+        <div><span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">${row.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(row.status || 'CONCEPT')}</span></div>
+        <div>${row.line_count} regels</div>
+        <div><b>${row.total_qty}</b> colli</div>
+        <div><button class="btn" type="button" onclick="openPicklist('${row.id}')">Openen</button></div>
+      </div>
+    </div>
   `).join('');
 }
 
-byId('skuSelect').addEventListener('change', updateSkuInfo);
-byId('btnAddLine').addEventListener('click', addOrMergeLine);
-byId('btnSaveOrder').addEventListener('click', () => saveOrder().catch(e => toast(e.message || String(e), 'err')));
-byId('btnClearOrder').addEventListener('click', clearOrderForm);
-byId('btnRefreshOrders').addEventListener('click', () => loadOrders().catch(e => toast(e.message || String(e), 'err')));
-byId('pickSearch').addEventListener('keydown', e => {
-  if(e.key === 'Enter') loadOrders().catch(err => toast(err.message || String(err), 'err'));
+async function openPicklist(id){
+  const { data:order, error:oErr } = await client
+    .from('pick_orders')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if(oErr) return toast(oErr.message || String(oErr), 'err');
+
+  const { data:lines, error:lErr } = await client
+    .from('pick_order_lines')
+    .select('*')
+    .eq('pick_order_id', id)
+    .order('source_order_no', { ascending:true });
+
+  if(lErr) return toast(lErr.message || String(lErr), 'err');
+
+  activePicklist = order;
+  activePicklistLines = (lines || []).map(line => {
+    const stockNow = getStockCountForSku(line.sku_base);
+    const locationSummary = getLocationSummaryForSku(line.sku_base);
+    const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+    return {
+      ...line,
+      stock_now: stockNow,
+      location_summary: locationSummary,
+      qty_remaining: remaining
+    };
+  });
+
+  renderActivePicklist();
+}
+
+function renderActivePicklist(){
+  const el = byId('activePicklistDetail');
+
+  if(!activePicklist){
+    el.innerHTML = `<div class="muted">Nog geen picklijst geselecteerd.</div>`;
+    return;
+  }
+
+  const groups = new Map();
+  activePicklistLines.forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!groups.has(orderNo)) groups.set(orderNo, []);
+    groups.get(orderNo).push(line);
+  });
+
+  el.innerHTML = `
+    <div class="card" style="margin-bottom:16px">
+      <div class="row">
+        <div>
+          <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
+          <span class="small">${escapeHtml(activePicklist.note || '-')}</span>
+        </div>
+        <div>
+          <b>Status:</b> <span class="status-badge status-${escapeHtml(activePicklist.status || 'CONCEPT')}">${activePicklist.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(activePicklist.status || 'CONCEPT')}</span>
+        </div>
+      </div>
+    </div>
+
+    ${Array.from(groups.entries()).map(([orderNo, rows]) => `
+      <div class="picklist-row">
+        <div class="picklist-row-head">
+          <div>Order</div>
+          <div>SKU</div>
+          <div>Product</div>
+          <div>Nodig</div>
+          <div>Gepickt</div>
+          <div>Locaties</div>
+          <div>Actie</div>
+        </div>
+
+        ${rows.map(line => `
+          <div class="picklist-row-line ${line.qty_remaining === 0 ? 'line-ok' : (line.stock_now < line.qty_remaining ? 'line-warn' : '')}">
+            <div><b>${escapeHtml(orderNo)}</b></div>
+            <div><b>${escapeHtml(line.sku_base)}</b></div>
+            <div>${escapeHtml(line.product_name)}</div>
+            <div>${line.qty_needed}</div>
+            <div>${line.qty_picked || 0}</div>
+            <div class="small-stock">${escapeHtml(line.location_summary || '-')}</div>
+            <div>
+              ${line.qty_remaining > 0 ? `
+                <button class="btn primary" type="button" onclick="openPickModal('${line.id}')">
+                  GEPICKT EN AFBOEKEN
+                </button>
+              ` : `
+                <span class="status-badge status-DONE">AFGEBOEKT</span>
+              `}
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}
+  `;
+}
+
+async function openPickModal(lineId){
+  const line = activePicklistLines.find(l => l.id === lineId);
+  if(!line) return;
+
+  currentPickModalLine = line;
+
+  const qtyToPick = line.qty_remaining;
+  const available = (stockItems || [])
+    .filter(it => it.sku_base === line.sku_base)
+    .map(it => {
+      const locCounts = getLocationCountsForSku(line.sku_base);
+      const locQty = Number(locCounts.get((it.location || '').trim() || '-') || 0);
+      return {
+        ...it,
+        loc_qty: locQty
+      };
+    })
+    .sort((a,b) => {
+      if(a.loc_qty !== b.loc_qty) return a.loc_qty - b.loc_qty;
+      const l = String(a.location || '').localeCompare(String(b.location || ''), 'nl');
+      if(l !== 0) return l;
+      return new Date(a.in_at || a.created_at) - new Date(b.in_at || b.created_at);
+    });
+
+  byId('pickModalInfo').innerHTML = `
+    <b>Order:</b> ${escapeHtml(line.source_order_no || '')}<br>
+    <b>SKU:</b> ${escapeHtml(line.sku_base || '')}<br>
+    <b>Omschrijving:</b> ${escapeHtml(line.product_name || '')}<br>
+    <b>Nog nodig:</b> ${qtyToPick}
+  `;
+
+  const box = byId('pickModalItems');
+
+  if(!available.length){
+    box.innerHTML = `<div class="muted">Geen voorraad beschikbaar voor deze SKU.</div>`;
+    byId('pickModal').classList.add('show');
+    return;
+  }
+
+  box.innerHTML = available.map((it, idx) => `
+    <div class="pick-item">
+      <label>
+        <input class="pick-item-check" type="checkbox" value="${escapeHtml(it.id)}" data-sku="${escapeHtml(it.sku_unique)}">
+        <div class="pick-item-main">
+          <b>${escapeHtml(it.sku_unique)}</b>
+          <div class="muted-line">Locatie: ${escapeHtml(it.location || '-')}</div>
+          <div class="muted-line">Locatievoorraad: ${it.loc_qty}</div>
+          <div class="muted-line">Inslag: ${escapeHtml(nlTime(it.in_at || it.created_at))}</div>
+        </div>
+      </label>
+    </div>
+  `).join('');
+
+  const checks = box.querySelectorAll('.pick-item-check');
+  checks.forEach(ch => {
+    ch.addEventListener('change', () => {
+      const checked = Array.from(checks).filter(c => c.checked);
+      if(checked.length > qtyToPick){
+        ch.checked = false;
+        toast(`Je mag hier maximaal ${qtyToPick} collo selecteren.`, 'err');
+      }
+    });
+  });
+
+  byId('pickModal').classList.add('show');
+}
+
+function closePickModal(){
+  currentPickModalLine = null;
+  byId('pickModal').classList.remove('show');
+  byId('pickModalItems').innerHTML = '';
+}
+
+async function confirmPickedAndBookOut(){
+  if(!currentPickModalLine) return;
+
+  const checks = Array.from(document.querySelectorAll('.pick-item-check:checked'));
+  const qtySelected = checks.length;
+  const qtyNeeded = Number(currentPickModalLine.qty_remaining || 0);
+
+  if(qtySelected < 1) return toast('Selecteer minimaal 1 collo.', 'err');
+  if(qtySelected > qtyNeeded) return toast('Te veel colli geselecteerd.', 'err');
+
+  try{
+    for(const ch of checks){
+      const itemId = ch.value;
+      const skuUnique = ch.getAttribute('data-sku');
+
+      const { data:item, error:itemErr } = await client
+        .from('items')
+        .select('id, product_id, sku_unique, status, location')
+        .eq('id', itemId)
+        .maybeSingle();
+
+      if(itemErr) throw itemErr;
+      if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
+      if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
+
+      const { error:updateErr } = await client
+        .from('items')
+        .update({
+          status:'OUT',
+          out_at:new Date().toISOString()
+        })
+        .eq('id', item.id);
+
+      if(updateErr) throw updateErr;
+
+      const { error:moveErr } = await client
+        .from('movements')
+        .insert([{
+          type:'OUT',
+          product_id:item.product_id,
+          sku_unique:item.sku_unique,
+          location:item.location || null,
+          order_no: currentPickModalLine.source_order_no || activePicklist.order_no
+        }]);
+
+      if(moveErr) throw moveErr;
+    }
+
+    const newPicked = Number(currentPickModalLine.qty_picked || 0) + qtySelected;
+
+    const { error:lineErr } = await client
+      .from('pick_order_lines')
+      .update({ qty_picked: newPicked })
+      .eq('id', currentPickModalLine.id);
+
+    if(lineErr) throw lineErr;
+
+    closePickModal();
+
+    // kijken of hele picklijst nu volledig afgeboekt is
+    const { data:allLines, error:allErr } = await client
+      .from('pick_order_lines')
+      .select('id, qty_needed, qty_picked')
+      .eq('pick_order_id', activePicklist.id);
+
+    if(allErr) throw allErr;
+
+    const allDone = (allLines || []).every(l => Number(l.qty_picked || 0) >= Number(l.qty_needed || 0));
+
+    if(allDone){
+      await client
+        .from('pick_orders')
+        .update({ status:'DONE' })
+        .eq('id', activePicklist.id);
+    } else {
+      await client
+        .from('pick_orders')
+        .update({ status:'PICKING' })
+        .eq('id', activePicklist.id);
+    }
+
+    toast('Geselecteerde colli zijn afgeboekt.', 'ok');
+
+    await loadBaseData();
+    await loadSavedPicklists();
+    await openPicklist(activePicklist.id);
+
+  } catch(e){
+    toast(e.message || String(e), 'err');
+  }
+}
+
+byId('productSearch').addEventListener('input', e => {
+  selectedProduct = null;
+  renderSelectedProductInfo();
+  renderProductResults(e.target.value);
 });
 
-loadProductsAndStock()
+byId('btnAddLine').addEventListener('click', addDraftLine);
+byId('btnSavePicklist').addEventListener('click', () => savePicklist().catch(e => toast(e.message || String(e), 'err')));
+byId('btnClearDraft').addEventListener('click', () => {
+  draftLines = [];
+  byId('picklistNo').value = '';
+  byId('picklistNote').value = '';
+  byId('sourceOrderNo').value = '';
+  byId('productSearch').value = '';
+  byId('qtyNeeded').value = '1';
+  selectedProduct = null;
+  renderSelectedProductInfo();
+  renderDraftOrders();
+});
+
+byId('btnRefreshPicklists').addEventListener('click', () => loadSavedPicklists().catch(e => toast(e.message || String(e), 'err')));
+byId('picklistSearch').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    loadSavedPicklists().catch(err => toast(err.message || String(err), 'err'));
+  }
+});
+
+byId('btnCancelPicked').addEventListener('click', closePickModal);
+byId('btnConfirmPicked').addEventListener('click', () => confirmPickedAndBookOut().catch(e => toast(e.message || String(e), 'err')));
+byId('pickModal').addEventListener('click', e => {
+  if(e.target === byId('pickModal')) closePickModal();
+});
+
+loadBaseData()
   .then(() => {
-    renderLines();
-    return loadOrders();
+    renderSelectedProductInfo();
+    renderDraftOrders();
+    return loadSavedPicklists();
   })
   .catch(e => toast(e.message || String(e), 'err'));
 </script>
