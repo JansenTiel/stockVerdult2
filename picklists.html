@@ -242,7 +242,7 @@
 
     .saved-row-head{
       display:grid;
-      grid-template-columns:36px 170px 1fr 130px 110px 120px 150px;
+      grid-template-columns:36px 170px 1fr 130px 110px 120px 140px;
       gap:12px;
       padding:14px 16px;
       align-items:center;
@@ -288,6 +288,13 @@
       text-transform:uppercase;
       letter-spacing:.04em;
       margin-top:4px;
+    }
+
+    .saved-actions{
+      display:flex;
+      justify-content:flex-end;
+      gap:8px;
+      flex-wrap:wrap;
     }
 
     .modal-backdrop{
@@ -439,13 +446,17 @@
       top:0;
     }
 
-    @media(max-width:1100px){
+    @media(max-width:1150px){
       .order-line-head,
       .order-line,
       .detail-group-head,
       .detail-group-line,
       .saved-row-head{
         grid-template-columns:1fr;
+      }
+
+      .saved-actions{
+        justify-content:flex-start;
       }
     }
 
@@ -586,6 +597,7 @@
       <div class="btnRow" style="margin-top:14px">
         <button class="btn" id="btnSelectAllSaved" type="button">Alle picklijsten aanvinken</button>
         <button class="btn" id="btnSelectNoneSaved" type="button">Alle vinkjes uit</button>
+        <button class="btn accent" id="btnPrintSelectedSavedPicklists" type="button">Geselecteerde picklijsten printen</button>
         <button class="btn danger" id="btnDeleteSelectedPicklists" type="button">Geselecteerde picklijsten verwijderen</button>
       </div>
 
@@ -968,29 +980,23 @@ function setAllSavedChecks(value){
   document.querySelectorAll('.saved-picklist-check').forEach(cb => cb.checked = value);
 }
 
-function buildPrintHtml(groups){
-  const picklistNo = (byId('picklistNo').value || '').trim() || 'Concept picklijst';
-  const note = (byId('picklistNote').value || '').trim();
-  const totalOrders = groups.length;
-  const totalQty = groups.reduce((sum, g) => sum + g.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0), 0);
-
+function buildPrintHtmlFromGroups(title, subtitleLines, groups){
   return `
     <div class="print-sheet" id="printSheet">
       <div class="print-header">
-        <div class="print-title">Picklijst ${escapeHtml(picklistNo)}</div>
+        <div class="print-title">${escapeHtml(title)}</div>
         <div class="print-sub">
-          Ronald Verdult Design · Oegema Logistics<br>
-          Orders: <b>${totalOrders}</b> · Totaal colli: <b>${totalQty}</b><br>
-          ${note ? `Opmerking: ${escapeHtml(note)}` : ''}
+          ${subtitleLines.map(line => escapeHtml(line)).join('<br>')}
         </div>
       </div>
 
       ${groups.map(group => `
         <div class="print-order">
-          <div class="print-order-top">Order ${escapeHtml(group.orderNo)}</div>
+          <div class="print-order-top">${escapeHtml(group.blockTitle)}</div>
           <table class="print-table">
             <thead>
               <tr>
+                <th>Order</th>
                 <th>SKU</th>
                 <th>Product</th>
                 <th>Aantal</th>
@@ -1000,10 +1006,11 @@ function buildPrintHtml(groups){
             <tbody>
               ${group.rows.map(line => `
                 <tr>
+                  <td>${escapeHtml(line.source_order_no || '-')}</td>
                   <td><b>${escapeHtml(line.sku_base)}</b></td>
                   <td>${escapeHtml(line.product_name)}</td>
                   <td>${line.qty_needed}</td>
-                  <td>${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</td>
+                  <td>${escapeHtml(line.location_summary || getLocationSummaryForSku(line.sku_base) || '-')}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -1014,13 +1021,9 @@ function buildPrintHtml(groups){
   `;
 }
 
-async function printGroupsToPdf(groups, filenameBase){
-  if(!groups.length){
-    return toast('Selecteer eerst minimaal 1 order.', 'err');
-  }
-
+async function printHtmlToPdf(html, filenameBase){
   const mount = byId('hiddenPrintMount');
-  mount.innerHTML = buildPrintHtml(groups);
+  mount.innerHTML = html;
 
   const node = byId('printSheet');
   const canvas = await html2canvas(node, {
@@ -1080,14 +1083,48 @@ async function printGroupsToPdf(groups, filenameBase){
 
 async function printSelectedDraftOrders(){
   const groups = getSelectedDraftGroups();
-  const picklistNo = (byId('picklistNo').value || '').trim() || 'picklijst';
-  await printGroupsToPdf(groups, `${picklistNo}_geselecteerde_orders`);
+  if(!groups.length) return toast('Selecteer eerst minimaal 1 order.', 'err');
+
+  const picklistNo = (byId('picklistNo').value || '').trim() || 'Concept picklijst';
+  const note = (byId('picklistNote').value || '').trim();
+  const totalOrders = groups.length;
+  const totalQty = groups.reduce((sum, g) => sum + g.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0), 0);
+
+  const printGroups = groups.map(g => ({
+    blockTitle: `Order ${g.orderNo}`,
+    rows: g.rows
+  }));
+
+  const html = buildPrintHtmlFromGroups(
+    `Picklijst ${picklistNo}`,
+    [
+      'Ronald Verdult Design · Oegema Logistics',
+      `Orders: ${totalOrders} · Totaal colli: ${totalQty}`,
+      note ? `Opmerking: ${note}` : ''
+    ].filter(Boolean),
+    printGroups
+  );
+
+  await printHtmlToPdf(html, `${picklistNo}_geselecteerde_orders`);
 }
 
 async function printSingleDraftOrder(orderNo){
   const group = getDraftGroups().find(g => g.orderNo === orderNo);
   if(!group) return;
-  await printGroupsToPdf([group], `order_${orderNo}`);
+
+  const html = buildPrintHtmlFromGroups(
+    `Order ${orderNo}`,
+    [
+      'Ronald Verdult Design · Oegema Logistics',
+      `Totaal colli: ${group.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0)}`
+    ],
+    [{
+      blockTitle: `Order ${orderNo}`,
+      rows: group.rows
+    }]
+  );
+
+  await printHtmlToPdf(html, `order_${orderNo}`);
 }
 
 async function savePicklist(){
@@ -1205,6 +1242,7 @@ async function loadSavedPicklists(){
     const ls = grouped.get(order.id) || [];
     return {
       ...order,
+      lines: ls,
       line_count: ls.length,
       total_qty: ls.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0)
     };
@@ -1253,8 +1291,9 @@ async function loadSavedPicklists(){
           <div class="t">colli</div>
         </div>
 
-        <div>
+        <div class="saved-actions">
           <button class="btn primary" type="button" onclick="openPicklist('${row.id}')">Openen</button>
+          <button class="btn" type="button" onclick="printSingleSavedPicklist('${row.id}')">PDF</button>
         </div>
       </div>
     </div>
@@ -1265,6 +1304,62 @@ function getSelectedSavedPicklistIds(){
   return Array.from(document.querySelectorAll('.saved-picklist-check:checked'))
     .map(cb => cb.getAttribute('data-id'))
     .filter(Boolean);
+}
+
+async function buildSavedPicklistPrintGroups(ids){
+  const selected = savedPicklists.filter(p => ids.includes(p.id));
+  if(!selected.length) return [];
+
+  return selected.map(pick => {
+    const rows = pick.lines.map(line => ({
+      ...line,
+      location_summary: getLocationSummaryForSku(line.sku_base)
+    }));
+
+    return {
+      blockTitle: `Picklijst ${pick.order_no}`,
+      rows
+    };
+  });
+}
+
+async function printSingleSavedPicklist(id){
+  const groups = await buildSavedPicklistPrintGroups([id]);
+  if(!groups.length) return toast('Picklijst niet gevonden.', 'err');
+
+  const pick = savedPicklists.find(p => p.id === id);
+  const html = buildPrintHtmlFromGroups(
+    `Picklijst ${pick.order_no}`,
+    [
+      'Ronald Verdult Design · Oegema Logistics',
+      `Regels: ${pick.line_count} · Totaal colli: ${pick.total_qty}`,
+      pick.note ? `Opmerking: ${pick.note}` : ''
+    ].filter(Boolean),
+    groups
+  );
+
+  await printHtmlToPdf(html, `picklijst_${pick.order_no}`);
+}
+
+async function printSelectedSavedPicklists(){
+  const ids = getSelectedSavedPicklistIds();
+  if(!ids.length) return toast('Vink eerst minimaal 1 picklijst aan.', 'err');
+
+  const selected = savedPicklists.filter(p => ids.includes(p.id));
+  const totalQty = selected.reduce((sum, p) => sum + Number(p.total_qty || 0), 0);
+
+  const groups = await buildSavedPicklistPrintGroups(ids);
+
+  const html = buildPrintHtmlFromGroups(
+    'Geselecteerde picklijsten',
+    [
+      'Ronald Verdult Design · Oegema Logistics',
+      `Aantal picklijsten: ${selected.length} · Totaal colli: ${totalQty}`
+    ],
+    groups
+  );
+
+  await printHtmlToPdf(html, 'geselecteerde_picklijsten');
 }
 
 async function deleteSelectedPicklists(){
@@ -1629,6 +1724,11 @@ byId('picklistSearch').addEventListener('keydown', e => {
 
 byId('btnSelectAllSaved').addEventListener('click', () => setAllSavedChecks(true));
 byId('btnSelectNoneSaved').addEventListener('click', () => setAllSavedChecks(false));
+
+byId('btnPrintSelectedSavedPicklists').addEventListener('click', () =>
+  printSelectedSavedPicklists().catch(e => toast(e.message || String(e), 'err'))
+);
+
 byId('btnDeleteSelectedPicklists').addEventListener('click', () =>
   deleteSelectedPicklists().catch(e => toast(e.message || String(e), 'err'))
 );
