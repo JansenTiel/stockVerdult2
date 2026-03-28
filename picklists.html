@@ -13,12 +13,6 @@
   <script src="/js/auth.js"></script>
 
   <style>
-    .pick-layout{
-      display:grid;
-      grid-template-columns:1.1fr .9fr;
-      gap:18px;
-    }
-
     .product-search-results{
       margin-top:10px;
       border:1px solid var(--border);
@@ -65,7 +59,7 @@
 
     .compact-order-head{
       display:grid;
-      grid-template-columns:150px 1fr 100px 120px 160px;
+      grid-template-columns:150px 1fr 100px 120px 160px 150px;
       gap:12px;
       padding:12px 14px;
       background:#f8fafc;
@@ -76,7 +70,7 @@
 
     .compact-order-line{
       display:grid;
-      grid-template-columns:150px 140px 1fr 80px 1.2fr 160px;
+      grid-template-columns:150px 140px 1fr 80px 1.2fr 150px;
       gap:12px;
       padding:12px 14px;
       border-bottom:1px solid #edf2f7;
@@ -234,12 +228,6 @@
       line-height:1.35;
     }
 
-    @media(max-width:1200px){
-      .pick-layout{
-        grid-template-columns:1fr;
-      }
-    }
-
     @media(max-width:960px){
       .pick-toolbar{
         grid-template-columns:1fr 1fr;
@@ -249,6 +237,12 @@
       .compact-order-line,
       .picklist-row-head,
       .picklist-row-line{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:700px){
+      .pick-toolbar{
         grid-template-columns:1fr;
       }
     }
@@ -285,91 +279,83 @@
 <div class="container">
   <div id="toast" class="notice"></div>
 
-  <div class="pick-layout">
+  <div class="card">
+    <h2>Bestaande picklijsten</h2>
 
-    <div>
-      <div class="card">
-        <h2>Nieuwe picklijst</h2>
-        <div class="muted">
-          Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
-        </div>
-
-        <div class="row" style="margin-top:16px">
-          <div>
-            <label for="picklistNo">Picklijstnummer</label>
-            <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
-          </div>
-          <div>
-            <label for="picklistNote">Opmerking</label>
-            <input id="picklistNote" placeholder="Bijv. vandaag laden / spoed"/>
-          </div>
-        </div>
-
-        <div class="pick-toolbar" style="margin-top:16px">
-          <div>
-            <label for="sourceOrderNo">Ordernummer</label>
-            <input id="sourceOrderNo" placeholder="Bijv. ORD-10025"/>
-          </div>
-
-          <div>
-            <label for="productSearch">Artikel zoeken</label>
-            <input id="productSearch" placeholder="Zoek op SKU of omschrijving"/>
-          </div>
-
-          <div>
-            <label for="qtyNeeded">Aantal colli</label>
-            <input id="qtyNeeded" type="number" min="1" value="1"/>
-          </div>
-
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Toevoegen</button>
-          </div>
-        </div>
-
-        <div id="selectedProductInfo" class="small-stock" style="margin-top:10px">
-          Nog geen artikel geselecteerd.
-        </div>
-
-        <div id="productResults" class="product-search-results" style="display:none"></div>
-
-        <div style="margin-top:18px">
-          <h3>Huidige pickregels</h3>
-          <div id="draftOrders"></div>
-        </div>
-
-        <div class="btnRow" style="margin-top:16px">
-          <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
-          <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
-        </div>
+    <div class="row" style="margin-top:12px">
+      <div>
+        <label for="picklistSearch">Zoeken</label>
+        <input id="picklistSearch" placeholder="Zoek picklijstnummer"/>
+      </div>
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
       </div>
     </div>
 
-    <div>
-      <div class="card">
-        <h3>Bestaande picklijsten</h3>
-
-        <div class="row" style="margin-top:12px">
-          <div>
-            <label for="picklistSearch">Zoeken</label>
-            <input id="picklistSearch" placeholder="Zoek picklijstnummer"/>
-          </div>
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
-          </div>
-        </div>
-
-        <div style="margin-top:16px" id="savedPicklists"></div>
-      </div>
-    </div>
-
+    <div style="margin-top:16px" id="savedPicklists"></div>
   </div>
 
   <div class="card" style="margin-top:16px">
     <h3>Detail geselecteerde picklijst</h3>
     <div class="muted">Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.</div>
     <div id="activePicklistDetail" style="margin-top:16px"></div>
+  </div>
+
+  <div class="card" style="margin-top:16px">
+    <h2>Nieuwe picklijst</h2>
+    <div class="muted">
+      Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
+    </div>
+
+    <div class="row" style="margin-top:16px">
+      <div>
+        <label for="picklistNo">Picklijstnummer</label>
+        <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
+      </div>
+      <div>
+        <label for="picklistNote">Opmerking</label>
+        <input id="picklistNote" placeholder="Bijv. vandaag picken"/>
+      </div>
+    </div>
+
+    <div class="pick-toolbar" style="margin-top:16px">
+      <div>
+        <label for="sourceOrderNo">Ordernummer</label>
+        <input id="sourceOrderNo" placeholder="Bijv. V12345"/>
+      </div>
+
+      <div>
+        <label for="productSearch">Artikel zoeken</label>
+        <input id="productSearch" placeholder="Zoek op SKU of omschrijving"/>
+      </div>
+
+      <div>
+        <label for="qtyNeeded">Aantal colli</label>
+        <input id="qtyNeeded" type="number" min="1" value="1"/>
+      </div>
+
+      <div>
+        <label>&nbsp;</label>
+        <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Toevoegen</button>
+      </div>
+    </div>
+
+    <div id="selectedProductInfo" class="small-stock" style="margin-top:10px">
+      Nog geen artikel geselecteerd.
+    </div>
+
+    <div id="productResults" class="product-search-results" style="display:none"></div>
+
+    <div style="margin-top:18px">
+      <h3>Huidige pickregels</h3>
+      <div id="draftOrders"></div>
+    </div>
+
+    <div class="btnRow" style="margin-top:16px">
+      <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
+      <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
+    </div>
   </div>
 </div>
 
@@ -547,26 +533,27 @@ function renderDraftOrders(){
     <div class="compact-order">
       <div class="compact-order-head">
         <div>Order</div>
+        <div>SKU</div>
         <div>Product</div>
         <div>Aantal</div>
         <div>Voorraad</div>
         <div>Locaties</div>
       </div>
 
-      ${group.rows.map((line, idx) => {
+      ${group.rows.map((line) => {
         const globalIndex = draftLines.indexOf(line);
         return `
           <div class="compact-order-line">
             <div><b>${escapeHtml(group.orderNo)}</b></div>
-            <div>
-              <b>${escapeHtml(line.sku_base)}</b><br>
-              <span class="small">${escapeHtml(line.product_name)}</span>
-            </div>
+            <div><b>${escapeHtml(line.sku_base)}</b></div>
+            <div>${escapeHtml(line.product_name)}</div>
             <div><b>${line.qty_needed}</b></div>
             <div>${getStockCountForSku(line.sku_base)}</div>
-            <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
-            <div>
-              <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
+            <div class="small-stock">
+              ${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}
+              <div style="margin-top:8px">
+                <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
+              </div>
             </div>
           </div>
         `;
@@ -852,7 +839,7 @@ async function openPickModal(lineId){
     return;
   }
 
-  box.innerHTML = available.map((it, idx) => `
+  box.innerHTML = available.map((it) => `
     <div class="pick-item">
       <label>
         <input class="pick-item-check" type="checkbox" value="${escapeHtml(it.id)}" data-sku="${escapeHtml(it.sku_unique)}">
@@ -945,7 +932,6 @@ async function confirmPickedAndBookOut(){
 
     closePickModal();
 
-    // kijken of hele picklijst nu volledig afgeboekt is
     const { data:allLines, error:allErr } = await client
       .from('pick_order_lines')
       .select('id, qty_needed, qty_picked')
