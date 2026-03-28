@@ -13,12 +13,24 @@
   <script src="/js/auth.js"></script>
 
   <style>
+    .page-stack{
+      display:grid;
+      gap:16px;
+    }
+
+    .pick-toolbar{
+      display:grid;
+      grid-template-columns:180px 1fr 120px auto;
+      gap:12px;
+      align-items:end;
+    }
+
     .product-search-results{
       margin-top:10px;
       border:1px solid var(--border);
       border-radius:14px;
       background:#fff;
-      max-height:240px;
+      max-height:260px;
       overflow:auto;
     }
 
@@ -41,6 +53,7 @@
       font-weight:900;
       color:var(--navy);
       display:block;
+      margin-bottom:2px;
     }
 
     .product-result .name{
@@ -49,49 +62,10 @@
       margin-top:2px;
     }
 
-    .compact-order{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      margin-bottom:12px;
-    }
-
-    .compact-order-head{
-      display:grid;
-      grid-template-columns:150px 1fr 100px 120px 160px 150px;
-      gap:12px;
-      padding:12px 14px;
-      background:#f8fafc;
-      border-bottom:1px solid var(--border);
-      font-weight:800;
-      align-items:center;
-    }
-
-    .compact-order-line{
-      display:grid;
-      grid-template-columns:150px 140px 1fr 80px 1.2fr 150px;
-      gap:12px;
-      padding:12px 14px;
-      border-bottom:1px solid #edf2f7;
-      align-items:center;
-    }
-
-    .compact-order-line:last-child{
-      border-bottom:none;
-    }
-
-    .pick-toolbar{
-      display:grid;
-      grid-template-columns:160px 1fr 110px auto;
-      gap:12px;
-      align-items:end;
-    }
-
     .small-stock{
       font-size:12px;
       color:var(--muted);
-      line-height:1.35;
+      line-height:1.4;
     }
 
     .status-badge{
@@ -107,20 +81,86 @@
     }
 
     .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
+    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
 
-    .picklist-row{
+    .saved-grid{
+      display:grid;
+      gap:12px;
+    }
+
+    .saved-row{
       border:1px solid var(--border);
       border-radius:14px;
       background:#fff;
-      margin-bottom:12px;
       overflow:hidden;
     }
 
-    .picklist-row-head{
+    .saved-row-head{
       display:grid;
-      grid-template-columns:150px 1fr 120px 100px 120px 160px;
+      grid-template-columns:170px 1fr 130px 110px 120px 150px;
+      gap:12px;
+      padding:14px 16px;
+      align-items:center;
+      background:#fff;
+    }
+
+    .saved-row-head:hover{
+      background:#fafbfc;
+    }
+
+    .saved-title{
+      font-size:16px;
+      font-weight:900;
+      color:var(--navy);
+      word-break:break-word;
+    }
+
+    .saved-note{
+      color:var(--text);
+      line-height:1.35;
+    }
+
+    .saved-meta{
+      text-align:right;
+    }
+
+    .saved-meta .n{
+      font-size:24px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1;
+    }
+
+    .saved-meta .t{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-top:4px;
+    }
+
+    .detail-summary{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .detail-group{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .detail-group-head{
+      display:grid;
+      grid-template-columns:150px 130px 1fr 90px 90px 1.2fr 210px;
       gap:12px;
       padding:12px 14px;
       background:#f8fafc;
@@ -129,16 +169,16 @@
       align-items:center;
     }
 
-    .picklist-row-line{
+    .detail-group-line{
       display:grid;
-      grid-template-columns:150px 130px 1fr 80px 80px 1.2fr 200px;
+      grid-template-columns:150px 130px 1fr 90px 90px 1.2fr 210px;
       gap:12px;
       padding:12px 14px;
       border-bottom:1px solid #edf2f7;
       align-items:center;
     }
 
-    .picklist-row-line:last-child{
+    .detail-group-line:last-child{
       border-bottom:none;
     }
 
@@ -148,6 +188,44 @@
 
     .line-warn{
       background:#fff7ed;
+    }
+
+    .draft-group{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .draft-group-head{
+      display:grid;
+      grid-template-columns:150px 150px 1fr 90px 1.2fr 150px;
+      gap:12px;
+      padding:12px 14px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+      align-items:center;
+    }
+
+    .draft-group-line{
+      display:grid;
+      grid-template-columns:150px 150px 1fr 90px 1.2fr 150px;
+      gap:12px;
+      padding:12px 14px;
+      border-bottom:1px solid #edf2f7;
+      align-items:center;
+    }
+
+    .draft-group-line:last-child{
+      border-bottom:none;
+    }
+
+    .draft-order-label{
+      font-weight:900;
+      color:var(--navy);
+      word-break:break-word;
     }
 
     .modal-backdrop{
@@ -220,6 +298,7 @@
       display:block;
       color:var(--navy);
       margin-bottom:2px;
+      word-break:break-word;
     }
 
     .muted-line{
@@ -228,16 +307,19 @@
       line-height:1.35;
     }
 
-    @media(max-width:960px){
+    @media(max-width:1100px){
+      .saved-row-head,
+      .detail-group-head,
+      .detail-group-line,
+      .draft-group-head,
+      .draft-group-line{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:900px){
       .pick-toolbar{
         grid-template-columns:1fr 1fr;
-      }
-
-      .compact-order-head,
-      .compact-order-line,
-      .picklist-row-head,
-      .picklist-row-line{
-        grid-template-columns:1fr;
       }
     }
 
@@ -279,83 +361,97 @@
 <div class="container">
   <div id="toast" class="notice"></div>
 
-  <div class="card">
-    <h2>Bestaande picklijsten</h2>
+  <div class="page-stack">
 
-    <div class="row" style="margin-top:12px">
-      <div>
-        <label for="picklistSearch">Zoeken</label>
-        <input id="picklistSearch" placeholder="Zoek picklijstnummer"/>
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
+    <div class="card">
+      <h2>Picklijsten</h2>
+      <div class="muted">
+        Maak picklijsten op basis van SKU en omschrijving. De echte unieke colli worden pas gekozen op het moment van picken en afboeken.
       </div>
     </div>
 
-    <div style="margin-top:16px" id="savedPicklists"></div>
-  </div>
+    <div class="card">
+      <h3>Bestaande picklijsten</h3>
 
-  <div class="card" style="margin-top:16px">
-    <h3>Detail geselecteerde picklijst</h3>
-    <div class="muted">Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.</div>
-    <div id="activePicklistDetail" style="margin-top:16px"></div>
-  </div>
-
-  <div class="card" style="margin-top:16px">
-    <h2>Nieuwe picklijst</h2>
-    <div class="muted">
-      Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
-    </div>
-
-    <div class="row" style="margin-top:16px">
-      <div>
-        <label for="picklistNo">Picklijstnummer</label>
-        <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
-      </div>
-      <div>
-        <label for="picklistNote">Opmerking</label>
-        <input id="picklistNote" placeholder="Bijv. vandaag picken"/>
-      </div>
-    </div>
-
-    <div class="pick-toolbar" style="margin-top:16px">
-      <div>
-        <label for="sourceOrderNo">Ordernummer</label>
-        <input id="sourceOrderNo" placeholder="Bijv. V12345"/>
+      <div class="row" style="margin-top:14px">
+        <div>
+          <label for="picklistSearch">Zoeken</label>
+          <input id="picklistSearch" placeholder="Zoek op picklijstnummer"/>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
+        </div>
       </div>
 
-      <div>
-        <label for="productSearch">Artikel zoeken</label>
-        <input id="productSearch" placeholder="Zoek op SKU of omschrijving"/>
+      <div id="savedPicklists" class="saved-grid" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Detail geselecteerde picklijst</h3>
+      <div class="muted">
+        Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.
       </div>
 
-      <div>
-        <label for="qtyNeeded">Aantal colli</label>
-        <input id="qtyNeeded" type="number" min="1" value="1"/>
+      <div id="activePicklistDetail" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Nieuwe picklijst</h3>
+      <div class="muted">
+        Voeg meerdere orders toe aan één picklijst. Je selecteert op SKU / omschrijving, daarna worden pas na het picken de echte volgnummers afgeboekt.
       </div>
 
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Toevoegen</button>
+      <div class="row" style="margin-top:16px">
+        <div>
+          <label for="picklistNo">Picklijstnummer</label>
+          <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
+        </div>
+        <div>
+          <label for="picklistNote">Opmerking</label>
+          <input id="picklistNote" placeholder="Bijv. vandaag laden / spoed"/>
+        </div>
+      </div>
+
+      <div class="pick-toolbar" style="margin-top:16px">
+        <div>
+          <label for="sourceOrderNo">Ordernummer</label>
+          <input id="sourceOrderNo" placeholder="Bijv. ORD-10025"/>
+        </div>
+
+        <div>
+          <label for="productSearch">Artikel zoeken</label>
+          <input id="productSearch" placeholder="Zoek op SKU of omschrijving"/>
+        </div>
+
+        <div>
+          <label for="qtyNeeded">Aantal colli</label>
+          <input id="qtyNeeded" type="number" min="1" value="1"/>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" id="btnAddLine" type="button" style="width:100%">Toevoegen</button>
+        </div>
+      </div>
+
+      <div id="selectedProductInfo" class="small-stock" style="margin-top:10px">
+        Nog geen artikel geselecteerd.
+      </div>
+
+      <div id="productResults" class="product-search-results" style="display:none"></div>
+
+      <div style="margin-top:18px">
+        <h3>Huidige pickregels</h3>
+        <div id="draftOrders"></div>
+      </div>
+
+      <div class="btnRow" style="margin-top:16px">
+        <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
+        <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
       </div>
     </div>
 
-    <div id="selectedProductInfo" class="small-stock" style="margin-top:10px">
-      Nog geen artikel geselecteerd.
-    </div>
-
-    <div id="productResults" class="product-search-results" style="display:none"></div>
-
-    <div style="margin-top:18px">
-      <h3>Huidige pickregels</h3>
-      <div id="draftOrders"></div>
-    </div>
-
-    <div class="btnRow" style="margin-top:16px">
-      <button class="btn accent" id="btnSavePicklist" type="button">Picklijst opslaan</button>
-      <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
-    </div>
   </div>
 </div>
 
@@ -420,7 +516,7 @@ function getLocationSummaryForSku(skuBase){
   const counts = getLocationCountsForSku(skuBase);
 
   return Array.from(counts.entries())
-    .sort((a,b) => {
+    .sort((a, b) => {
       if(a[1] !== b[1]) return a[1] - b[1];
       return String(a[0]).localeCompare(String(b[0]), 'nl');
     })
@@ -455,8 +551,8 @@ function renderProductResults(query){
   }
 
   box.style.display = 'block';
-  box.innerHTML = results.map((p, idx) => `
-    <div class="product-result" data-idx="${idx}" data-sku="${escapeHtml(p.sku_base)}">
+  box.innerHTML = results.map(p => `
+    <div class="product-result" data-sku="${escapeHtml(p.sku_base)}">
       <span class="sku">${escapeHtml(p.sku_base)}</span>
       <span class="name">${escapeHtml(p.name || '')}</span>
       <div class="muted-line">${escapeHtml(p.description || '')}</div>
@@ -530,30 +626,27 @@ function renderDraftOrders(){
   }
 
   el.innerHTML = groups.map(group => `
-    <div class="compact-order">
-      <div class="compact-order-head">
+    <div class="draft-group">
+      <div class="draft-group-head">
         <div>Order</div>
         <div>SKU</div>
         <div>Product</div>
         <div>Aantal</div>
-        <div>Voorraad</div>
         <div>Locaties</div>
+        <div>Actie</div>
       </div>
 
-      ${group.rows.map((line) => {
+      ${group.rows.map(line => {
         const globalIndex = draftLines.indexOf(line);
         return `
-          <div class="compact-order-line">
-            <div><b>${escapeHtml(group.orderNo)}</b></div>
+          <div class="draft-group-line">
+            <div class="draft-order-label">${escapeHtml(group.orderNo)}</div>
             <div><b>${escapeHtml(line.sku_base)}</b></div>
             <div>${escapeHtml(line.product_name)}</div>
             <div><b>${line.qty_needed}</b></div>
-            <div>${getStockCountForSku(line.sku_base)}</div>
-            <div class="small-stock">
-              ${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}
-              <div style="margin-top:8px">
-                <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
-              </div>
+            <div class="small-stock">${escapeHtml(getLocationSummaryForSku(line.sku_base) || '-')}</div>
+            <div>
+              <button class="btn danger" type="button" onclick="removeDraftLine(${globalIndex})">Verwijderen</button>
             </div>
           </div>
         `;
@@ -574,7 +667,7 @@ async function savePicklist(){
   if(!picklistNo) return toast('Vul eerst een picklijstnummer in.', 'err');
   if(!draftLines.length) return toast('Voeg eerst regels toe.', 'err');
 
-  const { data:exists, error:checkErr } = await client
+  const { data: exists, error: checkErr } = await client
     .from('pick_orders')
     .select('id')
     .eq('order_no', picklistNo)
@@ -583,7 +676,7 @@ async function savePicklist(){
   if(checkErr) return toast(checkErr.message || String(checkErr), 'err');
   if(exists) return toast('Dit picklijstnummer bestaat al.', 'err');
 
-  const { data:order, error:orderErr } = await client
+  const { data: order, error: orderErr } = await client
     .from('pick_orders')
     .insert([{
       order_no: picklistNo,
@@ -605,7 +698,7 @@ async function savePicklist(){
     qty_picked: 0
   }));
 
-  const { error:lineErr } = await client
+  const { error: lineErr } = await client
     .from('pick_order_lines')
     .insert(payload);
 
@@ -627,7 +720,7 @@ async function savePicklist(){
 }
 
 async function loadBaseData(){
-  const [{data:products, error:pErr}, {data:summary, error:sErr}, {data:items, error:iErr}] = await Promise.all([
+  const [{ data: products, error: pErr }, { data: summary, error: sErr }, { data: items, error: iErr }] = await Promise.all([
     client.from('products').select('id, sku_base, name, description').order('sku_base'),
     client.from('v_stock_summary').select('*'),
     client.from('v_stock_items').select('*')
@@ -648,14 +741,14 @@ async function loadBaseData(){
 async function loadSavedPicklists(){
   const q = (byId('picklistSearch').value || '').trim().toLowerCase();
 
-  const { data:orders, error:oErr } = await client
+  const { data: orders, error: oErr } = await client
     .from('pick_orders')
     .select('*')
-    .order('created_at', { ascending:false });
+    .order('created_at', { ascending: false });
 
   if(oErr) throw oErr;
 
-  const { data:lines, error:lErr } = await client
+  const { data: lines, error: lErr } = await client
     .from('pick_order_lines')
     .select('*');
 
@@ -690,21 +783,41 @@ async function loadSavedPicklists(){
   }
 
   el.innerHTML = rows.map(row => `
-    <div class="picklist-row">
-      <div class="picklist-row-head">
-        <div><b>${escapeHtml(row.order_no)}</b></div>
-        <div>${escapeHtml(row.note || '-')}</div>
-        <div><span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">${row.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(row.status || 'CONCEPT')}</span></div>
-        <div>${row.line_count} regels</div>
-        <div><b>${row.total_qty}</b> colli</div>
-        <div><button class="btn" type="button" onclick="openPicklist('${row.id}')">Openen</button></div>
+    <div class="saved-row">
+      <div class="saved-row-head">
+        <div class="saved-title">${escapeHtml(row.order_no)}</div>
+
+        <div class="saved-note">
+          <b>${escapeHtml(row.customer_name || '')}</b><br>
+          <span class="small">${escapeHtml(row.note || '-')}</span>
+        </div>
+
+        <div>
+          <span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">
+            ${row.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(row.status || 'CONCEPT')}
+          </span>
+        </div>
+
+        <div class="saved-meta">
+          <div class="n">${row.line_count}</div>
+          <div class="t">regels</div>
+        </div>
+
+        <div class="saved-meta">
+          <div class="n">${row.total_qty}</div>
+          <div class="t">colli</div>
+        </div>
+
+        <div>
+          <button class="btn primary" type="button" onclick="openPicklist('${row.id}')">Openen</button>
+        </div>
       </div>
     </div>
   `).join('');
 }
 
 async function openPicklist(id){
-  const { data:order, error:oErr } = await client
+  const { data: order, error: oErr } = await client
     .from('pick_orders')
     .select('*')
     .eq('id', id)
@@ -712,11 +825,11 @@ async function openPicklist(id){
 
   if(oErr) return toast(oErr.message || String(oErr), 'err');
 
-  const { data:lines, error:lErr } = await client
+  const { data: lines, error: lErr } = await client
     .from('pick_order_lines')
     .select('*')
     .eq('pick_order_id', id)
-    .order('source_order_no', { ascending:true });
+    .order('source_order_no', { ascending: true });
 
   if(lErr) return toast(lErr.message || String(lErr), 'err');
 
@@ -751,22 +864,29 @@ function renderActivePicklist(){
     groups.get(orderNo).push(line);
   });
 
+  const totalNeeded = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
+  const totalPicked = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+
   el.innerHTML = `
-    <div class="card" style="margin-bottom:16px">
+    <div class="detail-summary">
       <div class="row">
         <div>
           <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
           <span class="small">${escapeHtml(activePicklist.note || '-')}</span>
         </div>
         <div>
-          <b>Status:</b> <span class="status-badge status-${escapeHtml(activePicklist.status || 'CONCEPT')}">${activePicklist.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(activePicklist.status || 'CONCEPT')}</span>
+          <b>Status:</b>
+          <span class="status-badge status-${escapeHtml(activePicklist.status || 'CONCEPT')}">
+            ${activePicklist.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(activePicklist.status || 'CONCEPT')}
+          </span><br>
+          <span class="small">Gepickt: ${totalPicked} / ${totalNeeded}</span>
         </div>
       </div>
     </div>
 
     ${Array.from(groups.entries()).map(([orderNo, rows]) => `
-      <div class="picklist-row">
-        <div class="picklist-row-head">
+      <div class="detail-group">
+        <div class="detail-group-head">
           <div>Order</div>
           <div>SKU</div>
           <div>Product</div>
@@ -777,7 +897,7 @@ function renderActivePicklist(){
         </div>
 
         ${rows.map(line => `
-          <div class="picklist-row-line ${line.qty_remaining === 0 ? 'line-ok' : (line.stock_now < line.qty_remaining ? 'line-warn' : '')}">
+          <div class="detail-group-line ${line.qty_remaining === 0 ? 'line-ok' : (line.stock_now < line.qty_remaining ? 'line-warn' : '')}">
             <div><b>${escapeHtml(orderNo)}</b></div>
             <div><b>${escapeHtml(line.sku_base)}</b></div>
             <div>${escapeHtml(line.product_name)}</div>
@@ -817,7 +937,7 @@ async function openPickModal(lineId){
         loc_qty: locQty
       };
     })
-    .sort((a,b) => {
+    .sort((a, b) => {
       if(a.loc_qty !== b.loc_qty) return a.loc_qty - b.loc_qty;
       const l = String(a.location || '').localeCompare(String(b.location || ''), 'nl');
       if(l !== 0) return l;
@@ -839,7 +959,7 @@ async function openPickModal(lineId){
     return;
   }
 
-  box.innerHTML = available.map((it) => `
+  box.innerHTML = available.map(it => `
     <div class="pick-item">
       <label>
         <input class="pick-item-check" type="checkbox" value="${escapeHtml(it.id)}" data-sku="${escapeHtml(it.sku_unique)}">
@@ -888,7 +1008,7 @@ async function confirmPickedAndBookOut(){
       const itemId = ch.value;
       const skuUnique = ch.getAttribute('data-sku');
 
-      const { data:item, error:itemErr } = await client
+      const { data: item, error: itemErr } = await client
         .from('items')
         .select('id, product_id, sku_unique, status, location')
         .eq('id', itemId)
@@ -898,23 +1018,23 @@ async function confirmPickedAndBookOut(){
       if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
       if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
 
-      const { error:updateErr } = await client
+      const { error: updateErr } = await client
         .from('items')
         .update({
-          status:'OUT',
-          out_at:new Date().toISOString()
+          status: 'OUT',
+          out_at: new Date().toISOString()
         })
         .eq('id', item.id);
 
       if(updateErr) throw updateErr;
 
-      const { error:moveErr } = await client
+      const { error: moveErr } = await client
         .from('movements')
         .insert([{
-          type:'OUT',
-          product_id:item.product_id,
-          sku_unique:item.sku_unique,
-          location:item.location || null,
+          type: 'OUT',
+          product_id: item.product_id,
+          sku_unique: item.sku_unique,
+          location: item.location || null,
           order_no: currentPickModalLine.source_order_no || activePicklist.order_no
         }]);
 
@@ -923,7 +1043,7 @@ async function confirmPickedAndBookOut(){
 
     const newPicked = Number(currentPickModalLine.qty_picked || 0) + qtySelected;
 
-    const { error:lineErr } = await client
+    const { error: lineErr } = await client
       .from('pick_order_lines')
       .update({ qty_picked: newPicked })
       .eq('id', currentPickModalLine.id);
@@ -932,7 +1052,7 @@ async function confirmPickedAndBookOut(){
 
     closePickModal();
 
-    const { data:allLines, error:allErr } = await client
+    const { data: allLines, error: allErr } = await client
       .from('pick_order_lines')
       .select('id, qty_needed, qty_picked')
       .eq('pick_order_id', activePicklist.id);
@@ -944,12 +1064,12 @@ async function confirmPickedAndBookOut(){
     if(allDone){
       await client
         .from('pick_orders')
-        .update({ status:'DONE' })
+        .update({ status: 'DONE' })
         .eq('id', activePicklist.id);
     } else {
       await client
         .from('pick_orders')
-        .update({ status:'PICKING' })
+        .update({ status: 'PICKING' })
         .eq('id', activePicklist.id);
     }
 
@@ -971,7 +1091,11 @@ byId('productSearch').addEventListener('input', e => {
 });
 
 byId('btnAddLine').addEventListener('click', addDraftLine);
-byId('btnSavePicklist').addEventListener('click', () => savePicklist().catch(e => toast(e.message || String(e), 'err')));
+
+byId('btnSavePicklist').addEventListener('click', () =>
+  savePicklist().catch(e => toast(e.message || String(e), 'err'))
+);
+
 byId('btnClearDraft').addEventListener('click', () => {
   draftLines = [];
   byId('picklistNo').value = '';
@@ -982,9 +1106,14 @@ byId('btnClearDraft').addEventListener('click', () => {
   selectedProduct = null;
   renderSelectedProductInfo();
   renderDraftOrders();
+  byId('productResults').style.display = 'none';
+  byId('productResults').innerHTML = '';
 });
 
-byId('btnRefreshPicklists').addEventListener('click', () => loadSavedPicklists().catch(e => toast(e.message || String(e), 'err')));
+byId('btnRefreshPicklists').addEventListener('click', () =>
+  loadSavedPicklists().catch(e => toast(e.message || String(e), 'err'))
+);
+
 byId('picklistSearch').addEventListener('keydown', e => {
   if(e.key === 'Enter'){
     loadSavedPicklists().catch(err => toast(err.message || String(err), 'err'));
@@ -992,7 +1121,10 @@ byId('picklistSearch').addEventListener('keydown', e => {
 });
 
 byId('btnCancelPicked').addEventListener('click', closePickModal);
-byId('btnConfirmPicked').addEventListener('click', () => confirmPickedAndBookOut().catch(e => toast(e.message || String(e), 'err')));
+byId('btnConfirmPicked').addEventListener('click', () =>
+  confirmPickedAndBookOut().catch(e => toast(e.message || String(e), 'err'))
+);
+
 byId('pickModal').addEventListener('click', e => {
   if(e.target === byId('pickModal')) closePickModal();
 });
