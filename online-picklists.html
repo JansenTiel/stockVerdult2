@@ -308,9 +308,60 @@
       transition:width .2s ease;
     }
 
+    .order-groups{
+      display:grid;
+      gap:14px;
+    }
+
+    .order-group{
+      border:1px solid var(--border);
+      border-radius:20px;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    .order-group-head{
+      padding:14px 16px;
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .order-group-title{
+      font-size:22px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.1;
+    }
+
+    .order-group-sub{
+      margin-top:4px;
+      font-size:13px;
+      color:var(--muted);
+      font-weight:800;
+    }
+
+    .order-pill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      min-width:76px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:var(--navy);
+      color:#fff;
+      font-size:16px;
+      font-weight:900;
+    }
+
     .pick-cards{
       display:grid;
       gap:12px;
+      padding:14px;
     }
 
     .pick-card{
@@ -581,10 +632,7 @@
       }
 
       .active-pick-top,
-      .scan-main{
-        grid-template-columns:1fr;
-      }
-
+      .scan-main,
       .available-item{
         grid-template-columns:1fr;
       }
@@ -609,6 +657,10 @@
 
       .pick-title{
         font-size:21px;
+      }
+
+      .order-group-title{
+        font-size:20px;
       }
 
       .scan-input{
@@ -673,7 +725,7 @@
         <div class="section-head">
           <div>
             <h2>Overzicht</h2>
-            <div class="section-sub">Actieve picklijst bovenaan, daarna direct de open pickregels.</div>
+            <div class="section-sub">Één picklijst kan meerdere orders bevatten. Die zie je hieronder apart gegroepeerd.</div>
           </div>
           <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
         </div>
@@ -702,7 +754,7 @@
         <div class="section-head">
           <div>
             <h2>Actieve picklijst</h2>
-            <div class="section-sub">Hier zie je direct de voortgang van de picklijst.</div>
+            <div class="section-sub">Compact overzicht van de gekozen picklijst.</div>
           </div>
         </div>
 
@@ -712,19 +764,19 @@
       <div class="section-card" style="margin-bottom:14px">
         <div class="section-head">
           <div>
-            <h2>Open pickregels</h2>
-            <div class="section-sub">Dit is leidend tijdens het picken.</div>
+            <h2>Open pickregels per order</h2>
+            <div class="section-sub">Hier zie je eerst de orders en daaronder pas de SKU’s die erbij horen.</div>
           </div>
         </div>
 
-        <div id="openPickCards" class="pick-cards"></div>
+        <div id="openPickOrderGroups" class="order-groups"></div>
       </div>
 
       <div class="section-card" style="margin-bottom:14px">
         <div class="section-head">
           <div>
             <h2>Scannen</h2>
-            <div class="section-sub">Pas na het bekijken van de pickregels scan je het product.</div>
+            <div class="section-sub">Gebruik dit pas nadat je de juiste order en regel in beeld hebt.</div>
           </div>
         </div>
 
@@ -765,7 +817,7 @@
         <div class="available-toggle">
           <div>
             <h3 style="margin:0">Andere vrijgegeven picklijsten</h3>
-            <div class="section-sub">Alleen gebruiken als je naar een andere picklijst wilt schakelen.</div>
+            <div class="section-sub">Hier kies je alleen een andere picklijst als dat nodig is.</div>
           </div>
           <div class="btnRow">
             <button class="btn" id="btnRefreshPicklists" type="button">Verversen</button>
@@ -808,7 +860,7 @@ const liveStatusTxt = byId('liveStatusTxt');
 const picklistSearch = byId('picklistSearch');
 const availablePicklists = byId('availablePicklists');
 const activePickHeader = byId('activePickHeader');
-const openPickCards = byId('openPickCards');
+const openPickOrderGroups = byId('openPickOrderGroups');
 const scanSkuInput = byId('scanSkuInput');
 const btnProcessScan = byId('btnProcessScan');
 const btnToggleCamera = byId('btnToggleCamera');
@@ -1063,10 +1115,24 @@ async function openOnlinePicklist(id){
   scanSkuInput.focus();
 }
 
+function groupLinesBySourceOrder(lines){
+  const map = new Map();
+
+  (lines || []).forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!map.has(orderNo)){
+      map.set(orderNo, []);
+    }
+    map.get(orderNo).push(line);
+  });
+
+  return Array.from(map.entries()).map(([orderNo, rows]) => ({ orderNo, rows }));
+}
+
 function renderActivePicklist(){
   if(!activePicklist){
     activePickHeader.innerHTML = `<div class="muted">Nog geen picklijst geselecteerd.</div>`;
-    openPickCards.innerHTML = `<div class="muted">Nog geen open pickregels.</div>`;
+    openPickOrderGroups.innerHTML = `<div class="muted">Nog geen open pickregels.</div>`;
     return;
   }
 
@@ -1111,62 +1177,84 @@ function renderActivePicklist(){
     </div>
   `;
 
-  const orderedLines = activePicklistLines
-    .slice()
-    .sort((a,b) => {
-      const ar = Math.max(0, Number(a.qty_needed || 0) - Number(a.qty_picked || 0));
-      const br = Math.max(0, Number(b.qty_needed || 0) - Number(b.qty_picked || 0));
-      if(ar === 0 && br > 0) return 1;
-      if(br === 0 && ar > 0) return -1;
-      return String(a.source_order_no || '').localeCompare(String(b.source_order_no || ''), 'nl');
-    });
+  const grouped = groupLinesBySourceOrder(activePicklistLines);
 
-  if(!orderedLines.length){
-    openPickCards.innerHTML = `<div class="muted">Geen pickregels gevonden.</div>`;
+  if(!grouped.length){
+    openPickOrderGroups.innerHTML = `<div class="muted">Geen pickregels gevonden.</div>`;
     return;
   }
 
-  openPickCards.innerHTML = orderedLines.map(line => {
-    const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
-    const isDone = remaining === 0;
+  openPickOrderGroups.innerHTML = grouped.map(group => {
+    const orderOpen = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.qty_needed || 0) - Number(row.qty_picked || 0)), 0);
+    const orderNeeded = group.rows.reduce((sum, row) => sum + Number(row.qty_needed || 0), 0);
+    const orderPicked = group.rows.reduce((sum, row) => sum + Number(row.qty_picked || 0), 0);
+
+    const rowsHtml = group.rows
+      .slice()
+      .sort((a,b) => {
+        const ar = Math.max(0, Number(a.qty_needed || 0) - Number(a.qty_picked || 0));
+        const br = Math.max(0, Number(b.qty_needed || 0) - Number(b.qty_picked || 0));
+        if(ar === 0 && br > 0) return 1;
+        if(br === 0 && ar > 0) return -1;
+        return String(a.sku_base || '').localeCompare(String(b.sku_base || ''), 'nl');
+      })
+      .map(line => {
+        const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+        const isDone = remaining === 0;
+
+        return `
+          <div class="pick-card ${isDone ? 'done' : 'open'}">
+            <div class="pick-card-top">
+              <div class="pick-card-title-row">
+                <div>
+                  <div class="pick-card-title">${escapeHtml(line.sku_base)}</div>
+                  <div class="pick-card-order">Order ${escapeHtml(group.orderNo)}</div>
+                </div>
+                <div class="open-badge ${isDone ? 'done' : ''}">${isDone ? 'Klaar' : remaining}</div>
+              </div>
+            </div>
+
+            <div class="pick-card-body">
+              <div class="pick-row">
+                <div class="k">Product</div>
+                <div class="v">${escapeHtml(line.product_name || '-')}</div>
+              </div>
+
+              <div class="pick-row">
+                <div class="k">Nodig</div>
+                <div class="v">${line.qty_needed}</div>
+              </div>
+
+              <div class="pick-row">
+                <div class="k">Gepickt</div>
+                <div class="v">${line.qty_picked || 0}</div>
+              </div>
+
+              <div class="pick-row">
+                <div class="k">Open</div>
+                <div class="v"><b>${remaining}</b></div>
+              </div>
+
+              <div class="location-box">
+                <div class="location-title">Locaties</div>
+                <div class="location-value">${escapeHtml(line.location_summary || '-')}</div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
 
     return `
-      <div class="pick-card ${isDone ? 'done' : 'open'}">
-        <div class="pick-card-top">
-          <div class="pick-card-title-row">
-            <div>
-              <div class="pick-card-title">${escapeHtml(line.sku_base)}</div>
-              <div class="pick-card-order">Order ${escapeHtml(line.source_order_no || '-')}</div>
-            </div>
-            <div class="open-badge ${isDone ? 'done' : ''}">${isDone ? 'Klaar' : remaining}</div>
+      <div class="order-group">
+        <div class="order-group-head">
+          <div>
+            <div class="order-group-title">Order ${escapeHtml(group.orderNo)}</div>
+            <div class="order-group-sub">${orderPicked} van ${orderNeeded} gepickt</div>
           </div>
+          <div class="order-pill">${orderOpen} open</div>
         </div>
-
-        <div class="pick-card-body">
-          <div class="pick-row">
-            <div class="k">Product</div>
-            <div class="v">${escapeHtml(line.product_name || '-')}</div>
-          </div>
-
-          <div class="pick-row">
-            <div class="k">Nodig</div>
-            <div class="v">${line.qty_needed}</div>
-          </div>
-
-          <div class="pick-row">
-            <div class="k">Gepickt</div>
-            <div class="v">${line.qty_picked || 0}</div>
-          </div>
-
-          <div class="pick-row">
-            <div class="k">Open</div>
-            <div class="v"><b>${remaining}</b></div>
-          </div>
-
-          <div class="location-box">
-            <div class="location-title">Locaties</div>
-            <div class="location-value">${escapeHtml(line.location_summary || '-')}</div>
-          </div>
+        <div class="pick-cards">
+          ${rowsHtml}
         </div>
       </div>
     `;
