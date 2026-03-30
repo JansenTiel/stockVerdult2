@@ -180,6 +180,23 @@
       white-space:nowrap;
     }
 
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      white-space:nowrap;
+    }
+
+    .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
+    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
+    .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+    .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
+
     .kpi-grid{
       display:grid;
       grid-template-columns:repeat(4,1fr);
@@ -289,68 +306,6 @@
       background:linear-gradient(90deg,var(--navy),var(--navy-2));
       border-radius:999px;
       transition:width .2s ease;
-    }
-
-    .scan-panel{
-      position:sticky;
-      top:12px;
-      z-index:10;
-    }
-
-    .scan-main{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:10px;
-      align-items:end;
-    }
-
-    .scan-input{
-      font-size:20px;
-      font-weight:900;
-      padding:14px 16px;
-      border-radius:16px;
-    }
-
-    .scan-feedback{
-      margin-top:12px;
-      border-radius:16px;
-      padding:14px;
-      border:1px solid var(--border);
-      background:#f8fafc;
-      min-height:56px;
-      display:flex;
-      align-items:center;
-      font-weight:800;
-      line-height:1.35;
-    }
-
-    .scan-feedback.ok{
-      background:#ecfdf3;
-      color:#027a48;
-      border-color:#abefc6;
-    }
-
-    .scan-feedback.err{
-      background:#fef3f2;
-      color:#b42318;
-      border-color:#fecdca;
-    }
-
-    .camera-box{
-      margin-top:12px;
-      border:1px dashed var(--border);
-      border-radius:16px;
-      padding:12px;
-      background:#fff;
-    }
-
-    .camera-top{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-bottom:10px;
     }
 
     .pick-cards{
@@ -475,6 +430,69 @@
       color:var(--navy);
       line-height:1.3;
       word-break:break-word;
+    }
+
+    .scan-section{
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:#f8fafc;
+      padding:14px;
+    }
+
+    .scan-main{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .scan-input{
+      font-size:20px;
+      font-weight:900;
+      padding:14px 16px;
+      border-radius:16px;
+    }
+
+    .scan-feedback{
+      margin-top:12px;
+      border-radius:16px;
+      padding:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .scan-feedback.ok{
+      background:#ecfdf3;
+      color:#027a48;
+      border-color:#abefc6;
+    }
+
+    .scan-feedback.err{
+      background:#fef3f2;
+      color:#b42318;
+      border-color:#fecdca;
+    }
+
+    .camera-box{
+      margin-top:12px;
+      border:1px dashed var(--border);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .camera-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
     }
 
     .available-toggle{
@@ -649,13 +667,13 @@
       </div>
     </div>
 
-    <div id="appSection" class="page-stack hidden">
+    <div id="appSection" class="hidden">
 
-      <div class="section-card">
+      <div class="section-card" style="margin-bottom:14px">
         <div class="section-head">
           <div>
             <h2>Overzicht</h2>
-            <div class="section-sub">Alleen vrijgegeven of actieve picklijsten worden hier getoond.</div>
+            <div class="section-sub">Actieve picklijst bovenaan, daarna direct de open pickregels.</div>
           </div>
           <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
         </div>
@@ -680,72 +698,74 @@
         </div>
       </div>
 
-      <div class="section-card">
+      <div class="section-card" style="margin-bottom:14px">
         <div class="section-head">
           <div>
             <h2>Actieve picklijst</h2>
-            <div class="section-sub">Dit is de picklijst waar je nu direct op scant.</div>
+            <div class="section-sub">Hier zie je direct de voortgang van de picklijst.</div>
           </div>
         </div>
 
         <div id="activePickHeader"></div>
       </div>
 
-      <div class="section-card scan-panel">
-        <div class="section-head">
-          <div>
-            <h2>Scannen</h2>
-            <div class="section-sub">Scan product-QR of barcode om direct af te boeken.</div>
-          </div>
-        </div>
-
-        <div class="scan-main">
-          <div>
-            <label for="scanSkuInput">SKU / sticker</label>
-            <input id="scanSkuInput" class="scan-input" placeholder="Scan productcode…" autocomplete="off"/>
-          </div>
-
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn primary" id="btnProcessScan" type="button" style="width:100%">Verwerken</button>
-          </div>
-
-          <div>
-            <label>&nbsp;</label>
-            <button class="btn" id="btnToggleCamera" type="button" style="width:100%">Start camera</button>
-          </div>
-        </div>
-
-        <div id="scanFeedback" class="scan-feedback">Nog geen scan verwerkt.</div>
-
-        <div class="camera-box">
-          <div class="camera-top">
-            <div>
-              <b>Camera scanner</b>
-              <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
-            </div>
-            <span class="pill">HTTPS nodig</span>
-          </div>
-          <div id="qr_reader" class="hidden" style="border-radius:14px;overflow:hidden"></div>
-        </div>
-      </div>
-
-      <div class="section-card">
+      <div class="section-card" style="margin-bottom:14px">
         <div class="section-head">
           <div>
             <h2>Open pickregels</h2>
-            <div class="section-sub">De belangrijkste informatie staat per regel in een duidelijke kaart.</div>
+            <div class="section-sub">Dit is leidend tijdens het picken.</div>
           </div>
         </div>
 
         <div id="openPickCards" class="pick-cards"></div>
       </div>
 
-      <div class="section-card">
+      <div class="section-card" style="margin-bottom:14px">
+        <div class="section-head">
+          <div>
+            <h2>Scannen</h2>
+            <div class="section-sub">Pas na het bekijken van de pickregels scan je het product.</div>
+          </div>
+        </div>
+
+        <div class="scan-section">
+          <div class="scan-main">
+            <div>
+              <label for="scanSkuInput">SKU / sticker</label>
+              <input id="scanSkuInput" class="scan-input" placeholder="Scan productcode…" autocomplete="off"/>
+            </div>
+
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn primary" id="btnProcessScan" type="button" style="width:100%">Verwerken</button>
+            </div>
+
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn" id="btnToggleCamera" type="button" style="width:100%">Start camera</button>
+            </div>
+          </div>
+
+          <div id="scanFeedback" class="scan-feedback">Nog geen scan verwerkt.</div>
+
+          <div id="cameraWrapper" class="camera-box hidden">
+            <div class="camera-top">
+              <div>
+                <b>Camera scanner</b>
+                <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
+              </div>
+              <span class="pill">HTTPS nodig</span>
+            </div>
+            <div id="qr_reader" style="border-radius:14px;overflow:hidden"></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card" style="margin-bottom:14px">
         <div class="available-toggle">
           <div>
             <h3 style="margin:0">Andere vrijgegeven picklijsten</h3>
-            <div class="section-sub">Open hieronder een andere picklijst als dat nodig is.</div>
+            <div class="section-sub">Alleen gebruiken als je naar een andere picklijst wilt schakelen.</div>
           </div>
           <div class="btnRow">
             <button class="btn" id="btnRefreshPicklists" type="button">Verversen</button>
@@ -796,6 +816,7 @@ const scanLog = byId('scanLog');
 const scanFeedback = byId('scanFeedback');
 const loginEmail = byId('loginEmail');
 const loginPassword = byId('loginPassword');
+const cameraWrapper = byId('cameraWrapper');
 
 let releasedPicklists = [];
 let activePicklist = null;
@@ -1090,7 +1111,7 @@ function renderActivePicklist(){
     </div>
   `;
 
-  const openLines = activePicklistLines
+  const orderedLines = activePicklistLines
     .slice()
     .sort((a,b) => {
       const ar = Math.max(0, Number(a.qty_needed || 0) - Number(a.qty_picked || 0));
@@ -1100,12 +1121,12 @@ function renderActivePicklist(){
       return String(a.source_order_no || '').localeCompare(String(b.source_order_no || ''), 'nl');
     });
 
-  if(!openLines.length){
+  if(!orderedLines.length){
     openPickCards.innerHTML = `<div class="muted">Geen pickregels gevonden.</div>`;
     return;
   }
 
-  openPickCards.innerHTML = openLines.map(line => {
+  openPickCards.innerHTML = orderedLines.map(line => {
     const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
     const isDone = remaining === 0;
 
@@ -1196,7 +1217,7 @@ async function processScannedSku(rawValue){
     );
 
     if(!line){
-      throw new Error(`Dit artikel hoort niet meer bij een open regel van picklijst ${activePicklist.order_no}.`);
+      throw new Error(`Dit artikel hoort niet bij een open regel van picklijst ${activePicklist.order_no}.`);
     }
 
     if(activePicklist.status === 'RELEASED'){
@@ -1284,10 +1305,8 @@ async function toggleCamera(){
     qr = new Html5Qrcode('qr_reader');
   }
 
-  const qrReader = byId('qr_reader');
-
   if(!qrRunning){
-    qrReader.classList.remove('hidden');
+    cameraWrapper.classList.remove('hidden');
     btnToggleCamera.textContent = 'Stop camera';
 
     try{
@@ -1310,7 +1329,7 @@ async function toggleCamera(){
       setStatus('Camera actief');
     } catch(e){
       qrRunning = false;
-      qrReader.classList.add('hidden');
+      cameraWrapper.classList.add('hidden');
       btnToggleCamera.textContent = 'Start camera';
       setStatus('Fout');
       toast('Camera start niet. Gebruik https en sta camera toe.', 'err');
@@ -1328,7 +1347,7 @@ async function stopCamera(){
   } catch(_) {}
 
   qrRunning = false;
-  byId('qr_reader').classList.add('hidden');
+  cameraWrapper.classList.add('hidden');
   btnToggleCamera.textContent = 'Start camera';
   setStatus('Klaar');
 }
