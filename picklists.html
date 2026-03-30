@@ -14,6 +14,7 @@
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <style>
     .page-stack{
@@ -23,7 +24,7 @@
 
     .build-header{
       display:grid;
-      grid-template-columns:1fr 1fr;
+      grid-template-columns:1fr;
       gap:14px;
     }
 
@@ -189,6 +190,13 @@
       margin-bottom:14px;
     }
 
+    .detail-actions-top{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
     .detail-group{
       border:1px solid var(--border);
       border-radius:14px;
@@ -242,7 +250,7 @@
 
     .saved-row-head{
       display:grid;
-      grid-template-columns:36px 170px 1fr 130px 110px 120px 140px;
+      grid-template-columns:36px 180px 1fr 130px 110px 120px 220px;
       gap:12px;
       padding:14px 16px;
       align-items:center;
@@ -390,6 +398,13 @@
       margin-bottom:18px;
     }
 
+    .print-title-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:18px;
+    }
+
     .print-title{
       font-size:24px;
       font-weight:900;
@@ -401,6 +416,30 @@
       font-size:13px;
       color:#475569;
       line-height:1.45;
+    }
+
+    .print-qr-box{
+      min-width:135px;
+      text-align:center;
+    }
+
+    .print-qr{
+      width:120px;
+      height:120px;
+      margin:0 auto 8px auto;
+      border:1px solid #dbe2ea;
+      padding:6px;
+      background:#fff;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .print-qr-note{
+      font-size:11px;
+      color:#475569;
+      line-height:1.3;
+      font-weight:700;
     }
 
     .print-order{
@@ -493,12 +532,12 @@
       top:0;
     }
 
-    @media(max-width:1150px){
+    @media(max-width:1220px){
+      .saved-row-head,
       .order-line-head,
       .order-line,
       .detail-group-head,
-      .detail-group-line,
-      .saved-row-head{
+      .detail-group-line{
         grid-template-columns:1fr;
       }
 
@@ -508,8 +547,7 @@
     }
 
     @media(max-width:900px){
-      .pick-toolbar,
-      .build-header{
+      .pick-toolbar{
         grid-template-columns:1fr;
       }
     }
@@ -534,6 +572,7 @@
       <a href="/stock.html">Huidige voorraad</a>
       <a href="/outscans.html">Uitscans</a>
       <a href="/picklists.html">Picklijsten</a>
+      <a href="/online-picklists.html">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -551,14 +590,10 @@
     <div class="card">
       <h2>Nieuwe picklijst in opbouw</h2>
       <div class="muted">
-        Voeg regels toe per order. Alleen artikelen die nu op voorraad staan zijn selecteerbaar. Vink daarna de gewenste orders aan om ze samen op één picklijst te zetten en op één PDF te printen.
+        Voeg regels toe per order. Alleen artikelen die nu op voorraad staan zijn selecteerbaar. Het systeem maakt bij opslaan automatisch een intern picklijst-ID aan.
       </div>
 
       <div class="build-header" style="margin-top:16px">
-        <div>
-          <label for="picklistNo">Picklijstnummer</label>
-          <input id="picklistNo" placeholder="Bijv. PICK-24001"/>
-        </div>
         <div>
           <label for="picklistNote">Opmerking</label>
           <input id="picklistNote" placeholder="Bijv. vandaag laden / spoed"/>
@@ -606,8 +641,8 @@
         <div class="btnRow" style="margin-top:14px">
           <button class="btn" id="btnSelectAllOrders" type="button">Alle orders aanvinken</button>
           <button class="btn" id="btnSelectNoOrders" type="button">Alle vinkjes uit</button>
-          <button class="btn accent" id="btnPrintSelectedOrders" type="button">PDF geselecteerde orders</button>
-          <button class="btn primary" id="btnSavePicklist" type="button">Picklijst opslaan van geselecteerde orders</button>
+          <button class="btn" id="btnPrintSelectedOrders" type="button">PDF concept</button>
+          <button class="btn primary" id="btnSavePicklist" type="button">Picklijst opslaan</button>
           <button class="btn" id="btnClearDraft" type="button">Leegmaken</button>
         </div>
       </div>
@@ -623,17 +658,16 @@
       <div class="muted">
         Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.
       </div>
-
       <div id="activePicklistDetail" style="margin-top:16px"></div>
     </div>
 
     <div class="card">
-      <h3>Oude picklijsten</h3>
+      <h3>Opgeslagen picklijsten</h3>
 
       <div class="row" style="margin-top:14px">
         <div>
           <label for="picklistSearch">Zoeken</label>
-          <input id="picklistSearch" placeholder="Zoek op picklijstnummer"/>
+          <input id="picklistSearch" placeholder="Zoek op picklijst-ID, status of opmerking"/>
         </div>
         <div>
           <label>&nbsp;</label>
@@ -662,7 +696,6 @@
     </div>
 
     <div id="pickModalInfo" class="small-stock" style="margin-bottom:12px"></div>
-
     <div id="pickModalItems"></div>
 
     <div class="btnRow" style="margin-top:16px">
@@ -678,6 +711,9 @@
 setActiveNav();
 const client = sb();
 
+const PICKER_EMAIL = 'warehouse@oegemalogistics.com';
+const ONLINE_PICK_PATH = '/online-picklists.html';
+
 let allProducts = [];
 let stockSummary = new Map();
 let stockItems = [];
@@ -689,6 +725,20 @@ let savedPicklists = [];
 let activePicklist = null;
 let activePicklistLines = [];
 let currentPickModalLine = null;
+
+function makeAutoPicklistNo(){
+  const d = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  return `PL-${d.getFullYear()}${pad(d.getMonth()+1)}${pad(d.getDate())}-${pad(d.getHours())}${pad(d.getMinutes())}${pad(d.getSeconds())}`;
+}
+
+function buildOnlinePickUrl(pick){
+  const url = new URL(location.origin + ONLINE_PICK_PATH);
+  url.searchParams.set('pick_id', pick.id);
+  url.searchParams.set('pick_no', pick.order_no);
+  url.searchParams.set('login_email', PICKER_EMAIL);
+  return url.toString();
+}
 
 function getLocationCountsForSku(skuBase){
   const counts = new Map();
@@ -943,7 +993,7 @@ function renderDraftOrders(){
           </div>
 
           <div class="order-actions">
-            <button class="btn" type="button" onclick="printSingleDraftOrder('${escapeHtml(group.orderNo)}')">PDF deze order</button>
+            <button class="btn" type="button" onclick="printSingleDraftOrder('${escapeHtml(group.orderNo)}')">PDF concept</button>
             <button class="btn danger" type="button" onclick="removeDraftOrder('${escapeHtml(group.orderNo)}')">Order verwijderen</button>
           </div>
         </div>
@@ -1049,9 +1099,17 @@ function buildPrintHtmlFromGroups(title, subtitleLines, groups){
   return `
     <div class="print-sheet" id="printSheet">
       <div class="print-header">
-        <div class="print-title">${escapeHtml(title)}</div>
-        <div class="print-sub">
-          ${subtitleLines.map(line => escapeHtml(line)).join('<br>')}
+        <div class="print-title-row">
+          <div style="flex:1">
+            <div class="print-title">${escapeHtml(title)}</div>
+            <div class="print-sub">
+              ${subtitleLines.map(line => escapeHtml(line)).join('<br>')}
+            </div>
+          </div>
+          <div class="print-qr-box">
+            <div class="print-qr" id="printQrBox"></div>
+            <div class="print-qr-note">Scan voor online picking</div>
+          </div>
         </div>
       </div>
 
@@ -1089,9 +1147,23 @@ function buildPrintHtmlFromGroups(title, subtitleLines, groups){
   `;
 }
 
-async function printHtmlToPdf(html, filenameBase){
+async function printHtmlToPdf(html, filenameBase, qrText=''){
   const mount = byId('hiddenPrintMount');
   mount.innerHTML = html;
+
+  if(qrText){
+    const qrTarget = byId('printQrBox');
+    if(qrTarget){
+      qrTarget.innerHTML = '';
+      new QRCode(qrTarget, {
+        text: qrText,
+        width: 106,
+        height: 106,
+        correctLevel: QRCode.CorrectLevel.M
+      });
+      await new Promise(resolve => setTimeout(resolve, 180));
+    }
+  }
 
   const node = byId('printSheet');
   const canvas = await html2canvas(node, {
@@ -1153,7 +1225,6 @@ async function printSelectedDraftOrders(){
   const groups = getSelectedDraftGroups();
   if(!groups.length) return toast('Selecteer eerst minimaal 1 order.', 'err');
 
-  const picklistNo = (byId('picklistNo').value || '').trim() || 'Concept picklijst';
   const note = (byId('picklistNote').value || '').trim();
   const totalOrders = groups.length;
   const totalQty = groups.reduce((sum, g) => sum + g.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0), 0);
@@ -1164,16 +1235,17 @@ async function printSelectedDraftOrders(){
   }));
 
   const html = buildPrintHtmlFromGroups(
-    `Picklijst ${picklistNo}`,
+    `Concept picklijst`,
     [
       'Ronald Verdult Design · Oegema Logistics',
       `Orders: ${totalOrders} · Totaal colli: ${totalQty}`,
-      note ? `Opmerking: ${note}` : ''
+      note ? `Opmerking: ${note}` : '',
+      'Let op: conceptprint zonder online QR-koppeling. Sla eerst op voor live QR.'
     ].filter(Boolean),
     printGroups
   );
 
-  await printHtmlToPdf(html, `${picklistNo}_geselecteerde_orders`);
+  await printHtmlToPdf(html, `concept_picklijst`);
 }
 
 async function printSingleDraftOrder(orderNo){
@@ -1181,10 +1253,11 @@ async function printSingleDraftOrder(orderNo){
   if(!group) return;
 
   const html = buildPrintHtmlFromGroups(
-    `Order ${orderNo}`,
+    `Concept order ${orderNo}`,
     [
       'Ronald Verdult Design · Oegema Logistics',
-      `Totaal colli: ${group.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0)}`
+      `Totaal colli: ${group.rows.reduce((s, r) => s + Number(r.qty_needed || 0), 0)}`,
+      'Let op: conceptprint zonder online QR-koppeling.'
     ],
     [{
       blockTitle: `Order ${orderNo}`,
@@ -1192,27 +1265,17 @@ async function printSingleDraftOrder(orderNo){
     }]
   );
 
-  await printHtmlToPdf(html, `order_${orderNo}`);
+  await printHtmlToPdf(html, `concept_order_${orderNo}`);
 }
 
 async function savePicklist(){
-  const picklistNo = (byId('picklistNo').value || '').trim();
   const note = (byId('picklistNote').value || '').trim();
   const selectedGroups = getSelectedDraftGroups();
 
-  if(!picklistNo) return toast('Vul eerst een picklijstnummer in.', 'err');
   if(!selectedGroups.length) return toast('Vink eerst minimaal 1 order aan.', 'err');
 
   const selectedLines = selectedGroups.flatMap(g => g.rows);
-
-  const { data: exists, error: checkErr } = await client
-    .from('pick_orders')
-    .select('id')
-    .eq('order_no', picklistNo)
-    .maybeSingle();
-
-  if(checkErr) return toast(checkErr.message || String(checkErr), 'err');
-  if(exists) return toast('Dit picklijstnummer bestaat al.', 'err');
+  const picklistNo = makeAutoPicklistNo();
 
   const { data: order, error: orderErr } = await client
     .from('pick_orders')
@@ -1317,19 +1380,26 @@ async function loadSavedPicklists(){
   });
 
   if(q){
-    rows = rows.filter(r => String(r.order_no || '').toLowerCase().includes(q));
+    rows = rows.filter(r =>
+      String(r.order_no || '').toLowerCase().includes(q) ||
+      String(r.note || '').toLowerCase().includes(q) ||
+      String(r.status || '').toLowerCase().includes(q)
+    );
   }
 
   savedPicklists = rows;
+  renderSavedPicklists();
+}
 
+function renderSavedPicklists(){
   const el = byId('savedPicklists');
 
-  if(!rows.length){
+  if(!savedPicklists.length){
     el.innerHTML = `<div class="muted">Nog geen picklijsten gevonden.</div>`;
     return;
   }
 
-  el.innerHTML = rows.map(row => `
+  el.innerHTML = savedPicklists.map(row => `
     <div class="saved-row">
       <div class="saved-row-head">
         <div>
@@ -1345,7 +1415,7 @@ async function loadSavedPicklists(){
 
         <div>
           <span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">
-            ${row.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(row.status || 'CONCEPT')}
+            ${escapeHtml(row.status || 'CONCEPT')}
           </span>
         </div>
 
@@ -1361,7 +1431,8 @@ async function loadSavedPicklists(){
 
         <div class="saved-actions">
           <button class="btn primary" type="button" onclick="openPicklist('${row.id}')">Openen</button>
-          <button class="btn" type="button" onclick="printSingleSavedPicklist('${row.id}')">PDF</button>
+          <button class="btn" type="button" onclick="releasePicklist('${row.id}')">Released</button>
+          <button class="btn accent" type="button" onclick="printSingleSavedPicklist('${row.id}')">PDF + QR</button>
         </div>
       </div>
     </div>
@@ -1396,17 +1467,20 @@ async function printSingleSavedPicklist(id){
   if(!groups.length) return toast('Picklijst niet gevonden.', 'err');
 
   const pick = savedPicklists.find(p => p.id === id);
+  const qrUrl = buildOnlinePickUrl(pick);
+
   const html = buildPrintHtmlFromGroups(
     `Picklijst ${pick.order_no}`,
     [
       'Ronald Verdult Design · Oegema Logistics',
       `Regels: ${pick.line_count} · Totaal colli: ${pick.total_qty}`,
-      pick.note ? `Opmerking: ${pick.note}` : ''
+      pick.note ? `Opmerking: ${pick.note}` : '',
+      `Picker login e-mail: ${PICKER_EMAIL}`
     ].filter(Boolean),
     groups
   );
 
-  await printHtmlToPdf(html, `picklijst_${pick.order_no}`);
+  await printHtmlToPdf(html, `picklijst_${pick.order_no}`, qrUrl);
 }
 
 async function printSelectedSavedPicklists(){
@@ -1414,20 +1488,46 @@ async function printSelectedSavedPicklists(){
   if(!ids.length) return toast('Vink eerst minimaal 1 picklijst aan.', 'err');
 
   const selected = savedPicklists.filter(p => ids.includes(p.id));
-  const totalQty = selected.reduce((sum, p) => sum + Number(p.total_qty || 0), 0);
+  if(selected.length === 1){
+    return printSingleSavedPicklist(selected[0].id);
+  }
 
+  const totalQty = selected.reduce((sum, p) => sum + Number(p.total_qty || 0), 0);
+  const first = selected[0];
   const groups = await buildSavedPicklistPrintGroups(ids);
 
   const html = buildPrintHtmlFromGroups(
     'Geselecteerde picklijsten',
     [
       'Ronald Verdult Design · Oegema Logistics',
-      `Aantal picklijsten: ${selected.length} · Totaal colli: ${totalQty}`
+      `Aantal picklijsten: ${selected.length} · Totaal colli: ${totalQty}`,
+      `QR verwijst naar eerste picklijst in selectie: ${first.order_no}`,
+      `Picker login e-mail: ${PICKER_EMAIL}`
     ],
     groups
   );
 
-  await printHtmlToPdf(html, 'geselecteerde_picklijsten');
+  await printHtmlToPdf(html, 'geselecteerde_picklijsten', buildOnlinePickUrl(first));
+}
+
+async function releasePicklist(id){
+  try{
+    const { error } = await client
+      .from('pick_orders')
+      .update({ status:'RELEASED' })
+      .eq('id', id);
+
+    if(error) throw error;
+
+    toast('Picklijst op RELEASED gezet.', 'ok');
+    await loadSavedPicklists();
+
+    if(activePicklist && activePicklist.id === id){
+      await openPicklist(id);
+    }
+  } catch(e){
+    toast(e.message || String(e), 'err');
+  }
 }
 
 async function deleteSelectedPicklists(){
@@ -1515,15 +1615,21 @@ function renderActivePicklist(){
       <div class="row">
         <div>
           <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
-          <span class="small">${escapeHtml(activePicklist.note || '-')}</span>
+          <span class="small">${escapeHtml(activePicklist.note || '-')}</span><br>
+          <span class="small">Online QR: ${escapeHtml(buildOnlinePickUrl(activePicklist))}</span>
         </div>
         <div>
           <b>Status:</b>
           <span class="status-badge status-${escapeHtml(activePicklist.status || 'CONCEPT')}">
-            ${activePicklist.status === 'DONE' ? 'VOLLEDIG AFGEBOEKT' : escapeHtml(activePicklist.status || 'CONCEPT')}
+            ${escapeHtml(activePicklist.status || 'CONCEPT')}
           </span><br>
           <span class="small">Gepickt: ${totalPicked} / ${totalNeeded}</span>
         </div>
+      </div>
+
+      <div class="detail-actions-top">
+        <button class="btn" type="button" onclick="releasePicklist('${activePicklist.id}')">Zet op RELEASED</button>
+        <button class="btn accent" type="button" onclick="printSingleSavedPicklist('${activePicklist.id}')">Print met QR</button>
       </div>
     </div>
 
@@ -1709,7 +1815,7 @@ async function confirmPickedAndBookOut(){
         .from('pick_orders')
         .update({ status:'DONE' })
         .eq('id', activePicklist.id);
-    } else {
+    } else if(activePicklist.status === 'CONCEPT' || activePicklist.status === 'RELEASED'){
       await client
         .from('pick_orders')
         .update({ status:'PICKING' })
@@ -1755,7 +1861,6 @@ byId('btnSavePicklist').addEventListener('click', () =>
 byId('btnClearDraft').addEventListener('click', async () => {
   draftLines = [];
   draftOrderChecks = {};
-  byId('picklistNo').value = '';
   byId('picklistNote').value = '';
   byId('sourceOrderNo').value = '';
   byId('productSearch').value = '';
