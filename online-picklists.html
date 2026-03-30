@@ -1,0 +1,1009 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+  <title>Online picklijsten · Ronald Verdult</title>
+
+  <link rel="stylesheet" href="/css/theme.css"/>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+
+  <style>
+    .page-stack{
+      display:grid;
+      gap:16px;
+    }
+
+    .auth-shell{
+      max-width:540px;
+      margin:0 auto;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .picker-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:flex-start;
+      flex-wrap:wrap;
+    }
+
+    .picker-toolbar{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
+      align-items:end;
+    }
+
+    .picker-kpis{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
+      gap:14px;
+      margin-top:14px;
+    }
+
+    .picker-kpis .card{
+      padding:16px;
+    }
+
+    .scan-area{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:12px;
+      align-items:end;
+    }
+
+    .scan-big{
+      font-size:20px;
+      font-weight:800;
+      padding:14px 16px;
+    }
+
+    .scan-help{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+    }
+
+    .qr-box{
+      margin-top:14px;
+      border:1px dashed var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:12px;
+    }
+
+    .qr-head{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .picklist-grid{
+      display:grid;
+      gap:12px;
+    }
+
+    .picklist-row{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+    }
+
+    .picklist-row-head{
+      display:grid;
+      grid-template-columns:180px 1fr 120px 110px 120px 140px;
+      gap:12px;
+      padding:14px 16px;
+      align-items:center;
+    }
+
+    .picklist-row-head:hover{
+      background:#fafbfc;
+    }
+
+    .picklist-title{
+      font-size:16px;
+      font-weight:900;
+      color:var(--navy);
+      word-break:break-word;
+    }
+
+    .picklist-note{
+      line-height:1.35;
+      color:var(--text);
+    }
+
+    .picklist-meta{
+      text-align:right;
+    }
+
+    .picklist-meta .n{
+      font-size:24px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1;
+    }
+
+    .picklist-meta .t{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-top:4px;
+    }
+
+    .status-badge{
+      display:inline-flex;
+      align-items:center;
+      padding:6px 10px;
+      border-radius:999px;
+      font-size:12px;
+      font-weight:800;
+      border:1px solid var(--border);
+      background:#fff;
+      white-space:nowrap;
+    }
+
+    .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
+    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
+    .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
+    .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
+
+    .active-summary{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:16px;
+      margin-bottom:14px;
+    }
+
+    .line-group{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      margin-bottom:12px;
+    }
+
+    .line-group-head,
+    .line-row{
+      display:grid;
+      grid-template-columns:150px 130px 1fr 90px 90px 90px 1.2fr;
+      gap:12px;
+      padding:12px 14px;
+      align-items:center;
+    }
+
+    .line-group-head{
+      background:#f8fafc;
+      border-bottom:1px solid var(--border);
+      font-weight:800;
+    }
+
+    .line-row{
+      border-bottom:1px solid #edf2f7;
+    }
+
+    .line-row:last-child{
+      border-bottom:none;
+    }
+
+    .line-ok{
+      background:#f0fdf4;
+    }
+
+    .line-warn{
+      background:#fff7ed;
+    }
+
+    .scan-log{
+      display:grid;
+      gap:8px;
+      margin-top:12px;
+    }
+
+    .scan-log-item{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:10px 12px;
+      font-size:13px;
+      line-height:1.4;
+    }
+
+    .scan-log-item.ok{
+      background:#ecfdf3;
+      border-color:#abefc6;
+    }
+
+    .scan-log-item.err{
+      background:#fef3f2;
+      border-color:#fecdca;
+    }
+
+    @media(max-width:1100px){
+      .picklist-row-head,
+      .line-group-head,
+      .line-row{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:900px){
+      .picker-kpis{
+        grid-template-columns:1fr 1fr;
+      }
+
+      .scan-area,
+      .picker-toolbar{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:640px){
+      .picker-kpis{
+        grid-template-columns:1fr;
+      }
+    }
+  </style>
+</head>
+<body data-page="online-picklists">
+
+<div class="topbar no-print">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo">o</div>
+      <div class="title">
+        Oegema Logistics
+        <small>Ronald Verdult Design · Online picklijsten</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/online-picklists.html" class="active">Online picklijsten</a>
+    </nav>
+
+    <div class="rightbar">
+      <span class="pill"><span id="userEmail"></span></span>
+      <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <div id="toast" class="notice"></div>
+
+  <div id="loginGate" class="auth-shell">
+    <div class="auth-card">
+      <div class="auth-logo">
+        <div class="logo">o</div>
+        <div>
+          <div class="hero-title">Online picklijsten</div>
+          <div class="subtle">Log in om direct naar de picklijst te gaan.</div>
+        </div>
+      </div>
+
+      <label for="loginEmail">E-mailadres</label>
+      <input id="loginEmail" type="email" autocomplete="username"/>
+
+      <label for="loginPassword" style="margin-top:12px">Wachtwoord</label>
+      <input id="loginPassword" type="password" autocomplete="current-password"/>
+
+      <div class="btnRow" style="margin-top:16px">
+        <button class="btn primary" id="btnLoginInline" type="button">Inloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="appSection" class="page-stack hidden">
+
+    <div class="card">
+      <div class="picker-top">
+        <div>
+          <h2>Online picklijsten</h2>
+          <div class="muted">
+            Scan de QR-code op de picklijst of open hieronder een vrijgegeven picklijst. Daarna scan je direct de producten om af te boeken.
+          </div>
+        </div>
+        <span class="pill">Status: <b id="liveStatusTxt">Klaar</b></span>
+      </div>
+
+      <div class="picker-kpis">
+        <div class="card">
+          <div class="kpi">
+            <div class="label">Vrijgegeven picklijsten</div>
+            <div class="value" id="kpiReleased">0</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <div class="label">Actieve picklijst</div>
+            <div class="value" id="kpiActivePick">-</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <div class="label">Nog te picken</div>
+            <div class="value" id="kpiRemaining">0</div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="kpi">
+            <div class="label">Gescand in sessie</div>
+            <div class="value" id="kpiScannedSession">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <h3>Beschikbare picklijsten</h3>
+
+      <div class="picker-toolbar" style="margin-top:14px">
+        <div>
+          <label for="picklistSearch">Zoeken</label>
+          <input id="picklistSearch" placeholder="Zoek op picklijstnummer of opmerking"/>
+        </div>
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
+        </div>
+      </div>
+
+      <div id="availablePicklists" class="picklist-grid" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Actieve picklijst</h3>
+      <div id="activePicklistDetail" style="margin-top:16px"></div>
+    </div>
+
+    <div class="card">
+      <h3>Product scannen en direct afboeken</h3>
+
+      <div class="scan-area" style="margin-top:14px">
+        <div>
+          <label for="scanSkuInput">SKU / sticker</label>
+          <input id="scanSkuInput" class="scan-big" placeholder="Scan productcode…" autocomplete="off"/>
+          <div class="scan-help">
+            Werkt met handscanner en QR-camera. Oude en nieuwe stickerformaten worden automatisch herkend.
+          </div>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn primary" id="btnProcessScan" type="button" style="width:100%">Verwerken</button>
+        </div>
+
+        <div>
+          <label>&nbsp;</label>
+          <button class="btn" id="btnToggleCamera" type="button" style="width:100%">Start camera</button>
+        </div>
+      </div>
+
+      <div class="qr-box">
+        <div class="qr-head">
+          <div>
+            <b>Camera scanner</b>
+            <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
+          </div>
+          <span class="pill">HTTPS nodig</span>
+        </div>
+        <div id="qr_reader" class="hidden" style="border-radius:14px;overflow:hidden"></div>
+      </div>
+
+      <div style="margin-top:14px">
+        <h3>Laatste scans</h3>
+        <div id="scanLog" class="scan-log"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+const client = sb();
+
+const loginGate = byId('loginGate');
+const appSection = byId('appSection');
+const btnLogout = byId('btnLogout');
+const liveStatusTxt = byId('liveStatusTxt');
+const picklistSearch = byId('picklistSearch');
+const availablePicklists = byId('availablePicklists');
+const activePicklistDetail = byId('activePicklistDetail');
+const scanSkuInput = byId('scanSkuInput');
+const btnProcessScan = byId('btnProcessScan');
+const btnToggleCamera = byId('btnToggleCamera');
+const scanLog = byId('scanLog');
+
+let releasedPicklists = [];
+let activePicklist = null;
+let activePicklistLines = [];
+let stockItems = [];
+let qr = null;
+let qrRunning = false;
+let scannedSessionCount = 0;
+
+function setStatus(text){
+  liveStatusTxt.textContent = text;
+}
+
+function addScanLog(message, type='ok'){
+  const item = document.createElement('div');
+  item.className = `scan-log-item ${type}`;
+  item.innerHTML = `<b>${escapeHtml(nlTime(new Date().toISOString()))}</b><br>${escapeHtml(message)}`;
+  scanLog.prepend(item);
+
+  while(scanLog.children.length > 15){
+    scanLog.removeChild(scanLog.lastChild);
+  }
+}
+
+function normalizeScanLocal(v){
+  return String(v || '')
+    .replace(/\//g, '-')
+    .replace(/\\/g, '-')
+    .replace(/\s+/g, '')
+    .trim()
+    .toUpperCase();
+}
+
+function isValidUniqueSkuFlexible(s){
+  return /^(.*)-\d{4,5}$/.test(normalizeScanLocal(s));
+}
+
+function getQueryParams(){
+  const url = new URL(window.location.href);
+  return {
+    pickId: url.searchParams.get('pick_id') || '',
+    pickNo: url.searchParams.get('pick_no') || ''
+  };
+}
+
+function updateQueryForPicklist(pick){
+  const url = new URL(window.location.href);
+  url.searchParams.set('pick_id', pick.id);
+  url.searchParams.set('pick_no', pick.order_no);
+  window.history.replaceState({}, '', url.toString());
+}
+
+async function requireSessionInline(){
+  const { data, error } = await client.auth.getSession();
+  if(error) throw error;
+  return data.session || null;
+}
+
+async function signInInline(){
+  const email = (byId('loginEmail').value || '').trim();
+  const password = byId('loginPassword').value || '';
+
+  if(!email) return toast('Vul je e-mailadres in.', 'err');
+  if(!password) return toast('Vul je wachtwoord in.', 'err');
+
+  const { error } = await client.auth.signInWithPassword({ email, password });
+  if(error) throw error;
+}
+
+async function signOutInline(){
+  await client.auth.signOut();
+  location.reload();
+}
+
+async function loadUserHeader(){
+  const session = await requireSessionInline();
+  const emailEl = byId('userEmail');
+  if(emailEl){
+    emailEl.textContent = session?.user?.email || '';
+  }
+  btnLogout.classList.toggle('hidden', !session);
+}
+
+async function loadStockItems(){
+  const { data, error } = await client
+    .from('v_stock_items')
+    .select('*');
+
+  if(error) throw error;
+  stockItems = data || [];
+}
+
+function getLocationCountsForSku(skuBase){
+  const counts = new Map();
+
+  (stockItems || [])
+    .filter(it => it.sku_base === skuBase)
+    .forEach(it => {
+      const loc = (it.location || '').trim() || '-';
+      counts.set(loc, (counts.get(loc) || 0) + 1);
+    });
+
+  return counts;
+}
+
+function getLocationSummaryForSku(skuBase){
+  const counts = getLocationCountsForSku(skuBase);
+
+  return Array.from(counts.entries())
+    .sort((a,b) => {
+      if(a[1] !== b[1]) return a[1] - b[1];
+      return String(a[0]).localeCompare(String(b[0]), 'nl');
+    })
+    .map(([loc, qty]) => `${loc} (${qty})`)
+    .join(', ');
+}
+
+function updateKpis(){
+  byId('kpiReleased').textContent = String(releasedPicklists.length);
+  byId('kpiActivePick').textContent = activePicklist ? activePicklist.order_no : '-';
+
+  const remaining = activePicklistLines.reduce((sum, l) => {
+    return sum + Math.max(0, Number(l.qty_needed || 0) - Number(l.qty_picked || 0));
+  }, 0);
+
+  byId('kpiRemaining').textContent = String(remaining);
+  byId('kpiScannedSession').textContent = String(scannedSessionCount);
+}
+
+async function loadReleasedPicklists(){
+  const q = (picklistSearch.value || '').trim().toLowerCase();
+
+  const { data: orders, error: oErr } = await client
+    .from('pick_orders')
+    .select('*')
+    .in('status', ['RELEASED', 'PICKING'])
+    .order('created_at', { ascending:false });
+
+  if(oErr) throw oErr;
+
+  const { data: lines, error: lErr } = await client
+    .from('pick_order_lines')
+    .select('*');
+
+  if(lErr) throw lErr;
+
+  const grouped = new Map();
+  (lines || []).forEach(line => {
+    if(!grouped.has(line.pick_order_id)) grouped.set(line.pick_order_id, []);
+    grouped.get(line.pick_order_id).push(line);
+  });
+
+  let rows = (orders || []).map(order => {
+    const ls = grouped.get(order.id) || [];
+    const totalQty = ls.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
+    const pickedQty = ls.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+
+    return {
+      ...order,
+      lines: ls,
+      line_count: ls.length,
+      total_qty: totalQty,
+      picked_qty: pickedQty,
+      remaining_qty: Math.max(0, totalQty - pickedQty)
+    };
+  });
+
+  if(q){
+    rows = rows.filter(r =>
+      String(r.order_no || '').toLowerCase().includes(q) ||
+      String(r.note || '').toLowerCase().includes(q)
+    );
+  }
+
+  releasedPicklists = rows;
+  renderReleasedPicklists();
+  updateKpis();
+}
+
+function renderReleasedPicklists(){
+  if(!releasedPicklists.length){
+    availablePicklists.innerHTML = `<div class="muted">Geen vrijgegeven picklijsten gevonden.</div>`;
+    return;
+  }
+
+  availablePicklists.innerHTML = releasedPicklists.map(row => `
+    <div class="picklist-row">
+      <div class="picklist-row-head">
+        <div class="picklist-title">${escapeHtml(row.order_no)}</div>
+
+        <div class="picklist-note">
+          <b>${escapeHtml(row.customer_name || '')}</b><br>
+          <span class="small">${escapeHtml(row.note || '-')}</span>
+        </div>
+
+        <div>
+          <span class="status-badge status-${escapeHtml(row.status || 'RELEASED')}">${escapeHtml(row.status || 'RELEASED')}</span>
+        </div>
+
+        <div class="picklist-meta">
+          <div class="n">${row.line_count}</div>
+          <div class="t">regels</div>
+        </div>
+
+        <div class="picklist-meta">
+          <div class="n">${row.remaining_qty}</div>
+          <div class="t">nog te picken</div>
+        </div>
+
+        <div>
+          <button class="btn primary" type="button" onclick="openOnlinePicklist('${row.id}')">Openen</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function openOnlinePicklist(id){
+  const { data: order, error: oErr } = await client
+    .from('pick_orders')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if(oErr) return toast(oErr.message || String(oErr), 'err');
+
+  const { data: lines, error: lErr } = await client
+    .from('pick_order_lines')
+    .select('*')
+    .eq('pick_order_id', id)
+    .order('source_order_no', { ascending:true });
+
+  if(lErr) return toast(lErr.message || String(lErr), 'err');
+
+  activePicklist = order;
+  activePicklistLines = (lines || []).map(line => {
+    const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+    return {
+      ...line,
+      qty_remaining: remaining,
+      location_summary: getLocationSummaryForSku(line.sku_base)
+    };
+  });
+
+  updateQueryForPicklist(order);
+  renderActivePicklist();
+  updateKpis();
+  scanSkuInput.focus();
+}
+
+function renderActivePicklist(){
+  if(!activePicklist){
+    activePicklistDetail.innerHTML = `<div class="muted">Nog geen picklijst geselecteerd.</div>`;
+    return;
+  }
+
+  const groups = new Map();
+  activePicklistLines.forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!groups.has(orderNo)) groups.set(orderNo, []);
+    groups.get(orderNo).push(line);
+  });
+
+  const totalNeeded = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
+  const totalPicked = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+
+  activePicklistDetail.innerHTML = `
+    <div class="active-summary">
+      <div class="row">
+        <div>
+          <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
+          <span class="small">${escapeHtml(activePicklist.note || '-')}</span>
+        </div>
+        <div>
+          <b>Status:</b>
+          <span class="status-badge status-${escapeHtml(activePicklist.status || 'RELEASED')}">
+            ${escapeHtml(activePicklist.status || 'RELEASED')}
+          </span><br>
+          <span class="small">Gepickt: ${totalPicked} / ${totalNeeded}</span>
+        </div>
+      </div>
+    </div>
+
+    ${Array.from(groups.entries()).map(([orderNo, rows]) => `
+      <div class="line-group">
+        <div class="line-group-head">
+          <div>Order</div>
+          <div>SKU</div>
+          <div>Product</div>
+          <div>Nodig</div>
+          <div>Gepickt</div>
+          <div>Open</div>
+          <div>Locaties</div>
+        </div>
+
+        ${rows.map(line => `
+          <div class="line-row ${line.qty_remaining === 0 ? 'line-ok' : ''}">
+            <div><b>${escapeHtml(orderNo)}</b></div>
+            <div><b>${escapeHtml(line.sku_base)}</b></div>
+            <div>${escapeHtml(line.product_name)}</div>
+            <div>${line.qty_needed}</div>
+            <div>${line.qty_picked || 0}</div>
+            <div>${line.qty_remaining}</div>
+            <div class="small-stock">${escapeHtml(line.location_summary || '-')}</div>
+          </div>
+        `).join('')}
+      </div>
+    `).join('')}
+  `;
+}
+
+async function findItemByExactSku(skuUnique){
+  const { data, error } = await client
+    .from('items')
+    .select('id, product_id, sku_unique, status, location')
+    .eq('sku_unique', skuUnique)
+    .maybeSingle();
+
+  if(error) throw error;
+  return data || null;
+}
+
+async function processScannedSku(rawValue){
+  if(!activePicklist){
+    toast('Open eerst een picklijst.', 'err');
+    addScanLog('Geen actieve picklijst geselecteerd.', 'err');
+    return;
+  }
+
+  const skuUnique = normalizeScanLocal(rawValue);
+  if(!skuUnique){
+    return;
+  }
+
+  if(!isValidUniqueSkuFlexible(skuUnique)){
+    toast('Stickerformaat ongeldig.', 'err');
+    addScanLog(`Ongeldige scan: ${skuUnique}`, 'err');
+    return;
+  }
+
+  try{
+    setStatus('Controleren…');
+
+    const item = await findItemByExactSku(skuUnique);
+    if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
+    if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
+
+    const line = activePicklistLines.find(l =>
+      l.sku_base === skuUnique.replace(/-\d{4,5}$/,'') &&
+      Number(l.qty_picked || 0) < Number(l.qty_needed || 0)
+    );
+
+    if(!line){
+      throw new Error(`Dit artikel hoort niet meer bij een open regel van picklijst ${activePicklist.order_no}.`);
+    }
+
+    if(activePicklist.status === 'RELEASED'){
+      const { error: statusErr } = await client
+        .from('pick_orders')
+        .update({ status:'PICKING' })
+        .eq('id', activePicklist.id);
+
+      if(statusErr) throw statusErr;
+    }
+
+    const { error:updateErr } = await client
+      .from('items')
+      .update({
+        status:'OUT',
+        out_at:new Date().toISOString()
+      })
+      .eq('id', item.id);
+
+    if(updateErr) throw updateErr;
+
+    const { error:moveErr } = await client
+      .from('movements')
+      .insert([{
+        type:'OUT',
+        product_id:item.product_id,
+        sku_unique:item.sku_unique,
+        location:item.location || null,
+        order_no: line.source_order_no || activePicklist.order_no
+      }]);
+
+    if(moveErr) throw moveErr;
+
+    const newPicked = Number(line.qty_picked || 0) + 1;
+
+    const { error:lineErr } = await client
+      .from('pick_order_lines')
+      .update({ qty_picked: newPicked })
+      .eq('id', line.id);
+
+    if(lineErr) throw lineErr;
+
+    scannedSessionCount += 1;
+    addScanLog(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
+
+    await loadStockItems();
+    await loadReleasedPicklists();
+    await openOnlinePicklist(activePicklist.id);
+
+    const allDone = activePicklistLines.every(l => Number(l.qty_picked || 0) >= Number(l.qty_needed || 0));
+    if(allDone){
+      const { error:doneErr } = await client
+        .from('pick_orders')
+        .update({ status:'DONE' })
+        .eq('id', activePicklist.id);
+
+      if(doneErr) throw doneErr;
+
+      await loadReleasedPicklists();
+      await openOnlinePicklist(activePicklist.id);
+      addScanLog(`Picklijst ${activePicklist.order_no} is volledig afgerond.`, 'ok');
+    }
+
+    setStatus('Klaar');
+    scanSkuInput.value = '';
+    scanSkuInput.focus();
+
+  } catch(e){
+    setStatus('Fout');
+    toast(e.message || String(e), 'err');
+    addScanLog(e.message || String(e), 'err');
+    scanSkuInput.focus();
+  }
+}
+
+async function toggleCamera(){
+  if(typeof Html5Qrcode !== 'function'){
+    return toast('QR library ontbreekt.', 'err');
+  }
+
+  if(!qr){
+    qr = new Html5Qrcode('qr_reader');
+  }
+
+  const qrReader = byId('qr_reader');
+
+  if(!qrRunning){
+    qrReader.classList.remove('hidden');
+    btnToggleCamera.textContent = 'Stop camera';
+
+    try{
+      const cams = await Html5Qrcode.getCameras();
+      if(!cams || !cams.length) throw new Error('Geen camera gevonden');
+
+      const preferred = cams.find(c => /back|rear|environment/i.test(c.label)) || cams[0];
+
+      qrRunning = true;
+      await qr.start(
+        preferred.id,
+        { fps: 10, qrbox: { width: 260, height: 260 } },
+        async (decodedText) => {
+          const fixed = normalizeScanLocal(decodedText);
+          scanSkuInput.value = fixed;
+          await processScannedSku(fixed);
+        }
+      );
+
+      setStatus('Camera actief');
+    } catch(e){
+      qrRunning = false;
+      qrReader.classList.add('hidden');
+      btnToggleCamera.textContent = 'Start camera';
+      setStatus('Fout');
+      toast('Camera start niet. Gebruik https en sta camera toe.', 'err');
+    }
+  } else {
+    await stopCamera();
+  }
+}
+
+async function stopCamera(){
+  try{
+    if(qr && qrRunning){
+      await qr.stop();
+    }
+  } catch(_) {}
+
+  qrRunning = false;
+  byId('qr_reader').classList.add('hidden');
+  btnToggleCamera.textContent = 'Start camera';
+  setStatus('Klaar');
+}
+
+async function loadFromQueryIfPresent(){
+  const { pickId, pickNo } = getQueryParams();
+
+  if(pickId){
+    await openOnlinePicklist(pickId);
+    return;
+  }
+
+  if(pickNo){
+    const found = releasedPicklists.find(p => String(p.order_no || '') === String(pickNo || ''));
+    if(found){
+      await openOnlinePicklist(found.id);
+    }
+  }
+}
+
+async function bootstrap(){
+  const session = await requireSessionInline();
+  await loadUserHeader();
+
+  if(!session){
+    loginGate.classList.remove('hidden');
+    appSection.classList.add('hidden');
+    return;
+  }
+
+  loginGate.classList.add('hidden');
+  appSection.classList.remove('hidden');
+
+  await loadStockItems();
+  await loadReleasedPicklists();
+  await loadFromQueryIfPresent();
+
+  if(!activePicklist && releasedPicklists.length){
+    const { pickId, pickNo } = getQueryParams();
+    if(!pickId && !pickNo){
+      // niets automatisch openen als geen QR-link gebruikt is
+    }
+  }
+
+  setStatus('Klaar');
+}
+
+byId('btnLoginInline').addEventListener('click', async () => {
+  try{
+    await signInInline();
+    toast('Inloggen gelukt.', 'ok');
+    await bootstrap();
+  } catch(e){
+    toast(e.message || String(e), 'err');
+  }
+});
+
+btnLogout.addEventListener('click', async () => {
+  await signOutInline();
+});
+
+byId('btnRefreshPicklists').addEventListener('click', () => {
+  loadReleasedPicklists().catch(e => toast(e.message || String(e), 'err'));
+});
+
+picklistSearch.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    loadReleasedPicklists().catch(err => toast(err.message || String(err), 'err'));
+  }
+});
+
+btnProcessScan.addEventListener('click', () => {
+  processScannedSku(scanSkuInput.value).catch(e => toast(e.message || String(e), 'err'));
+});
+
+scanSkuInput.addEventListener('input', () => {
+  scanSkuInput.value = normalizeScanLocal(scanSkuInput.value);
+});
+
+scanSkuInput.addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    processScannedSku(scanSkuInput.value).catch(err => toast(err.message || String(err), 'err'));
+  }
+});
+
+btnToggleCamera.addEventListener('click', () => {
+  toggleCamera().catch(e => toast(e.message || String(e), 'err'));
+});
+
+bootstrap().catch(e => toast(e.message || String(e), 'err'));
+</script>
+
+</body>
+</html>
