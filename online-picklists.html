@@ -13,9 +13,85 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 
   <style>
-    .page-stack{
+    .hidden{ display:none !important; }
+
+    .mobile-shell{
+      max-width:920px;
+      margin:0 auto;
       display:grid;
-      gap:16px;
+      gap:14px;
+    }
+
+    .compact-topbar{
+      background:var(--navy);
+      color:#fff;
+      border-radius:22px;
+      padding:16px;
+      box-shadow:var(--shadow);
+    }
+
+    .compact-top-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+
+    .compact-brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:0;
+    }
+
+    .compact-brand .logo{
+      width:44px;
+      height:44px;
+      font-size:28px;
+      border-radius:14px;
+      flex:0 0 auto;
+    }
+
+    .compact-brand-text{
+      min-width:0;
+    }
+
+    .compact-brand-title{
+      font-size:18px;
+      font-weight:900;
+      line-height:1.1;
+    }
+
+    .compact-brand-sub{
+      margin-top:4px;
+      font-size:13px;
+      color:#d2deeb;
+      font-weight:700;
+      line-height:1.3;
+    }
+
+    .compact-user{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+
+    .compact-user .mail-pill{
+      display:inline-flex;
+      align-items:center;
+      max-width:280px;
+      padding:10px 14px;
+      border-radius:999px;
+      background:#fff;
+      color:var(--text);
+      font-weight:800;
+      font-size:13px;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
 
     .auth-shell{
@@ -23,65 +99,252 @@
       margin:0 auto;
     }
 
-    .hidden{
-      display:none !important;
+    .auth-card{
+      background:#fff;
+      padding:24px;
+      border:1px solid var(--border);
+      border-radius:24px;
+      box-shadow:var(--shadow);
     }
 
-    .picker-top{
+    .auth-head{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      margin-bottom:16px;
+    }
+
+    .auth-head .logo{
+      width:48px;
+      height:48px;
+      font-size:30px;
+      border-radius:14px;
+      flex:0 0 auto;
+    }
+
+    .auth-title{
+      font-size:24px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.1;
+      margin:0;
+    }
+
+    .auth-sub{
+      margin-top:4px;
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.4;
+    }
+
+    .section-card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:22px;
+      box-shadow:var(--shadow);
+      padding:18px;
+    }
+
+    .section-head{
       display:flex;
       justify-content:space-between;
-      gap:12px;
       align-items:flex-start;
-      flex-wrap:wrap;
-    }
-
-    .picker-toolbar{
-      display:grid;
-      grid-template-columns:1fr auto;
       gap:12px;
-      align-items:end;
+      flex-wrap:wrap;
+      margin-bottom:12px;
     }
 
-    .picker-kpis{
+    .section-head h2,
+    .section-head h3{
+      margin:0;
+    }
+
+    .section-sub{
+      color:var(--muted);
+      font-size:14px;
+      line-height:1.4;
+      margin-top:4px;
+    }
+
+    .status-chip{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:13px;
+      font-weight:900;
+      color:var(--text);
+      white-space:nowrap;
+    }
+
+    .kpi-grid{
       display:grid;
       grid-template-columns:repeat(4,1fr);
-      gap:14px;
-      margin-top:14px;
-    }
-
-    .picker-kpis .card{
-      padding:16px;
-    }
-
-    .scan-area{
-      display:grid;
-      grid-template-columns:1fr auto auto;
       gap:12px;
-      align-items:end;
     }
 
-    .scan-big{
-      font-size:20px;
-      font-weight:800;
-      padding:14px 16px;
+    .kpi-mini{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#f8fafc;
+      padding:14px;
     }
 
-    .scan-help{
+    .kpi-mini .k{
+      font-size:11px;
+      color:var(--muted);
+      font-weight:900;
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .kpi-mini .v{
+      margin-top:6px;
+      font-size:28px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.05;
+    }
+
+    .active-pick-top{
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:14px;
+    }
+
+    .pick-title{
+      font-size:24px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.1;
+      word-break:break-word;
+    }
+
+    .pick-note{
       margin-top:8px;
-      font-size:12px;
       color:var(--muted);
       line-height:1.4;
     }
 
-    .qr-box{
-      margin-top:14px;
-      border:1px dashed var(--border);
-      border-radius:14px;
-      background:#fff;
-      padding:12px;
+    .pick-stat-box{
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:#f8fafc;
+      padding:14px;
     }
 
-    .qr-head{
+    .pick-stat-line{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .pick-stat-line:last-child{
+      margin-bottom:0;
+    }
+
+    .pick-stat-line .label{
+      font-size:13px;
+      font-weight:800;
+      color:var(--muted);
+    }
+
+    .pick-stat-line .value{
+      font-size:14px;
+      font-weight:900;
+      color:var(--text);
+      text-align:right;
+    }
+
+    .progress-wrap{
+      margin-top:14px;
+    }
+
+    .progress-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      margin-bottom:8px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--muted);
+    }
+
+    .progress-bar{
+      width:100%;
+      height:14px;
+      border-radius:999px;
+      background:#e5e7eb;
+      overflow:hidden;
+    }
+
+    .progress-fill{
+      height:100%;
+      background:linear-gradient(90deg,var(--navy),var(--navy-2));
+      border-radius:999px;
+      transition:width .2s ease;
+    }
+
+    .scan-panel{
+      position:sticky;
+      top:12px;
+      z-index:10;
+    }
+
+    .scan-main{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .scan-input{
+      font-size:20px;
+      font-weight:900;
+      padding:14px 16px;
+      border-radius:16px;
+    }
+
+    .scan-feedback{
+      margin-top:12px;
+      border-radius:16px;
+      padding:14px;
+      border:1px solid var(--border);
+      background:#f8fafc;
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .scan-feedback.ok{
+      background:#ecfdf3;
+      color:#027a48;
+      border-color:#abefc6;
+    }
+
+    .scan-feedback.err{
+      background:#fef3f2;
+      color:#b42318;
+      border-color:#fecdca;
+    }
+
+    .camera-box{
+      margin-top:12px;
+      border:1px dashed var(--border);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .camera-top{
       display:flex;
       justify-content:space-between;
       gap:12px;
@@ -90,137 +353,196 @@
       margin-bottom:10px;
     }
 
-    .picklist-grid{
+    .pick-cards{
       display:grid;
       gap:12px;
     }
 
-    .picklist-row{
+    .pick-card{
       border:1px solid var(--border);
-      border-radius:14px;
+      border-radius:18px;
       background:#fff;
       overflow:hidden;
     }
 
-    .picklist-row-head{
-      display:grid;
-      grid-template-columns:180px 1fr 120px 110px 120px 140px;
+    .pick-card.open{
+      border-color:#c7d2fe;
+      background:#fcfcff;
+    }
+
+    .pick-card.done{
+      background:#f0fdf4;
+      border-color:#abefc6;
+    }
+
+    .pick-card-top{
+      padding:14px 14px 10px 14px;
+      border-bottom:1px solid #edf2f7;
+      background:#f8fafc;
+    }
+
+    .pick-card-title-row{
+      display:flex;
+      justify-content:space-between;
       gap:12px;
-      padding:14px 16px;
-      align-items:center;
+      align-items:flex-start;
+      flex-wrap:wrap;
     }
 
-    .picklist-row-head:hover{
-      background:#fafbfc;
-    }
-
-    .picklist-title{
-      font-size:16px;
+    .pick-card-title{
+      font-size:18px;
       font-weight:900;
       color:var(--navy);
+      line-height:1.15;
       word-break:break-word;
     }
 
-    .picklist-note{
-      line-height:1.35;
-      color:var(--text);
-    }
-
-    .picklist-meta{
-      text-align:right;
-    }
-
-    .picklist-meta .n{
-      font-size:24px;
-      font-weight:900;
-      color:var(--navy);
-      line-height:1;
-    }
-
-    .picklist-meta .t{
-      font-size:12px;
-      color:var(--muted);
-      font-weight:800;
-      text-transform:uppercase;
-      letter-spacing:.04em;
+    .pick-card-order{
       margin-top:4px;
+      color:var(--muted);
+      font-size:13px;
+      font-weight:800;
     }
 
-    .status-badge{
+    .open-badge{
       display:inline-flex;
       align-items:center;
-      padding:6px 10px;
+      justify-content:center;
+      min-width:56px;
+      padding:8px 12px;
       border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid var(--border);
-      background:#fff;
-      white-space:nowrap;
+      background:var(--navy);
+      color:#fff;
+      font-weight:900;
+      font-size:16px;
     }
 
-    .status-CONCEPT{color:#92400e;background:#fffbeb;border-color:#fde68a}
-    .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
-    .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
-    .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
-
-    .active-summary{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      padding:16px;
-      margin-bottom:14px;
+    .open-badge.done{
+      background:#188038;
     }
 
-    .line-group{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      margin-bottom:12px;
-    }
-
-    .line-group-head,
-    .line-row{
+    .pick-card-body{
+      padding:14px;
       display:grid;
-      grid-template-columns:150px 130px 1fr 90px 90px 90px 1.2fr;
+      gap:10px;
+    }
+
+    .pick-row{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+    }
+
+    .pick-row .k{
+      min-width:90px;
+      font-size:12px;
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+    }
+
+    .pick-row .v{
+      text-align:right;
+      font-size:15px;
+      color:var(--text);
+      line-height:1.35;
+      word-break:break-word;
+      flex:1;
+    }
+
+    .location-box{
+      margin-top:2px;
+      padding:12px;
+      border-radius:14px;
+      background:#eef4fb;
+      border:1px solid #dbe7f4;
+    }
+
+    .location-title{
+      font-size:12px;
+      font-weight:900;
+      color:var(--muted);
+      text-transform:uppercase;
+      letter-spacing:.04em;
+      margin-bottom:6px;
+    }
+
+    .location-value{
+      font-size:17px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.3;
+      word-break:break-word;
+    }
+
+    .available-toggle{
+      display:flex;
+      justify-content:space-between;
       gap:12px;
-      padding:12px 14px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .available-list{
+      margin-top:14px;
+      display:grid;
+      gap:10px;
+    }
+
+    .available-item{
+      border:1px solid var(--border);
+      border-radius:16px;
+      background:#fff;
+      padding:14px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:12px;
       align-items:center;
     }
 
-    .line-group-head{
+    .available-title{
+      font-size:17px;
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.15;
+      word-break:break-word;
+    }
+
+    .available-sub{
+      margin-top:6px;
+      color:var(--muted);
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .available-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:8px;
+    }
+
+    .available-meta .pill{
+      padding:6px 10px;
+      border-radius:999px;
       background:#f8fafc;
-      border-bottom:1px solid var(--border);
-      font-weight:800;
-    }
-
-    .line-row{
-      border-bottom:1px solid #edf2f7;
-    }
-
-    .line-row:last-child{
-      border-bottom:none;
-    }
-
-    .line-ok{
-      background:#f0fdf4;
-    }
-
-    .line-warn{
-      background:#fff7ed;
+      border:1px solid var(--border);
+      font-size:12px;
+      font-weight:900;
     }
 
     .scan-log{
       display:grid;
       gap:8px;
-      margin-top:12px;
     }
 
     .scan-log-item{
       border:1px solid var(--border);
-      border-radius:12px;
+      border-radius:14px;
       background:#fff;
-      padding:10px 12px;
+      padding:12px;
       font-size:13px;
       line-height:1.4;
     }
@@ -235,188 +557,229 @@
       border-color:#fecdca;
     }
 
-    @media(max-width:1100px){
-      .picklist-row-head,
-      .line-group-head,
-      .line-row{
-        grid-template-columns:1fr;
-      }
-    }
-
     @media(max-width:900px){
-      .picker-kpis{
+      .kpi-grid{
         grid-template-columns:1fr 1fr;
       }
 
-      .scan-area,
-      .picker-toolbar{
+      .active-pick-top,
+      .scan-main{
         grid-template-columns:1fr;
+      }
+
+      .available-item{
+        grid-template-columns:1fr;
+      }
+
+      .compact-user{
+        justify-content:flex-start;
       }
     }
 
     @media(max-width:640px){
-      .picker-kpis{
+      .kpi-grid{
         grid-template-columns:1fr;
+      }
+
+      .compact-topbar{
+        padding:14px;
+      }
+
+      .section-card{
+        padding:16px;
+      }
+
+      .pick-title{
+        font-size:21px;
+      }
+
+      .scan-input{
+        font-size:18px;
+      }
+
+      .compact-user .mail-pill{
+        max-width:100%;
       }
     }
   </style>
 </head>
 <body data-page="online-picklists">
 
-<div class="topbar no-print">
-  <div class="inner">
-    <div class="brand">
-      <div class="logo">o</div>
-      <div class="title">
-        Oegema Logistics
-        <small>Ronald Verdult Design · Online picklijsten</small>
-      </div>
-    </div>
-
-    <nav class="nav">
-      <a href="/online-picklists.html" class="active">Online picklijsten</a>
-    </nav>
-
-    <div class="rightbar">
-      <span class="pill"><span id="userEmail"></span></span>
-      <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
-    </div>
-  </div>
-</div>
-
 <div class="container">
   <div id="toast" class="notice"></div>
 
-  <div id="loginGate" class="auth-shell">
-    <div class="auth-card">
-      <div class="auth-logo">
-        <div class="logo">o</div>
-        <div>
-          <div class="hero-title">Online picklijsten</div>
-          <div class="subtle">Log in om direct naar de picklijst te gaan.</div>
-        </div>
-      </div>
+  <div class="mobile-shell">
 
-      <label for="loginEmail">E-mailadres</label>
-      <input id="loginEmail" type="email" autocomplete="username"/>
-
-      <label for="loginPassword" style="margin-top:12px">Wachtwoord</label>
-      <input id="loginPassword" type="password" autocomplete="current-password"/>
-
-      <div class="btnRow" style="margin-top:16px">
-        <button class="btn primary" id="btnLoginInline" type="button">Inloggen</button>
-      </div>
-    </div>
-  </div>
-
-  <div id="appSection" class="page-stack hidden">
-
-    <div class="card">
-      <div class="picker-top">
-        <div>
-          <h2>Online picklijsten</h2>
-          <div class="muted">
-            Scan de QR-code op de picklijst of open hieronder een vrijgegeven picklijst. Daarna scan je direct de producten om af te boeken.
+    <div class="compact-topbar">
+      <div class="compact-top-row">
+        <div class="compact-brand">
+          <div class="logo">o</div>
+          <div class="compact-brand-text">
+            <div class="compact-brand-title">Oegema Logistics</div>
+            <div class="compact-brand-sub">Ronald Verdult Design · Online picklijsten</div>
           </div>
         </div>
-        <span class="pill">Status: <b id="liveStatusTxt">Klaar</b></span>
-      </div>
 
-      <div class="picker-kpis">
-        <div class="card">
-          <div class="kpi">
-            <div class="label">Vrijgegeven picklijsten</div>
-            <div class="value" id="kpiReleased">0</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="kpi">
-            <div class="label">Actieve picklijst</div>
-            <div class="value" id="kpiActivePick">-</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="kpi">
-            <div class="label">Nog te picken</div>
-            <div class="value" id="kpiRemaining">0</div>
-          </div>
-        </div>
-        <div class="card">
-          <div class="kpi">
-            <div class="label">Gescand in sessie</div>
-            <div class="value" id="kpiScannedSession">0</div>
-          </div>
+        <div class="compact-user">
+          <span class="mail-pill"><span id="userEmail"></span></span>
+          <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
         </div>
       </div>
     </div>
 
-    <div class="card">
-      <h3>Beschikbare picklijsten</h3>
+    <div id="loginGate" class="auth-shell">
+      <div class="auth-card">
+        <div class="auth-head">
+          <div class="logo">o</div>
+          <div>
+            <h1 class="auth-title">Inloggen</h1>
+            <div class="auth-sub">Log in om direct naar de picklijst te gaan.</div>
+          </div>
+        </div>
 
-      <div class="picker-toolbar" style="margin-top:14px">
-        <div>
+        <label for="loginEmail">E-mailadres</label>
+        <input id="loginEmail" type="email" autocomplete="username"/>
+
+        <label for="loginPassword" style="margin-top:12px">Wachtwoord</label>
+        <input id="loginPassword" type="password" autocomplete="current-password"/>
+
+        <div class="btnRow" style="margin-top:16px">
+          <button class="btn primary" id="btnLoginInline" type="button">Inloggen</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="appSection" class="page-stack hidden">
+
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Overzicht</h2>
+            <div class="section-sub">Alleen vrijgegeven of actieve picklijsten worden hier getoond.</div>
+          </div>
+          <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
+        </div>
+
+        <div class="kpi-grid">
+          <div class="kpi-mini">
+            <div class="k">Vrijgegeven</div>
+            <div class="v" id="kpiReleased">0</div>
+          </div>
+          <div class="kpi-mini">
+            <div class="k">Actieve picklijst</div>
+            <div class="v" id="kpiActivePick">-</div>
+          </div>
+          <div class="kpi-mini">
+            <div class="k">Nog te picken</div>
+            <div class="v" id="kpiRemaining">0</div>
+          </div>
+          <div class="kpi-mini">
+            <div class="k">Gescand sessie</div>
+            <div class="v" id="kpiScannedSession">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Actieve picklijst</h2>
+            <div class="section-sub">Dit is de picklijst waar je nu direct op scant.</div>
+          </div>
+        </div>
+
+        <div id="activePickHeader"></div>
+      </div>
+
+      <div class="section-card scan-panel">
+        <div class="section-head">
+          <div>
+            <h2>Scannen</h2>
+            <div class="section-sub">Scan product-QR of barcode om direct af te boeken.</div>
+          </div>
+        </div>
+
+        <div class="scan-main">
+          <div>
+            <label for="scanSkuInput">SKU / sticker</label>
+            <input id="scanSkuInput" class="scan-input" placeholder="Scan productcode…" autocomplete="off"/>
+          </div>
+
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn primary" id="btnProcessScan" type="button" style="width:100%">Verwerken</button>
+          </div>
+
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn" id="btnToggleCamera" type="button" style="width:100%">Start camera</button>
+          </div>
+        </div>
+
+        <div id="scanFeedback" class="scan-feedback">Nog geen scan verwerkt.</div>
+
+        <div class="camera-box">
+          <div class="camera-top">
+            <div>
+              <b>Camera scanner</b>
+              <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
+            </div>
+            <span class="pill">HTTPS nodig</span>
+          </div>
+          <div id="qr_reader" class="hidden" style="border-radius:14px;overflow:hidden"></div>
+        </div>
+      </div>
+
+      <div class="section-card">
+        <div class="section-head">
+          <div>
+            <h2>Open pickregels</h2>
+            <div class="section-sub">De belangrijkste informatie staat per regel in een duidelijke kaart.</div>
+          </div>
+        </div>
+
+        <div id="openPickCards" class="pick-cards"></div>
+      </div>
+
+      <div class="section-card">
+        <div class="available-toggle">
+          <div>
+            <h3 style="margin:0">Andere vrijgegeven picklijsten</h3>
+            <div class="section-sub">Open hieronder een andere picklijst als dat nodig is.</div>
+          </div>
+          <div class="btnRow">
+            <button class="btn" id="btnRefreshPicklists" type="button">Verversen</button>
+          </div>
+        </div>
+
+        <div style="margin-top:12px">
           <label for="picklistSearch">Zoeken</label>
           <input id="picklistSearch" placeholder="Zoek op picklijstnummer of opmerking"/>
         </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnRefreshPicklists" type="button" style="width:100%">Verversen</button>
-        </div>
+
+        <div id="availablePicklists" class="available-list"></div>
       </div>
 
-      <div id="availablePicklists" class="picklist-grid" style="margin-top:16px"></div>
-    </div>
-
-    <div class="card">
-      <h3>Actieve picklijst</h3>
-      <div id="activePicklistDetail" style="margin-top:16px"></div>
-    </div>
-
-    <div class="card">
-      <h3>Product scannen en direct afboeken</h3>
-
-      <div class="scan-area" style="margin-top:14px">
-        <div>
-          <label for="scanSkuInput">SKU / sticker</label>
-          <input id="scanSkuInput" class="scan-big" placeholder="Scan productcode…" autocomplete="off"/>
-          <div class="scan-help">
-            Werkt met handscanner en QR-camera. Oude en nieuwe stickerformaten worden automatisch herkend.
-          </div>
-        </div>
-
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btnProcessScan" type="button" style="width:100%">Verwerken</button>
-        </div>
-
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn" id="btnToggleCamera" type="button" style="width:100%">Start camera</button>
-        </div>
-      </div>
-
-      <div class="qr-box">
-        <div class="qr-head">
+      <div class="section-card">
+        <div class="section-head">
           <div>
-            <b>Camera scanner</b>
-            <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
+            <h3>Laatste scans</h3>
+            <div class="section-sub">Controle van de meest recente verwerkingen.</div>
           </div>
-          <span class="pill">HTTPS nodig</span>
         </div>
-        <div id="qr_reader" class="hidden" style="border-radius:14px;overflow:hidden"></div>
-      </div>
 
-      <div style="margin-top:14px">
-        <h3>Laatste scans</h3>
         <div id="scanLog" class="scan-log"></div>
       </div>
-    </div>
 
+    </div>
   </div>
 </div>
 
 <script>
 const client = sb();
+
+const DEFAULT_PICKER_EMAIL = 'warehouse@oegemalogistics.com';
+const DEFAULT_PICKER_PASSWORD = 'Oeg1234!';
 
 const loginGate = byId('loginGate');
 const appSection = byId('appSection');
@@ -424,11 +787,15 @@ const btnLogout = byId('btnLogout');
 const liveStatusTxt = byId('liveStatusTxt');
 const picklistSearch = byId('picklistSearch');
 const availablePicklists = byId('availablePicklists');
-const activePicklistDetail = byId('activePicklistDetail');
+const activePickHeader = byId('activePickHeader');
+const openPickCards = byId('openPickCards');
 const scanSkuInput = byId('scanSkuInput');
 const btnProcessScan = byId('btnProcessScan');
 const btnToggleCamera = byId('btnToggleCamera');
 const scanLog = byId('scanLog');
+const scanFeedback = byId('scanFeedback');
+const loginEmail = byId('loginEmail');
+const loginPassword = byId('loginPassword');
 
 let releasedPicklists = [];
 let activePicklist = null;
@@ -440,6 +807,11 @@ let scannedSessionCount = 0;
 
 function setStatus(text){
   liveStatusTxt.textContent = text;
+}
+
+function setFeedback(message, type=''){
+  scanFeedback.textContent = message;
+  scanFeedback.className = `scan-feedback${type ? ' ' + type : ''}`;
 }
 
 function addScanLog(message, type='ok'){
@@ -470,15 +842,15 @@ function getQueryParams(){
   const url = new URL(window.location.href);
   return {
     pickId: url.searchParams.get('pick_id') || '',
-    pickNo: url.searchParams.get('pick_no') || ''
+    pickNo: url.searchParams.get('pick_no') || '',
+    loginEmailParam: url.searchParams.get('login_email') || ''
   };
 }
 
-function updateQueryForPicklist(pick){
-  const url = new URL(window.location.href);
-  url.searchParams.set('pick_id', pick.id);
-  url.searchParams.set('pick_no', pick.order_no);
-  window.history.replaceState({}, '', url.toString());
+function prefillLoginFields(){
+  const { loginEmailParam } = getQueryParams();
+  loginEmail.value = loginEmailParam || DEFAULT_PICKER_EMAIL;
+  loginPassword.value = DEFAULT_PICKER_PASSWORD;
 }
 
 async function requireSessionInline(){
@@ -488,8 +860,8 @@ async function requireSessionInline(){
 }
 
 async function signInInline(){
-  const email = (byId('loginEmail').value || '').trim();
-  const password = byId('loginPassword').value || '';
+  const email = (loginEmail.value || '').trim();
+  const password = loginPassword.value || '';
 
   if(!email) return toast('Vul je e-mailadres in.', 'err');
   if(!password) return toast('Vul je wachtwoord in.', 'err');
@@ -615,32 +987,18 @@ function renderReleasedPicklists(){
   }
 
   availablePicklists.innerHTML = releasedPicklists.map(row => `
-    <div class="picklist-row">
-      <div class="picklist-row-head">
-        <div class="picklist-title">${escapeHtml(row.order_no)}</div>
-
-        <div class="picklist-note">
-          <b>${escapeHtml(row.customer_name || '')}</b><br>
-          <span class="small">${escapeHtml(row.note || '-')}</span>
+    <div class="available-item">
+      <div>
+        <div class="available-title">${escapeHtml(row.order_no)}</div>
+        <div class="available-sub">${escapeHtml(row.note || '-')}</div>
+        <div class="available-meta">
+          <span class="pill">${escapeHtml(row.status || 'RELEASED')}</span>
+          <span class="pill">${row.line_count} regels</span>
+          <span class="pill">${row.remaining_qty} open</span>
         </div>
-
-        <div>
-          <span class="status-badge status-${escapeHtml(row.status || 'RELEASED')}">${escapeHtml(row.status || 'RELEASED')}</span>
-        </div>
-
-        <div class="picklist-meta">
-          <div class="n">${row.line_count}</div>
-          <div class="t">regels</div>
-        </div>
-
-        <div class="picklist-meta">
-          <div class="n">${row.remaining_qty}</div>
-          <div class="t">nog te picken</div>
-        </div>
-
-        <div>
-          <button class="btn primary" type="button" onclick="openOnlinePicklist('${row.id}')">Openen</button>
-        </div>
+      </div>
+      <div>
+        <button class="btn primary" type="button" onclick="openOnlinePicklist('${row.id}')">Openen</button>
       </div>
     </div>
   `).join('');
@@ -673,7 +1031,12 @@ async function openOnlinePicklist(id){
     };
   });
 
-  updateQueryForPicklist(order);
+  const url = new URL(window.location.href);
+  url.searchParams.set('pick_id', order.id);
+  url.searchParams.set('pick_no', order.order_no);
+  url.searchParams.set('login_email', loginEmail.value || DEFAULT_PICKER_EMAIL);
+  window.history.replaceState({}, '', url.toString());
+
   renderActivePicklist();
   updateKpis();
   scanSkuInput.focus();
@@ -681,63 +1044,112 @@ async function openOnlinePicklist(id){
 
 function renderActivePicklist(){
   if(!activePicklist){
-    activePicklistDetail.innerHTML = `<div class="muted">Nog geen picklijst geselecteerd.</div>`;
+    activePickHeader.innerHTML = `<div class="muted">Nog geen picklijst geselecteerd.</div>`;
+    openPickCards.innerHTML = `<div class="muted">Nog geen open pickregels.</div>`;
     return;
   }
 
-  const groups = new Map();
-  activePicklistLines.forEach(line => {
-    const orderNo = line.source_order_no || 'ZONDER ORDER';
-    if(!groups.has(orderNo)) groups.set(orderNo, []);
-    groups.get(orderNo).push(line);
-  });
-
   const totalNeeded = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
   const totalPicked = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+  const totalOpen = Math.max(0, totalNeeded - totalPicked);
+  const progressPct = totalNeeded > 0 ? Math.round((totalPicked / totalNeeded) * 100) : 0;
 
-  activePicklistDetail.innerHTML = `
-    <div class="active-summary">
-      <div class="row">
-        <div>
-          <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
-          <span class="small">${escapeHtml(activePicklist.note || '-')}</span>
+  activePickHeader.innerHTML = `
+    <div class="active-pick-top">
+      <div>
+        <div class="pick-title">${escapeHtml(activePicklist.order_no || '')}</div>
+        <div class="pick-note">${escapeHtml(activePicklist.note || '-')}</div>
+
+        <div class="progress-wrap">
+          <div class="progress-top">
+            <span>Voortgang</span>
+            <span>${totalPicked} van ${totalNeeded} gepickt</span>
+          </div>
+          <div class="progress-bar">
+            <div class="progress-fill" style="width:${progressPct}%"></div>
+          </div>
         </div>
-        <div>
-          <b>Status:</b>
-          <span class="status-badge status-${escapeHtml(activePicklist.status || 'RELEASED')}">
-            ${escapeHtml(activePicklist.status || 'RELEASED')}
-          </span><br>
-          <span class="small">Gepickt: ${totalPicked} / ${totalNeeded}</span>
+      </div>
+
+      <div class="pick-stat-box">
+        <div class="pick-stat-line">
+          <div class="label">Status</div>
+          <div class="value">
+            <span class="status-badge status-${escapeHtml(activePicklist.status || 'RELEASED')}">${escapeHtml(activePicklist.status || 'RELEASED')}</span>
+          </div>
+        </div>
+        <div class="pick-stat-line">
+          <div class="label">Open</div>
+          <div class="value">${totalOpen}</div>
+        </div>
+        <div class="pick-stat-line">
+          <div class="label">Regels</div>
+          <div class="value">${activePicklistLines.length}</div>
         </div>
       </div>
     </div>
+  `;
 
-    ${Array.from(groups.entries()).map(([orderNo, rows]) => `
-      <div class="line-group">
-        <div class="line-group-head">
-          <div>Order</div>
-          <div>SKU</div>
-          <div>Product</div>
-          <div>Nodig</div>
-          <div>Gepickt</div>
-          <div>Open</div>
-          <div>Locaties</div>
+  const openLines = activePicklistLines
+    .slice()
+    .sort((a,b) => {
+      const ar = Math.max(0, Number(a.qty_needed || 0) - Number(a.qty_picked || 0));
+      const br = Math.max(0, Number(b.qty_needed || 0) - Number(b.qty_picked || 0));
+      if(ar === 0 && br > 0) return 1;
+      if(br === 0 && ar > 0) return -1;
+      return String(a.source_order_no || '').localeCompare(String(b.source_order_no || ''), 'nl');
+    });
+
+  if(!openLines.length){
+    openPickCards.innerHTML = `<div class="muted">Geen pickregels gevonden.</div>`;
+    return;
+  }
+
+  openPickCards.innerHTML = openLines.map(line => {
+    const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+    const isDone = remaining === 0;
+
+    return `
+      <div class="pick-card ${isDone ? 'done' : 'open'}">
+        <div class="pick-card-top">
+          <div class="pick-card-title-row">
+            <div>
+              <div class="pick-card-title">${escapeHtml(line.sku_base)}</div>
+              <div class="pick-card-order">Order ${escapeHtml(line.source_order_no || '-')}</div>
+            </div>
+            <div class="open-badge ${isDone ? 'done' : ''}">${isDone ? 'Klaar' : remaining}</div>
+          </div>
         </div>
 
-        ${rows.map(line => `
-          <div class="line-row ${line.qty_remaining === 0 ? 'line-ok' : ''}">
-            <div><b>${escapeHtml(orderNo)}</b></div>
-            <div><b>${escapeHtml(line.sku_base)}</b></div>
-            <div>${escapeHtml(line.product_name)}</div>
-            <div>${line.qty_needed}</div>
-            <div>${line.qty_picked || 0}</div>
-            <div>${line.qty_remaining}</div>
-            <div class="small-stock">${escapeHtml(line.location_summary || '-')}</div>
+        <div class="pick-card-body">
+          <div class="pick-row">
+            <div class="k">Product</div>
+            <div class="v">${escapeHtml(line.product_name || '-')}</div>
           </div>
-        `).join('')}
+
+          <div class="pick-row">
+            <div class="k">Nodig</div>
+            <div class="v">${line.qty_needed}</div>
+          </div>
+
+          <div class="pick-row">
+            <div class="k">Gepickt</div>
+            <div class="v">${line.qty_picked || 0}</div>
+          </div>
+
+          <div class="pick-row">
+            <div class="k">Open</div>
+            <div class="v"><b>${remaining}</b></div>
+          </div>
+
+          <div class="location-box">
+            <div class="location-title">Locaties</div>
+            <div class="location-value">${escapeHtml(line.location_summary || '-')}</div>
+          </div>
+        </div>
       </div>
-    `).join('')}
-  `;
+    `;
+  }).join('');
 }
 
 async function findItemByExactSku(skuUnique){
@@ -754,6 +1166,7 @@ async function findItemByExactSku(skuUnique){
 async function processScannedSku(rawValue){
   if(!activePicklist){
     toast('Open eerst een picklijst.', 'err');
+    setFeedback('Geen actieve picklijst geselecteerd.', 'err');
     addScanLog('Geen actieve picklijst geselecteerd.', 'err');
     return;
   }
@@ -765,6 +1178,7 @@ async function processScannedSku(rawValue){
 
   if(!isValidUniqueSkuFlexible(skuUnique)){
     toast('Stickerformaat ongeldig.', 'err');
+    setFeedback(`Ongeldige scan: ${skuUnique}`, 'err');
     addScanLog(`Ongeldige scan: ${skuUnique}`, 'err');
     return;
   }
@@ -826,6 +1240,7 @@ async function processScannedSku(rawValue){
     if(lineErr) throw lineErr;
 
     scannedSessionCount += 1;
+    setFeedback(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
     addScanLog(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
 
     await loadStockItems();
@@ -843,6 +1258,7 @@ async function processScannedSku(rawValue){
 
       await loadReleasedPicklists();
       await openOnlinePicklist(activePicklist.id);
+      setFeedback(`Picklijst ${activePicklist.order_no} is volledig afgerond.`, 'ok');
       addScanLog(`Picklijst ${activePicklist.order_no} is volledig afgerond.`, 'ok');
     }
 
@@ -853,6 +1269,7 @@ async function processScannedSku(rawValue){
   } catch(e){
     setStatus('Fout');
     toast(e.message || String(e), 'err');
+    setFeedback(e.message || String(e), 'err');
     addScanLog(e.message || String(e), 'err');
     scanSkuInput.focus();
   }
@@ -933,6 +1350,8 @@ async function loadFromQueryIfPresent(){
 }
 
 async function bootstrap(){
+  prefillLoginFields();
+
   const session = await requireSessionInline();
   await loadUserHeader();
 
@@ -949,14 +1368,8 @@ async function bootstrap(){
   await loadReleasedPicklists();
   await loadFromQueryIfPresent();
 
-  if(!activePicklist && releasedPicklists.length){
-    const { pickId, pickNo } = getQueryParams();
-    if(!pickId && !pickNo){
-      // niets automatisch openen als geen QR-link gebruikt is
-    }
-  }
-
   setStatus('Klaar');
+  setFeedback('Nog geen scan verwerkt.');
 }
 
 byId('btnLoginInline').addEventListener('click', async () => {
