@@ -47,6 +47,7 @@
       overflow:hidden;
       background:#fff;
       flex:0 0 auto;
+      cursor:pointer;
     }
 
     .sg-photo img{
@@ -130,7 +131,7 @@
 
     .stock-body-top{
       display:grid;
-      grid-template-columns:160px 1fr;
+      grid-template-columns:180px 1fr;
       gap:16px;
       align-items:start;
       margin-top:14px;
@@ -138,12 +139,13 @@
     }
 
     .stock-body-photo{
-      width:160px;
-      height:160px;
+      width:180px;
+      height:180px;
       border:1px solid var(--border);
       border-radius:16px;
       overflow:hidden;
       background:#fff;
+      cursor:pointer;
     }
 
     .stock-body-photo img{
@@ -207,7 +209,7 @@
 
       .stock-body-photo{
         width:100%;
-        max-width:220px;
+        max-width:240px;
         height:auto;
         aspect-ratio:1/1;
       }
@@ -330,6 +332,68 @@
     .modal-info b{
       color:var(--navy);
     }
+
+    .image-lightbox{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.78);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:2000;
+    }
+
+    .image-lightbox.show{
+      display:flex;
+    }
+
+    .image-lightbox-inner{
+      position:relative;
+      max-width:min(1200px,96vw);
+      max-height:92vh;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .image-lightbox img{
+      max-width:100%;
+      max-height:92vh;
+      border-radius:16px;
+      background:#fff;
+      box-shadow:0 20px 60px rgba(0,0,0,.45);
+      display:block;
+    }
+
+    .image-lightbox-close{
+      position:absolute;
+      top:-12px;
+      right:-12px;
+      width:42px;
+      height:42px;
+      border:none;
+      border-radius:999px;
+      background:#fff;
+      color:#111;
+      font-size:24px;
+      font-weight:900;
+      cursor:pointer;
+      box-shadow:0 8px 24px rgba(0,0,0,.25);
+    }
+
+    .image-lightbox-caption{
+      position:absolute;
+      left:12px;
+      right:12px;
+      bottom:12px;
+      background:rgba(15,47,79,.82);
+      color:#fff;
+      padding:10px 12px;
+      border-radius:12px;
+      font-size:14px;
+      line-height:1.35;
+    }
   </style>
 </head>
 
@@ -447,6 +511,14 @@
   </div>
 </div>
 
+<div id="imageLightbox" class="image-lightbox">
+  <div class="image-lightbox-inner">
+    <button class="image-lightbox-close" id="btnCloseImage" type="button">×</button>
+    <img id="lightboxImg" src="" alt="Productfoto groot"/>
+    <div class="image-lightbox-caption" id="lightboxCaption"></div>
+  </div>
+</div>
+
 <script>
 setActiveNav();
 
@@ -506,7 +578,12 @@ function makeHeaderPhotoHtml(group){
   const url = getProductImageUrl(group.image_path);
   if(!url) return '';
   return `
-    <div class="sg-photo">
+    <div
+      class="sg-photo"
+      data-image-url="${escapeHtml(url)}"
+      data-image-title="${escapeHtml(group.sku_base)}"
+      data-image-name="${escapeHtml(group.name || '')}"
+    >
       <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
     </div>
   `;
@@ -517,7 +594,12 @@ function makeBodyPhotoHtml(group){
   if(!url) return '';
   return `
     <div class="stock-body-top">
-      <div class="stock-body-photo">
+      <div
+        class="stock-body-photo"
+        data-image-url="${escapeHtml(url)}"
+        data-image-title="${escapeHtml(group.sku_base)}"
+        data-image-name="${escapeHtml(group.name || '')}"
+      >
         <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
       </div>
       <div class="stock-body-meta">
@@ -644,10 +726,42 @@ function makeGroupHtml(group, idx){
 
 function bindExpanders(){
   document.querySelectorAll('.stock-group-head').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', e => {
+      if(e.target.closest('.sg-photo') || e.target.closest('.stock-body-photo')){
+        return;
+      }
+
       const wrap = btn.closest('.stock-group');
       const open = wrap.classList.toggle('open');
       btn.setAttribute('aria-expanded', open ? 'true' : 'false');
+    });
+  });
+}
+
+function openImageLightbox(url, title, name){
+  byId('lightboxImg').src = url;
+  byId('lightboxCaption').textContent = name ? `${title} — ${name}` : title;
+  byId('imageLightbox').classList.add('show');
+}
+
+function closeImageLightbox(){
+  byId('imageLightbox').classList.remove('show');
+  byId('lightboxImg').src = '';
+  byId('lightboxCaption').textContent = '';
+}
+
+function bindImageZoom(){
+  document.querySelectorAll('[data-image-url]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.preventDefault();
+      e.stopPropagation();
+
+      const url = el.getAttribute('data-image-url');
+      const title = el.getAttribute('data-image-title') || '';
+      const name = el.getAttribute('data-image-name') || '';
+
+      if(!url) return;
+      openImageLightbox(url, title, name);
     });
   });
 }
@@ -831,6 +945,7 @@ async function load(){
 
   el.innerHTML = groups.map((g, i) => makeGroupHtml(g, i)).join('');
   bindExpanders();
+  bindImageZoom();
   bindOutButtons();
 }
 
@@ -858,6 +973,25 @@ byId('modalOrderNo').addEventListener('keydown', e => {
 byId('outModal').addEventListener('click', e => {
   if(e.target === byId('outModal')){
     closeOutModal();
+  }
+});
+
+byId('btnCloseImage').addEventListener('click', closeImageLightbox);
+
+byId('imageLightbox').addEventListener('click', e => {
+  if(e.target === byId('imageLightbox')){
+    closeImageLightbox();
+  }
+});
+
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape'){
+    if(byId('imageLightbox').classList.contains('show')){
+      closeImageLightbox();
+    }
+    if(byId('outModal').classList.contains('show')){
+      closeOutModal();
+    }
   }
 });
 
