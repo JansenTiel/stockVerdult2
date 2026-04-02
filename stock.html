@@ -30,13 +30,30 @@
       padding:14px 16px;
       text-align:left;
       display:grid;
-      grid-template-columns:180px 1fr 120px 36px;
+      grid-template-columns:auto 180px 1fr 120px 36px;
       gap:12px;
       align-items:center;
     }
 
     .stock-group-head:hover{
       background:#fafbfc;
+    }
+
+    .sg-photo{
+      width:58px;
+      height:58px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+      flex:0 0 auto;
+    }
+
+    .sg-photo img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
     }
 
     .sg-sku{
@@ -111,6 +128,47 @@
       display:block;
     }
 
+    .stock-body-top{
+      display:grid;
+      grid-template-columns:160px 1fr;
+      gap:16px;
+      align-items:start;
+      margin-top:14px;
+      margin-bottom:8px;
+    }
+
+    .stock-body-photo{
+      width:160px;
+      height:160px;
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      background:#fff;
+    }
+
+    .stock-body-photo img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .stock-body-meta{
+      display:grid;
+      gap:10px;
+    }
+
+    .stock-meta-card{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:12px 14px;
+    }
+
+    .stock-meta-card b{
+      color:var(--navy);
+    }
+
     .stock-toolbar{
       display:grid;
       grid-template-columns:1fr 1fr auto auto;
@@ -124,13 +182,14 @@
       }
 
       .stock-group-head{
-        grid-template-columns:1fr auto;
+        grid-template-columns:auto 1fr auto;
         grid-template-areas:
-          "sku total"
-          "name arrow";
+          "photo sku total"
+          "photo name arrow";
         gap:8px 12px;
       }
 
+      .sg-photo{grid-area:photo}
       .sg-sku{grid-area:sku}
       .sg-name{grid-area:name}
       .sg-total{grid-area:total}
@@ -140,6 +199,17 @@
     @media(max-width:700px){
       .stock-toolbar{
         grid-template-columns:1fr;
+      }
+
+      .stock-body-top{
+        grid-template-columns:1fr;
+      }
+
+      .stock-body-photo{
+        width:100%;
+        max-width:220px;
+        height:auto;
+        aspect-ratio:1/1;
       }
     }
 
@@ -276,11 +346,11 @@
     </div>
 
     <nav class="nav">
-      <a href="/index.html">Dashboard</a>
-      <a href="/products.html">Artikelen + Stickers</a>
-      <a href="/scan.html">In-/Uitscan</a>
-      <a href="/stock.html">Huidige voorraad</a>
-      <a href="/outscans.html">Uitscans</a>
+      <a href='/'>Dashboard</a>
+      <a href='/products'>Artikelen + Stickers</a>
+      <a href='/scan'>In-/Uitscan</a>
+      <a href='/stock'>Huidige voorraad</a>
+      <a href='/outscans'>Uitscans</a>
     </nav>
 
     <div class="rightbar">
@@ -381,9 +451,16 @@
 setActiveNav();
 
 const client = sb();
+const STORAGE_BUCKET = 'product-images';
 
 let currentGroups = [];
 let currentOutItem = null;
+
+function getProductImageUrl(imagePath){
+  if(!imagePath) return '';
+  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
+  return data?.publicUrl || '';
+}
 
 function groupItems(items){
   const map = new Map();
@@ -396,6 +473,8 @@ function groupItems(items){
         sku_base: it.sku_base || "",
         name: it.name || "",
         description: it.description || "",
+        color_code: it.color_code || "",
+        image_path: it.image_path || "",
         items: []
       });
     }
@@ -423,13 +502,47 @@ function sortGroups(groups, sort){
   return rows;
 }
 
+function makeHeaderPhotoHtml(group){
+  const url = getProductImageUrl(group.image_path);
+  if(!url) return '';
+  return `
+    <div class="sg-photo">
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
+    </div>
+  `;
+}
+
+function makeBodyPhotoHtml(group){
+  const url = getProductImageUrl(group.image_path);
+  if(!url) return '';
+  return `
+    <div class="stock-body-top">
+      <div class="stock-body-photo">
+        <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
+      </div>
+      <div class="stock-body-meta">
+        <div class="stock-meta-card">
+          <div><b>SKU basis:</b> ${escapeHtml(group.sku_base)}</div>
+          <div><b>Omschrijving:</b> ${escapeHtml(group.name || '')}</div>
+          ${group.description ? `<div><b>Overige vermelding:</b> ${escapeHtml(group.description)}</div>` : ''}
+          ${group.color_code ? `<div><b>Kleurcode:</b> ${escapeHtml(group.color_code)}</div>` : ''}
+          <div><b>Op voorraad:</b> ${group.items.length}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
 function makeGroupHtml(group, idx){
   const desc = group.description ? escapeHtml(group.description) : 'Geen extra vermelding';
   const bodyId = `group_${idx}`;
+  const hasPhoto = !!group.image_path;
 
   return `
     <div class="stock-group">
       <button class="stock-group-head" type="button" data-target="${bodyId}" aria-expanded="false">
+        ${hasPhoto ? makeHeaderPhotoHtml(group) : ''}
+
         <div class="sg-sku">${escapeHtml(group.sku_base)}</div>
 
         <div class="sg-name">
@@ -446,6 +559,8 @@ function makeGroupHtml(group, idx){
       </button>
 
       <div class="stock-group-body" id="${bodyId}">
+        ${hasPhoto ? makeBodyPhotoHtml(group) : ''}
+
         <div class="table-wrap desktop-detail-table" style="margin-top:12px">
           <table>
             <thead>
@@ -636,6 +751,7 @@ function exportGroupedToExcel(groups){
       SKU: group.sku_base,
       Omschrijving: group.name,
       'Overige vermelding': group.description || '',
+      'Kleurcode': group.color_code || '',
       'Totaal op voorraad': group.items.length,
       'Unieke SKU': '',
       'Locatie': '',
@@ -648,6 +764,7 @@ function exportGroupedToExcel(groups){
         SKU: '',
         Omschrijving: '',
         'Overige vermelding': '',
+        'Kleurcode': '',
         'Totaal op voorraad': '',
         'Unieke SKU': it.sku_unique || '',
         'Locatie': it.location || '',
@@ -664,6 +781,7 @@ function exportGroupedToExcel(groups){
     { wch: 16 },
     { wch: 30 },
     { wch: 24 },
+    { wch: 18 },
     { wch: 16 },
     { wch: 24 },
     { wch: 18 },
