@@ -17,248 +17,24 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
-    :root{
-      --navy:#16385b;
-      --muted:#6b7280;
-      --border:#dbe3ea;
-      --bgsoft:#fafbfc;
-      --danger:#bf3b3b;
-      --success:#1f8a4c;
-    }
+    /* Alleen products-specifieke styling; algemene layout komt uit theme.css */
 
-    *{ box-sizing:border-box; }
-
-    body{
-      margin:0;
-      font-family:Arial,Helvetica,sans-serif;
-      background:#f4f6f8;
-      color:#1f2937;
-    }
-
-    .topbar{
-      position:sticky;
-      top:0;
-      z-index:50;
-      background:#fff;
-      border-bottom:1px solid var(--border);
-    }
-
-    .topbar .inner{
-      max-width:1400px;
-      margin:0 auto;
-      padding:14px 18px;
-      display:flex;
-      align-items:center;
+    .products-stack{
+      display:grid;
       gap:18px;
-      flex-wrap:wrap;
+      margin-top:18px;
     }
 
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:240px;
-    }
-
-    .logo{
-      width:38px;
-      height:38px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:var(--navy);
-      color:#fff;
-      font-weight:900;
-      font-size:22px;
-      flex:0 0 auto;
-    }
-
-    .title{
-      font-weight:900;
-      color:var(--navy);
-      line-height:1.1;
-    }
-
-    .title small{
-      display:block;
-      font-size:12px;
-      color:var(--muted);
-      font-weight:700;
-      margin-top:3px;
-    }
-
-    .nav{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      flex:1 1 auto;
-    }
-
-    .nav a{
-      text-decoration:none;
-      color:var(--navy);
-      font-weight:800;
-      padding:10px 12px;
-      border-radius:10px;
-    }
-
-    .nav a.active,
-    .nav a:hover{
-      background:#eef4f8;
-    }
-
-    .rightbar{
-      display:flex;
-      align-items:center;
-      gap:10px;
-      flex-wrap:wrap;
-    }
-
-    .pill,
-    .badge{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      padding:7px 11px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-size:12px;
-      font-weight:800;
-      color:var(--navy);
-    }
-
-    .container{
-      max-width:1400px;
-      margin:0 auto;
-      padding:18px;
-    }
-
-    .card{
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:18px;
-      box-shadow:0 4px 18px rgba(0,0,0,.04);
-    }
-
-    .card h2,
-    .card h3{
-      margin:0 0 8px 0;
-      color:var(--navy);
-    }
-
-    .muted{
-      color:var(--muted);
-      line-height:1.45;
-    }
-
-    .page-stack{
-      display:grid;
-      gap:16px;
-      margin-top:16px;
-    }
-
-    .split-2{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:16px;
-    }
-
-    label{
-      display:block;
-      font-size:13px;
-      font-weight:800;
-      color:var(--navy);
-      margin-bottom:6px;
-    }
-
-    input, select, textarea{
-      width:100%;
-      padding:12px 14px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      outline:none;
-      background:#fff;
-      font:inherit;
-    }
-
-    textarea{
-      min-height:100px;
-      resize:vertical;
-    }
-
-    input:focus, select:focus, textarea:focus{
-      border-color:#9cb7cd;
-      box-shadow:0 0 0 3px rgba(22,56,91,.08);
-    }
-
-    .row{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-
-    .btnRow{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .btn{
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--navy);
-      border-radius:12px;
-      padding:11px 14px;
-      font-weight:800;
-      cursor:pointer;
-      font:inherit;
-    }
-
-    .btn:hover{
-      background:#f7fafc;
-    }
-
-    .btn.primary{
-      background:var(--navy);
-      color:#fff;
-      border-color:var(--navy);
-    }
-
-    .btn.primary:hover{
-      filter:brightness(1.05);
-    }
-
-    .btn.accent{
-      background:#f28c13;
-      color:#fff;
-      border-color:#f28c13;
-    }
-
-    .btn.ghost{
-      background:#fff;
-    }
-
-    .btn.danger{
-      background:var(--danger);
-      color:#fff;
-      border-color:var(--danger);
-    }
-
-    .btn:disabled{
-      opacity:.55;
-      cursor:not-allowed;
+    .products-intro{
+      margin-bottom:2px;
     }
 
     .upload-card,
     .scan-card,
-    .soft-box{
+    .edit-photo-panel{
       border:1px dashed var(--border);
       border-radius:14px;
-      background:var(--bgsoft);
+      background:#f8fafc;
       padding:14px;
     }
 
@@ -300,166 +76,9 @@
     }
 
     .small-muted{
+      font-size:12px;
       color:var(--muted);
-      font-size:12px;
       line-height:1.45;
-    }
-
-    .previewWrap{
-      display:grid;
-      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
-      gap:16px;
-      align-items:start;
-    }
-
-    .sticker-wrap{
-      border:1px solid var(--border);
-      border-radius:18px;
-      padding:12px;
-      background:#fff;
-    }
-
-    .sticker-head{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-      font-size:13px;
-      font-weight:800;
-      color:var(--navy);
-    }
-
-    .sticker-head label{
-      margin:0;
-      display:flex;
-      align-items:center;
-      gap:8px;
-      cursor:pointer;
-    }
-
-    .sticker{
-      width:100%;
-      background:#fff;
-      border:1px solid var(--border);
-      border-radius:16px;
-      padding:16px;
-      min-height:250px;
-    }
-
-    .st-hdr{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-    }
-
-    .st-company{
-      font-size:16px;
-      font-weight:900;
-      color:var(--navy);
-      margin-bottom:2px;
-    }
-
-    .st-customer{
-      font-size:13px;
-      font-weight:800;
-      margin-bottom:8px;
-    }
-
-    .st-prod{
-      font-size:18px;
-      font-weight:900;
-      line-height:1.2;
-      margin-bottom:6px;
-    }
-
-    .st-sku{
-      font-size:16px;
-      font-weight:900;
-      margin-bottom:6px;
-    }
-
-    .st-notes{
-      font-size:13px;
-      line-height:1.35;
-    }
-
-    .st-small{
-      font-size:12px;
-      font-weight:900;
-      margin-bottom:8px;
-      text-transform:uppercase;
-      letter-spacing:.05em;
-    }
-
-    .st-badge{
-      min-width:54px;
-      height:54px;
-      border-radius:999px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      background:#eef4f8;
-      color:var(--navy);
-      font-weight:900;
-      border:1px solid var(--border);
-    }
-
-    .st-codes{
-      margin-top:14px;
-      display:grid;
-      grid-template-columns:1.2fr .8fr;
-      gap:12px;
-      align-items:end;
-    }
-
-    .st-block{
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px;
-      background:#fff;
-    }
-
-    .st-barcode svg{
-      width:100%;
-      height:auto;
-      display:block;
-    }
-
-    .st-qr{
-      display:flex;
-      flex-direction:column;
-      align-items:center;
-      justify-content:center;
-    }
-
-    .scan-video{
-      display:none;
-      width:100%;
-      max-width:420px;
-      border:1px solid var(--border);
-      border-radius:12px;
-      margin-top:14px;
-      background:#000;
-    }
-
-    .scan-result{
-      display:none;
-      margin-top:14px;
-    }
-
-    .scan-found{
-      border:1px solid var(--border);
-      border-radius:12px;
-      background:#fff;
-      padding:12px;
-      margin-bottom:12px;
-      line-height:1.45;
-    }
-
-    .scan-found b{
-      color:var(--navy);
     }
 
     .manage-grid{
@@ -480,10 +99,10 @@
 
     .photo-thumb{
       width:100%;
-      aspect-ratio:1/1;
+      aspect-ratio:1 / 1;
       border:1px solid var(--border);
       border-radius:12px;
-      background:var(--bgsoft);
+      background:#f8fafc;
       overflow:hidden;
       display:flex;
       align-items:center;
@@ -506,10 +125,6 @@
       display:block;
       margin-bottom:4px;
       color:var(--navy);
-    }
-
-    .manage-info .small{
-      line-height:1.4;
     }
 
     .color-pill{
@@ -563,6 +178,34 @@
       justify-content:flex-end;
     }
 
+    .scan-video{
+      display:none;
+      width:100%;
+      max-width:420px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      margin-top:14px;
+      background:#000;
+    }
+
+    .scan-result{
+      display:none;
+      margin-top:14px;
+    }
+
+    .scan-found{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:12px;
+      margin-bottom:12px;
+      line-height:1.45;
+    }
+
+    .scan-found b{
+      color:var(--navy);
+    }
+
     .modal-backdrop{
       position:fixed;
       inset:0;
@@ -605,7 +248,7 @@
     .modal-info{
       border:1px solid var(--border);
       border-radius:12px;
-      background:var(--bgsoft);
+      background:#f8fafc;
       padding:12px;
       font-size:14px;
       line-height:1.5;
@@ -623,72 +266,36 @@
       align-items:start;
     }
 
-    .edit-photo-panel{
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:var(--bgsoft);
-      padding:14px;
-    }
-
     .uploading{
       opacity:.6;
       pointer-events:none;
     }
 
-    .notice{
-      position:fixed;
-      right:18px;
-      bottom:18px;
-      z-index:1200;
-      background:#fff;
-      border:1px solid var(--border);
-      border-left:6px solid var(--success);
-      border-radius:14px;
-      padding:12px 14px;
-      min-width:220px;
-      max-width:380px;
-      box-shadow:0 18px 40px rgba(0,0,0,.12);
-      display:none;
-      font-weight:700;
-    }
-
-    .notice.show{
-      display:block;
-    }
-
-    .notice.err{
-      border-left-color:var(--danger);
-    }
-
-    .notice.ok{
-      border-left-color:var(--success);
-    }
-
-    @media (max-width:1100px){
+    @media(max-width:1100px){
       .manage-row{
         grid-template-columns:100px 1fr;
       }
+
       .manage-count{
         text-align:left;
       }
+
       .manage-actions{
         justify-content:flex-start;
       }
     }
 
-    @media (max-width:900px){
-      .split-2,
-      .edit-grid,
-      .st-codes,
-      .row{
+    @media(max-width:980px){
+      .edit-grid{
         grid-template-columns:1fr;
       }
     }
 
-    @media (max-width:760px){
+    @media(max-width:760px){
       .manage-row{
         grid-template-columns:1fr;
       }
+
       .upload-preview,
       .scan-preview{
         width:100%;
@@ -728,14 +335,14 @@
 
     <div class="card">
       <h2>Artikelen + Stickers</h2>
-      <div class="muted">
+      <div class="muted products-intro">
         Artikelbeheer met productfoto op SKU-basis. Je kunt artikelen aanmaken, stickers genereren, bestaande artikelen beheren
         en op mobiel eerst de SKU of QR scannen en daarna direct een foto maken die automatisch aan die bestaande SKU wordt gekoppeld.
       </div>
     </div>
 
-    <div class="page-stack">
-      <div class="split-2">
+    <div class="products-stack">
+      <div class="split">
         <div class="card">
           <h3>1) Artikel aanmaken</h3>
 
@@ -812,6 +419,10 @@
         <div class="muted">
           Scan op mobiel de QR-code of barcode, of plak een gescande waarde in het veld. Daarna kun je direct een foto maken.
           De foto wordt opgeslagen op dezelfde bestaande SKU-basis als in het productoverzicht.
+        </div>
+
+        <div class="small" style="margin-top:8px">
+          Let op: live scannen werkt alleen op browsers die BarcodeDetector ondersteunen. Op iPhone/Safari kun je nog wel gewoon handmatig zoeken en daarna direct een foto maken.
         </div>
 
         <div class="row" style="margin-top:14px">
@@ -986,23 +597,29 @@
         alert(msg);
         return;
       }
+
       el.textContent = msg;
-      el.className = 'notice show ' + (type === 'err' ? 'err' : 'ok');
+      el.className = 'notice ' + (type === 'err' ? 'err' : 'ok');
+
       clearTimeout(toast._timer);
       toast._timer = setTimeout(() => {
         el.className = 'notice';
+        el.textContent = '';
       }, 3200);
     }
 
     function setBusy(button, busy){
       if(!button) return;
+
       if(busy){
         button.dataset.originalText = button.textContent;
         button.disabled = true;
         button.textContent = 'Bezig...';
       }else{
         button.disabled = false;
-        if(button.dataset.originalText) button.textContent = button.dataset.originalText;
+        if(button.dataset.originalText){
+          button.textContent = button.dataset.originalText;
+        }
       }
     }
 
@@ -1043,11 +660,13 @@
         box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview" />`;
         return;
       }
+
       const url = getProductImageUrl(imagePath);
       if(url){
         box.innerHTML = `<img src="${escapeHtml(url)}" alt="Bestaande productfoto" />`;
         return;
       }
+
       box.innerHTML = 'Geen foto aanwezig';
     }
 
@@ -1230,6 +849,7 @@
       (data || []).forEach(it => {
         counts[it.product_id] = (counts[it.product_id] || 0) + 1;
       });
+
       state.itemCounts = counts;
     }
 
@@ -1361,7 +981,6 @@
       }
 
       wrap.querySelector('.sticker-check').addEventListener('change', updateButtons);
-
       return wrap;
     }
 
@@ -1397,9 +1016,7 @@
 
         const stickersEl = byId('stickers');
         stickersEl.innerHTML = '';
-        state.lastGenerated.forEach(it => {
-          stickersEl.appendChild(renderSticker(product, it));
-        });
+        state.lastGenerated.forEach(it => stickersEl.appendChild(renderSticker(product, it)));
 
         await loadManageList();
 
@@ -1484,11 +1101,11 @@
       }));
 
       if(q){
-        rows = rows.filter(r => {
-          return [r.sku_base, r.name, r.description, r.color_code]
+        rows = rows.filter(r =>
+          [r.sku_base, r.name, r.description, r.color_code]
             .map(v => String(v || '').toLowerCase())
-            .some(v => v.includes(q));
-        });
+            .some(v => v.includes(q))
+        );
       }
 
       if(!rows.length){
@@ -1570,7 +1187,6 @@
           byId('edit_product_photo_camera').value = '';
           setEditPhotoPreview(state.currentEditProduct.image_path || '', null);
           setEditPhotoStatus('');
-
           byId('editModal').classList.add('show');
         });
       });
@@ -1781,7 +1397,7 @@
 
     async function startProductScanner(){
       if(!('BarcodeDetector' in window)){
-        toast('Deze telefoon/browser ondersteunt de barcode scanner niet. Vul de SKU handmatig in.', 'err');
+        toast('Live scanner niet ondersteund op deze browser. Vul de SKU handmatig in en maak daarna direct een foto.', 'err');
         return;
       }
 
@@ -2013,29 +1629,12 @@
       byId('btn_save_scan_product_photo').addEventListener('click', () => {
         saveScannedProductPhoto().catch(e => toast(e.message || String(e), 'err'));
       });
-
-      if(typeof requireAuth === 'function'){
-        requireAuth();
-      }
-
-      if(typeof bindLogout === 'function'){
-        bindLogout();
-      }
     }
 
     async function init(){
       if(!client){
         toast('Supabase client ontbreekt. Controleer /js/supabase.js', 'err');
         return;
-      }
-
-      try{
-        if(client.auth && byId('userEmail')){
-          const { data } = await client.auth.getUser();
-          byId('userEmail').textContent = data?.user?.email || '';
-        }
-      }catch(e){
-        console.warn(e);
       }
 
       bindBasicEvents();
