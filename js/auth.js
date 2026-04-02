@@ -13,6 +13,19 @@ function hideProtectedPage(){
   document.documentElement.classList.add("auth-pending");
 }
 
+function isProtectedPage(page){
+  const protectedPages = [
+    "dashboard",
+    "products",
+    "scan",
+    "stock",
+    "outscans",
+    "picklists",
+    "picklist_detail"
+  ];
+  return protectedPages.includes(page);
+}
+
 async function requireAuth(){
   try{
     const client = sb();
@@ -59,7 +72,7 @@ function bindLogout(){
       await sb().auth.signOut();
       location.replace("/login.html");
     }catch(e){
-      console.error(e);
+      console.error("Logout error:", e);
     }
   });
 }
@@ -162,11 +175,13 @@ function initUpdatePassword(){
     const p2 = document.getElementById("password2").value;
 
     if(p1.length < 6){
-      return alert("Wachtwoord moet minimaal 6 tekens zijn.");
+      alert("Wachtwoord moet minimaal 6 tekens zijn.");
+      return;
     }
 
     if(p1 !== p2){
-      return alert("Wachtwoorden zijn niet gelijk.");
+      alert("Wachtwoorden zijn niet gelijk.");
+      return;
     }
 
     try{
@@ -190,6 +205,22 @@ function initUpdatePassword(){
 
 
 /* =========================================
+   Auth state listener
+========================================= */
+
+function bindAuthStateListener(page){
+  const client = sb();
+
+  client.auth.onAuthStateChange((event) => {
+    if(event === "SIGNED_OUT" && isProtectedPage(page)){
+      hideProtectedPage();
+      location.replace("/login.html");
+    }
+  });
+}
+
+
+/* =========================================
    Pagina initialisatie
 ========================================= */
 
@@ -197,17 +228,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
 
   const page = document.body.dataset.page || "";
 
-  const protectedPages = [
-    "dashboard",
-    "products",
-    "scan",
-    "stock",
-    "outscans",
-    "picklists",
-    "picklist_detail"
-  ];
-
-  if(protectedPages.includes(page)){
+  if(isProtectedPage(page)){
     hideProtectedPage();
 
     const session = await requireAuth();
@@ -217,6 +238,7 @@ document.addEventListener("DOMContentLoaded", async ()=>{
     }
 
     authNav();
+    bindAuthStateListener(page);
     showProtectedPage();
   }
 
