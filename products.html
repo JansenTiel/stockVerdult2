@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="nl" class="auth-pending">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
@@ -7,17 +7,14 @@
 
   <link rel="stylesheet" href="/css/theme.css"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/supabase.js"></script>
-  <script src="/js/auth.js"></script>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-
   <style>
+    html.auth-pending body{
+      visibility:hidden;
+    }
+    html.auth-ready body{
+      visibility:visible;
+    }
+
     .products-stack{
       display:grid;
       gap:18px;
@@ -303,6 +300,21 @@
       }
     }
   </style>
+
+  <script>
+    document.documentElement.classList.add("auth-pending");
+    document.documentElement.classList.remove("auth-ready");
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/auth.js"></script>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body data-page="products">
 
@@ -1241,10 +1253,12 @@ async function saveProductEdit(){
 
     if(error) throw error;
 
+    const editedId = state.currentEditProduct.id;
+
     closeEditModal();
     clearPreview();
     await loadManageList();
-    await loadProducts(state.currentEditProduct.id);
+    await loadProducts(editedId);
 
     toast(`Artikel ${sku_base} is bijgewerkt.`, 'ok');
   }catch(e){
@@ -1262,21 +1276,23 @@ async function deleteProductDefinitive(){
   setBusy(btn, true);
 
   try{
-    if(state.currentDeleteProduct.item_count > 0){
+    const currentDeleteProduct = { ...state.currentDeleteProduct };
+
+    if(currentDeleteProduct.item_count > 0){
       const ok = confirm(
-        `SKU ${state.currentDeleteProduct.sku_base} heeft nog ${state.currentDeleteProduct.item_count} gekoppelde items. Door verwijderen worden ook gekoppelde stickers/items verwijderd. Doorgaan?`
+        `SKU ${currentDeleteProduct.sku_base} heeft nog ${currentDeleteProduct.item_count} gekoppelde items. Door verwijderen worden ook gekoppelde stickers/items verwijderd. Doorgaan?`
       );
       if(!ok) return;
     }
 
-    if(state.currentDeleteProduct.image_path){
-      await client.storage.from(STORAGE_BUCKET).remove([state.currentDeleteProduct.image_path]);
+    if(currentDeleteProduct.image_path){
+      await client.storage.from(STORAGE_BUCKET).remove([currentDeleteProduct.image_path]);
     }
 
     const { error } = await client
       .from('products')
       .delete()
-      .eq('id', state.currentDeleteProduct.id);
+      .eq('id', currentDeleteProduct.id);
 
     if(error) throw error;
 
@@ -1285,7 +1301,7 @@ async function deleteProductDefinitive(){
     await loadManageList();
     await loadProducts();
 
-    toast(`SKU ${state.currentDeleteProduct.sku_base} is verwijderd.`, 'ok');
+    toast(`SKU ${currentDeleteProduct.sku_base} is verwijderd.`, 'ok');
   }catch(e){
     toast(e.message || String(e), 'err');
   }finally{
