@@ -14,6 +14,29 @@
   <script src="/js/auth.js"></script>
 
   <style>
+    .page-url{
+      margin:12px 0 0;
+      color:var(--navy);
+      font-size:14px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .page-url strong{
+      display:inline-flex;
+      align-items:center;
+      padding:5px 12px;
+      border-radius:999px;
+      background:rgba(196,154,108,.14);
+      border:1px solid rgba(196,154,108,.28);
+      color:#6e4f36;
+      font-weight:900;
+      letter-spacing:.01em;
+    }
+
     .stock-group{
       border:1px solid var(--border);
       border-radius:14px;
@@ -432,15 +455,23 @@
     </div>
 
     <nav class="nav">
-      <a href="/">Dashboard</a>
-      <a href="/products">Artikelen + Stickers</a>
-      <a href="/scan">In-/Uitscan</a>
-      <a href="/stock">Huidige voorraad</a>
-      <a href="/outscans">Uitscans</a>
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a href="/stock.html" class="active">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html">Picklijsten</a>
     </nav>
 
     <div class="rightbar">
-      <span class="pill"><span id="userEmail"></span></span>
+      <a class="site-link" href="https://www.rv-voorraad.nl" target="_blank" rel="noopener">
+        www.rv-voorraad.nl
+      </a>
+
+      <span class="pill">
+        <span id="userEmail"></span>
+      </span>
+
       <button class="btn" id="btnLogout" type="button">Uitloggen</button>
     </div>
   </div>
@@ -454,6 +485,11 @@
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen. Vanuit de detailregels kun je losse colli direct uitboeken.
     </div>
+
+    <p class="page-url">
+      Actieve omgeving:
+      <strong>www.rv-voorraad.nl</strong>
+    </p>
 
     <div class="stock-toolbar" style="margin-top:14px">
       <div>
@@ -560,15 +596,14 @@ function groupItems(items){
   const map = new Map();
 
   (items || []).forEach(it => {
-    const key = it.sku_base || "ZONDER-SKU";
+    const key = it.sku_base || 'ZONDER-SKU';
 
     if(!map.has(key)){
       map.set(key, {
-        sku_base: it.sku_base || "",
-        name: it.name || "",
-        description: it.description || "",
-        color_code: it.color_code || "",
-        image_path: it.image_path || "",
+        sku_base: it.sku_base || '',
+        name: it.name || '',
+        description: it.description || '',
+        image_path: it.image_path || '',
         items: []
       });
     }
@@ -635,7 +670,6 @@ function makeBodyPhotoHtml(group){
           <div><b>SKU basis:</b> ${escapeHtml(group.sku_base)}</div>
           <div><b>Omschrijving:</b> ${escapeHtml(group.name || '')}</div>
           ${group.description ? `<div><b>Overige vermelding:</b> ${escapeHtml(group.description)}</div>` : ''}
-          ${group.color_code ? `<div><b>Kleurcode:</b> ${escapeHtml(group.color_code)}</div>` : ''}
           <div><b>Op voorraad:</b> ${group.items.length}</div>
         </div>
       </div>
@@ -893,7 +927,6 @@ function exportGroupedToExcel(groups){
       SKU: group.sku_base,
       Omschrijving: group.name,
       'Overige vermelding': group.description || '',
-      'Kleurcode': group.color_code || '',
       'Totaal op voorraad': group.items.length,
       'Unieke SKU': '',
       'Locatie': '',
@@ -906,7 +939,6 @@ function exportGroupedToExcel(groups){
         SKU: '',
         Omschrijving: '',
         'Overige vermelding': '',
-        'Kleurcode': '',
         'Totaal op voorraad': '',
         'Unieke SKU': it.sku_unique || '',
         'Locatie': it.location || '',
@@ -923,7 +955,6 @@ function exportGroupedToExcel(groups){
     { wch: 16 },
     { wch: 30 },
     { wch: 24 },
-    { wch: 18 },
     { wch: 16 },
     { wch: 24 },
     { wch: 18 },
