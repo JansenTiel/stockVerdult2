@@ -29,9 +29,33 @@
       background:#fff;
       padding:14px;
       display:grid;
-      grid-template-columns:180px 1fr 120px auto;
+      grid-template-columns:120px 180px 1fr 120px auto;
       gap:12px;
       align-items:center;
+    }
+
+    .photo-thumb{
+      width:100%;
+      aspect-ratio:1/1;
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fafbfc;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+      padding:8px;
+    }
+
+    .photo-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
     }
 
     .manage-sku{
@@ -99,16 +123,43 @@
       justify-content:flex-end;
     }
 
-    @media(max-width:960px){
-      .manage-row{
-        grid-template-columns:1fr;
-      }
-      .manage-count{
-        text-align:left;
-      }
-      .manage-actions{
-        justify-content:flex-start;
-      }
+    .upload-card{
+      border:1px dashed var(--border);
+      border-radius:14px;
+      background:#fafbfc;
+      padding:14px;
+      margin-top:12px;
+    }
+
+    .upload-preview{
+      width:160px;
+      height:160px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+      padding:8px;
+      margin-bottom:12px;
+    }
+
+    .upload-preview img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .small-muted{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
     }
 
     .modal-backdrop{
@@ -127,7 +178,7 @@
     }
 
     .modal-card{
-      width:min(680px,100%);
+      width:min(760px,100%);
       background:#fff;
       border:1px solid var(--border);
       border-radius:20px;
@@ -163,6 +214,77 @@
     .modal-info b{
       color:var(--navy);
     }
+
+    .edit-grid{
+      display:grid;
+      grid-template-columns:1.1fr .9fr;
+      gap:18px;
+      align-items:start;
+    }
+
+    .edit-photo-panel{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fafbfc;
+      padding:14px;
+    }
+
+    .edit-photo-preview{
+      width:100%;
+      max-width:260px;
+      aspect-ratio:1/1;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:12px;
+      font-weight:800;
+      text-align:center;
+      padding:8px;
+      margin-bottom:12px;
+    }
+
+    .edit-photo-preview img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .uploading{
+      opacity:.6;
+      pointer-events:none;
+    }
+
+    @media(max-width:1100px){
+      .manage-row{
+        grid-template-columns:100px 1fr;
+      }
+
+      .manage-count{
+        text-align:left;
+      }
+
+      .manage-actions{
+        justify-content:flex-start;
+      }
+    }
+
+    @media(max-width:860px){
+      .edit-grid{
+        grid-template-columns:1fr;
+      }
+    }
+
+    @media(max-width:760px){
+      .manage-row{
+        grid-template-columns:1fr;
+      }
+    }
   </style>
 </head>
 <body data-page="products">
@@ -178,11 +300,11 @@
     </div>
 
     <nav class="nav">
-      <a href='/'>Dashboard</a>
-      <a href='/products'>Artikelen + Stickers</a>
-      <a href='/scan'>In-/Uitscan</a>
-      <a href='/stock'>Huidige voorraad</a>
-      <a href='/outscans'>Uitscans</a>
+      <a href="/">Dashboard</a>
+      <a href="/products">Artikelen + Stickers</a>
+      <a href="/scan">In-/Uitscan</a>
+      <a href="/stock">Huidige voorraad</a>
+      <a href="/outscans">Uitscans</a>
     </nav>
 
     <div class="rightbar">
@@ -197,7 +319,9 @@
 
   <div class="card">
     <h2>Artikelen + Stickers</h2>
-    <div class="muted">PDF download op exact 14 × 11 cm, netjes gecentreerd.</div>
+    <div class="muted">
+      Artikelbeheer met foto op productniveau. Foto’s worden vóór upload automatisch gecomprimeerd, zodat je binnen de opslaglimiet van Supabase zoveel mogelijk artikelen kunt opslaan.
+    </div>
   </div>
 
   <div class="split" style="margin-top:16px">
@@ -215,6 +339,24 @@
 
       <label for="color_code" style="margin-top:12px">Kleurcode</label>
       <input id="color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+
+      <div class="upload-card">
+        <label for="new_product_photo">Productfoto</label>
+        <div class="small-muted" style="margin-bottom:10px">
+          Kies een bestaande foto of maak direct een foto met mobiel. De afbeelding wordt automatisch teruggebracht naar ongeveer 0,5 MB.
+        </div>
+
+        <div class="upload-preview" id="newPhotoPreview">Nog geen foto gekozen</div>
+
+        <div class="btnRow">
+          <label class="btn" for="new_product_photo" style="cursor:pointer">Foto kiezen</label>
+          <label class="btn" for="new_product_photo_camera" style="cursor:pointer">Foto maken</label>
+          <button class="btn ghost" id="btn_clear_new_photo" type="button">Foto wissen</button>
+        </div>
+
+        <input id="new_product_photo" type="file" accept="image/*" style="display:none"/>
+        <input id="new_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none"/>
+      </div>
 
       <div class="btnRow" style="margin-top:16px">
         <button class="btn primary" id="btn_create" type="button">Opslaan</button>
@@ -256,12 +398,12 @@
 
   <div class="card" style="margin-top:16px">
     <h3>3) Bestaande artikelen beheren</h3>
-    <div class="muted">Gebruik dit blok om artikelen te bewerken of verkeerd aangemaakte SKU’s definitief te verwijderen.</div>
+    <div class="muted">Gebruik dit blok om artikelen te bewerken, foto’s toe te voegen of een fout aangemaakte SKU definitief te verwijderen.</div>
 
     <div class="row" style="margin-top:14px">
       <div>
         <label for="manage_q">Zoeken</label>
-        <input id="manage_q" placeholder="Zoek op SKU of omschrijving"/>
+        <input id="manage_q" placeholder="Zoek op SKU, omschrijving, kleurcode of extra info"/>
       </div>
       <div>
         <label>&nbsp;</label>
@@ -290,21 +432,44 @@
 <div id="editModal" class="modal-backdrop">
   <div class="modal-card">
     <h3 class="modal-title">Artikel bewerken</h3>
-    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info of kleurcode aan.</div>
+    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info, kleurcode en productfoto aan.</div>
 
     <div class="modal-info" id="editModalInfo"></div>
 
-    <label for="edit_sku_base">SKU basis</label>
-    <input id="edit_sku_base" placeholder="SKU basis"/>
+    <div class="edit-grid">
+      <div>
+        <label for="edit_sku_base">SKU basis</label>
+        <input id="edit_sku_base" placeholder="SKU basis"/>
 
-    <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
-    <input id="edit_name" placeholder="Naam / omschrijving"/>
+        <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
+        <input id="edit_name" placeholder="Naam / omschrijving"/>
 
-    <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
-    <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
+        <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
+        <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
 
-    <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
-    <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+        <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
+        <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+      </div>
+
+      <div class="edit-photo-panel" id="editPhotoPanel">
+        <div class="small-muted" style="margin-bottom:10px">
+          Productfoto. Nieuwe foto wordt automatisch gecomprimeerd vóór upload.
+        </div>
+
+        <div class="edit-photo-preview" id="editPhotoPreview">Geen foto aanwezig</div>
+
+        <div class="btnRow">
+          <label class="btn" for="edit_product_photo" style="cursor:pointer">Foto kiezen</label>
+          <label class="btn" for="edit_product_photo_camera" style="cursor:pointer">Foto maken</label>
+          <button class="btn ghost" id="btnDeletePhoto" type="button">Foto verwijderen</button>
+        </div>
+
+        <input id="edit_product_photo" type="file" accept="image/*" style="display:none"/>
+        <input id="edit_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none"/>
+
+        <div class="small-muted" id="editPhotoStatus" style="margin-top:10px"></div>
+      </div>
+    </div>
 
     <div class="btnRow" style="margin-top:16px">
       <button class="btn primary" id="btnConfirmEdit" type="button">Opslaan wijzigingen</button>
@@ -319,6 +484,8 @@ setActiveNav();
 const client = sb();
 const LABEL_W_MM = 140;
 const LABEL_H_MM = 110;
+const STORAGE_BUCKET = 'product-images';
+const TARGET_IMAGE_BYTES = 500 * 1024;
 
 const elSkuBase = byId('sku_base');
 const elName = byId('name');
@@ -341,6 +508,11 @@ let lastGenerated = [];
 let lastProduct = null;
 let currentDeleteProduct = null;
 let currentEditProduct = null;
+let newProductPhotoFile = null;
+
+function safeText(v){
+  return String(v || '').trim();
+}
 
 function getColorPreview(value){
   const v = String(value || '').trim();
@@ -348,11 +520,168 @@ function getColorPreview(value){
   return '#ffffff';
 }
 
+function getProductImageUrl(imagePath){
+  if(!imagePath) return '';
+  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
+  return data?.publicUrl || '';
+}
+
+function renderPhotoBox(imagePath, emptyText = 'Geen foto'){
+  const url = getProductImageUrl(imagePath);
+  if(url){
+    return `<img src="${escapeHtml(url)}" alt="Productfoto"/>`;
+  }
+  return `<span>${escapeHtml(emptyText)}</span>`;
+}
+
+function setNewPhotoPreview(file){
+  const box = byId('newPhotoPreview');
+  if(!file){
+    box.innerHTML = 'Nog geen foto gekozen';
+    return;
+  }
+
+  const url = URL.createObjectURL(file);
+  box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview"/>`;
+}
+
+function setEditPhotoPreview(imagePath = '', localFile = null){
+  const box = byId('editPhotoPreview');
+
+  if(localFile){
+    const url = URL.createObjectURL(localFile);
+    box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview"/>`;
+    return;
+  }
+
+  const url = getProductImageUrl(imagePath);
+  if(url){
+    box.innerHTML = `<img src="${escapeHtml(url)}" alt="Bestaande productfoto"/>`;
+    return;
+  }
+
+  box.innerHTML = 'Geen foto aanwezig';
+}
+
+function setEditPhotoStatus(msg = ''){
+  byId('editPhotoStatus').textContent = msg;
+}
+
+async function compressImageToTarget(file, options = {}){
+  const maxWidth = options.maxWidth || 1600;
+  const maxHeight = options.maxHeight || 1600;
+  const targetBytes = options.targetBytes || TARGET_IMAGE_BYTES;
+  const mimeType = 'image/jpeg';
+
+  const img = await new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => {
+      const image = new Image();
+      image.onload = () => resolve(image);
+      image.onerror = reject;
+      image.src = reader.result;
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(file);
+  });
+
+  let { width, height } = img;
+
+  const ratio = Math.min(1, maxWidth / width, maxHeight / height);
+  width = Math.round(width * ratio);
+  height = Math.round(height * ratio);
+
+  const canvas = document.createElement('canvas');
+  canvas.width = width;
+  canvas.height = height;
+
+  const ctx = canvas.getContext('2d');
+  ctx.drawImage(img, 0, 0, width, height);
+
+  async function canvasToBlob(quality){
+    return await new Promise(resolve => {
+      canvas.toBlob(blob => resolve(blob), mimeType, quality);
+    });
+  }
+
+  let quality = 0.82;
+  let blob = await canvasToBlob(quality);
+
+  while(blob && blob.size > targetBytes && quality > 0.45){
+    quality -= 0.07;
+    blob = await canvasToBlob(quality);
+  }
+
+  if(!blob){
+    throw new Error('Afbeelding comprimeren mislukt.');
+  }
+
+  return new File(
+    [blob],
+    (file.name || 'productfoto').replace(/\.[^.]+$/, '') + '.jpg',
+    { type: mimeType }
+  );
+}
+
+async function uploadProductImage(productId, file){
+  if(!productId) throw new Error('Geen productId ontvangen.');
+  if(!file) throw new Error('Geen bestand gekozen.');
+
+  const compressed = await compressImageToTarget(file, {
+    maxWidth: 1600,
+    maxHeight: 1600,
+    targetBytes: TARGET_IMAGE_BYTES
+  });
+
+  const filePath = `products/${productId}.jpg`;
+
+  const { error: uploadError } = await client
+    .storage
+    .from(STORAGE_BUCKET)
+    .upload(filePath, compressed, {
+      upsert: true,
+      contentType: 'image/jpeg'
+    });
+
+  if(uploadError) throw uploadError;
+
+  const { error: dbError } = await client
+    .from('products')
+    .update({ image_path: filePath })
+    .eq('id', productId);
+
+  if(dbError) throw dbError;
+
+  return filePath;
+}
+
+async function deleteProductImage(productId, imagePath){
+  if(!productId) throw new Error('Geen product geselecteerd.');
+
+  if(imagePath){
+    const { error: storageError } = await client
+      .storage
+      .from(STORAGE_BUCKET)
+      .remove([imagePath]);
+
+    if(storageError && !String(storageError.message || '').toLowerCase().includes('not found')){
+      throw storageError;
+    }
+  }
+
+  const { error: dbError } = await client
+    .from('products')
+    .update({ image_path: null })
+    .eq('id', productId);
+
+  if(dbError) throw dbError;
+}
+
 async function loadProducts(selectId = null){
   const { data, error } = await client
     .from('products')
-    .select('id,sku_base,name,description,color_code,created_at')
-    .order('created_at',{ascending:false});
+    .select('id,sku_base,name,description,color_code,image_path,created_at')
+    .order('created_at', { ascending:false });
 
   if(error) throw error;
 
@@ -370,29 +699,44 @@ async function loadProducts(selectId = null){
 
 async function createProduct(){
   const sku_base = cleanSku(elSkuBase.value);
-  const name = (elName.value || '').trim();
-  const description = (elDesc.value || '').trim();
-  const color_code = (elColor.value || '').trim();
+  const name = safeText(elName.value);
+  const description = safeText(elDesc.value);
+  const color_code = safeText(elColor.value);
 
   if(!sku_base) return toast('Vul een SKU basis in.','err');
   if(!name) return toast('Vul een naam / omschrijving in.','err');
 
-  const { data, error } = await client
-    .from('products')
-    .insert([{ sku_base, name, description, color_code }])
-    .select()
-    .single();
+  btnCreate.disabled = true;
 
-  if(error) throw error;
+  try{
+    const { data, error } = await client
+      .from('products')
+      .insert([{ sku_base, name, description, color_code }])
+      .select()
+      .single();
 
-  toast('Artikel opgeslagen.');
-  elSkuBase.value = '';
-  elName.value = '';
-  elDesc.value = '';
-  elColor.value = '';
+    if(error) throw error;
 
-  await loadProducts(data.id);
-  await loadManageList();
+    if(newProductPhotoFile){
+      await uploadProductImage(data.id, newProductPhotoFile);
+    }
+
+    toast('Artikel opgeslagen.','ok');
+
+    elSkuBase.value = '';
+    elName.value = '';
+    elDesc.value = '';
+    elColor.value = '';
+    newProductPhotoFile = null;
+    setNewPhotoPreview(null);
+
+    await loadProducts(data.id);
+    await loadManageList();
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }finally{
+    btnCreate.disabled = false;
+  }
 }
 
 function updateButtons(){
@@ -486,14 +830,14 @@ async function generateStickers(){
   const { data:product, error:pErr } = await client
     .from('products')
     .select('*')
-    .eq('id',product_id)
+    .eq('id', product_id)
     .single();
 
   if(pErr) throw pErr;
 
-  const { data:items, error } = await client.rpc('create_items',{
-    p_product_id:product_id,
-    p_qty:qty
+  const { data:items, error } = await client.rpc('create_items', {
+    p_product_id: product_id,
+    p_qty: qty
   });
 
   if(error) throw error;
@@ -502,7 +846,7 @@ async function generateStickers(){
   lastGenerated = items || [];
   stickersEl.innerHTML = '';
 
-  lastGenerated.forEach(it => stickersEl.appendChild(renderSticker(product,it)));
+  lastGenerated.forEach(it => stickersEl.appendChild(renderSticker(product, it)));
 
   toast(`Gegenereerd: ${lastGenerated.length} stickers.`,'ok');
   updateButtons();
@@ -537,7 +881,7 @@ async function downloadSelectedPDF(){
   let page = 0;
 
   for(const node of nodes){
-    const canvas = await html2canvas(node,{
+    const canvas = await html2canvas(node, {
       scale:2,
       backgroundColor:'#ffffff',
       useCORS:true
@@ -545,8 +889,8 @@ async function downloadSelectedPDF(){
 
     const img = canvas.toDataURL('image/png');
 
-    if(page > 0) pdf.addPage([LABEL_W_MM,LABEL_H_MM],'landscape');
-    pdf.addImage(img,'PNG',0,0,LABEL_W_MM,LABEL_H_MM);
+    if(page > 0) pdf.addPage([LABEL_W_MM, LABEL_H_MM], 'landscape');
+    pdf.addImage(img, 'PNG', 0, 0, LABEL_W_MM, LABEL_H_MM);
     page++;
   }
 
@@ -554,12 +898,12 @@ async function downloadSelectedPDF(){
 }
 
 async function loadManageList(){
-  const q = (byId('manage_q').value || '').trim().toLowerCase();
+  const q = safeText(byId('manage_q').value).toLowerCase();
 
   const { data:products, error } = await client
     .from('products')
-    .select('id,sku_base,name,description,color_code,created_at')
-    .order('created_at',{ascending:false});
+    .select('id,sku_base,name,description,color_code,image_path,created_at')
+    .order('created_at', { ascending:false });
 
   if(error) throw error;
 
@@ -570,18 +914,14 @@ async function loadManageList(){
     return;
   }
 
-  const productIds = products.map(p => p.id);
-
   let itemCounts = {};
-  if(productIds.length){
-    const { data:items } = await client
-      .from('items')
-      .select('id,product_id');
+  const { data:items } = await client
+    .from('items')
+    .select('id,product_id');
 
-    (items || []).forEach(it => {
-      itemCounts[it.product_id] = (itemCounts[it.product_id] || 0) + 1;
-    });
-  }
+  (items || []).forEach(it => {
+    itemCounts[it.product_id] = (itemCounts[it.product_id] || 0) + 1;
+  });
 
   let rows = products.map(p => ({
     ...p,
@@ -604,6 +944,10 @@ async function loadManageList(){
 
   listEl.innerHTML = rows.map(r => `
     <div class="manage-row">
+      <div class="photo-thumb">
+        ${renderPhotoBox(r.image_path, 'Geen foto')}
+      </div>
+
       <div class="manage-sku">${escapeHtml(r.sku_base)}</div>
 
       <div class="manage-info">
@@ -629,6 +973,7 @@ async function loadManageList(){
           data-edit-name="${escapeHtml(r.name)}"
           data-edit-description="${escapeHtml(r.description || '')}"
           data-edit-color="${escapeHtml(r.color_code || '')}"
+          data-edit-image="${escapeHtml(r.image_path || '')}"
           data-edit-count="${r.item_count}"
         >
           Bewerken
@@ -642,6 +987,7 @@ async function loadManageList(){
           data-delete-name="${escapeHtml(r.name)}"
           data-delete-description="${escapeHtml(r.description || '')}"
           data-delete-color="${escapeHtml(r.color_code || '')}"
+          data-delete-image="${escapeHtml(r.image_path || '')}"
           data-delete-count="${r.item_count}"
         >
           Verwijderen
@@ -663,6 +1009,7 @@ function bindEditButtons(){
         name: btn.getAttribute('data-edit-name'),
         description: btn.getAttribute('data-edit-description'),
         color_code: btn.getAttribute('data-edit-color'),
+        image_path: btn.getAttribute('data-edit-image'),
         item_count: Number(btn.getAttribute('data-edit-count') || 0)
       };
 
@@ -675,6 +1022,12 @@ function bindEditButtons(){
       byId('edit_name').value = currentEditProduct.name || '';
       byId('edit_description').value = currentEditProduct.description || '';
       byId('edit_color_code').value = currentEditProduct.color_code || '';
+
+      setEditPhotoPreview(currentEditProduct.image_path || '', null);
+      setEditPhotoStatus('');
+
+      byId('edit_product_photo').value = '';
+      byId('edit_product_photo_camera').value = '';
 
       byId('editModal').classList.add('show');
     });
@@ -690,6 +1043,7 @@ function bindDeleteButtons(){
         name: btn.getAttribute('data-delete-name'),
         description: btn.getAttribute('data-delete-description'),
         color_code: btn.getAttribute('data-delete-color'),
+        image_path: btn.getAttribute('data-delete-image'),
         item_count: Number(btn.getAttribute('data-delete-count') || 0)
       };
 
@@ -698,6 +1052,7 @@ function bindDeleteButtons(){
         <div><b>Omschrijving:</b> ${escapeHtml(currentDeleteProduct.name)}</div>
         <div><b>Overige vermelding:</b> ${escapeHtml(currentDeleteProduct.description || '-')}</div>
         <div><b>Kleurcode:</b> ${escapeHtml(currentDeleteProduct.color_code || '-')}</div>
+        <div><b>Foto aanwezig:</b> ${currentDeleteProduct.image_path ? 'Ja' : 'Nee'}</div>
         <div><b>Gekoppelde items:</b> ${currentDeleteProduct.item_count}</div>
       `;
 
@@ -723,9 +1078,9 @@ async function saveProductEdit(){
   }
 
   const sku_base = cleanSku(byId('edit_sku_base').value);
-  const name = (byId('edit_name').value || '').trim();
-  const description = (byId('edit_description').value || '').trim();
-  const color_code = (byId('edit_color_code').value || '').trim();
+  const name = safeText(byId('edit_name').value);
+  const description = safeText(byId('edit_description').value);
+  const color_code = safeText(byId('edit_color_code').value);
 
   if(!sku_base) return toast('Vul een SKU basis in.','err');
   if(!name) return toast('Vul een naam / omschrijving in.','err');
@@ -769,6 +1124,10 @@ async function deleteProductDefinitive(){
       if(!ok) return;
     }
 
+    if(currentDeleteProduct.image_path){
+      await client.storage.from(STORAGE_BUCKET).remove([currentDeleteProduct.image_path]);
+    }
+
     const { error } = await client
       .from('products')
       .delete()
@@ -787,7 +1146,75 @@ async function deleteProductDefinitive(){
   }
 }
 
+async function handleNewProductPhotoInput(file){
+  if(!file) return;
+  newProductPhotoFile = file;
+  setNewPhotoPreview(file);
+}
+
+async function handleEditPhotoUpload(file){
+  if(!currentEditProduct){
+    toast('Geen artikel geselecteerd.','err');
+    return;
+  }
+  if(!file) return;
+
+  const panel = byId('editPhotoPanel');
+  panel.classList.add('uploading');
+  setEditPhotoStatus('Foto wordt gecomprimeerd en geüpload...');
+
+  try{
+    const path = await uploadProductImage(currentEditProduct.id, file);
+    currentEditProduct.image_path = path;
+    setEditPhotoPreview(path, null);
+    setEditPhotoStatus('Foto opgeslagen.');
+    toast('Productfoto bijgewerkt.','ok');
+    await loadManageList();
+  }catch(e){
+    setEditPhotoStatus('');
+    toast(e.message || String(e), 'err');
+  }finally{
+    panel.classList.remove('uploading');
+    byId('edit_product_photo').value = '';
+    byId('edit_product_photo_camera').value = '';
+  }
+}
+
+async function handleDeleteEditPhoto(){
+  if(!currentEditProduct){
+    toast('Geen artikel geselecteerd.','err');
+    return;
+  }
+
+  if(!currentEditProduct.image_path){
+    toast('Er is geen foto om te verwijderen.','err');
+    return;
+  }
+
+  const ok = confirm('Weet je zeker dat je de productfoto wilt verwijderen?');
+  if(!ok) return;
+
+  const panel = byId('editPhotoPanel');
+  panel.classList.add('uploading');
+  setEditPhotoStatus('Foto wordt verwijderd...');
+
+  try{
+    await deleteProductImage(currentEditProduct.id, currentEditProduct.image_path);
+    currentEditProduct.image_path = '';
+    setEditPhotoPreview('', null);
+    setEditPhotoStatus('Foto verwijderd.');
+    toast('Productfoto verwijderd.','ok');
+    await loadManageList();
+  }catch(e){
+    setEditPhotoStatus('');
+    toast(e.message || String(e), 'err');
+  }finally{
+    panel.classList.remove('uploading');
+  }
+}
+
 btnCreate.addEventListener('click', () => createProduct().catch(e => toast(e.message || String(e),'err')));
+
 btnReload.addEventListener('click', async () => {
   try{
     await loadProducts();
@@ -815,6 +1242,7 @@ byId('btnConfirmDelete').addEventListener('click', deleteProductDefinitive);
 
 byId('btnCancelEdit').addEventListener('click', closeEditModal);
 byId('btnConfirmEdit').addEventListener('click', saveProductEdit);
+byId('btnDeletePhoto').addEventListener('click', handleDeleteEditPhoto);
 
 byId('deleteModal').addEventListener('click', e => {
   if(e.target === byId('deleteModal')){
@@ -826,6 +1254,29 @@ byId('editModal').addEventListener('click', e => {
   if(e.target === byId('editModal')){
     closeEditModal();
   }
+});
+
+byId('new_product_photo').addEventListener('change', e => {
+  handleNewProductPhotoInput(e.target.files?.[0] || null);
+});
+
+byId('new_product_photo_camera').addEventListener('change', e => {
+  handleNewProductPhotoInput(e.target.files?.[0] || null);
+});
+
+byId('btn_clear_new_photo').addEventListener('click', () => {
+  newProductPhotoFile = null;
+  byId('new_product_photo').value = '';
+  byId('new_product_photo_camera').value = '';
+  setNewPhotoPreview(null);
+});
+
+byId('edit_product_photo').addEventListener('change', e => {
+  handleEditPhotoUpload(e.target.files?.[0] || null);
+});
+
+byId('edit_product_photo_camera').addEventListener('change', e => {
+  handleEditPhotoUpload(e.target.files?.[0] || null);
 });
 
 loadProducts().catch(e => toast(e.message || String(e),'err'));
