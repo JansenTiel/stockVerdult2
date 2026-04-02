@@ -50,6 +50,28 @@
       line-height:1.35;
     }
 
+    .color-pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:12px;
+      font-weight:800;
+      margin-top:6px;
+    }
+
+    .color-dot{
+      width:14px;
+      height:14px;
+      border-radius:999px;
+      border:1px solid rgba(0,0,0,.12);
+      display:inline-block;
+      background:#fff;
+    }
+
     .manage-count{
       text-align:right;
     }
@@ -105,12 +127,14 @@
     }
 
     .modal-card{
-      width:min(560px,100%);
+      width:min(680px,100%);
       background:#fff;
       border:1px solid var(--border);
       border-radius:20px;
       box-shadow:0 20px 50px rgba(0,0,0,.18);
       padding:22px;
+      max-height:90vh;
+      overflow:auto;
     }
 
     .modal-title{
@@ -154,11 +178,11 @@
     </div>
 
     <nav class="nav">
-      <a href="/index.html">Dashboard</a>
-      <a href="/products.html">Artikelen + Stickers</a>
-      <a href="/scan.html">In-/Uitscan</a>
-      <a href="/stock.html">Huidige voorraad</a>
-      <a href="/outscans.html">Uitscans</a>
+      <a href='/'>Dashboard</a>
+      <a href='/products'>Artikelen + Stickers</a>
+      <a href='/scan'>In-/Uitscan</a>
+      <a href='/stock'>Huidige voorraad</a>
+      <a href='/outscans'>Uitscans</a>
     </nav>
 
     <div class="rightbar">
@@ -188,6 +212,9 @@
 
       <label for="description" style="margin-top:12px">Overige vermelding</label>
       <textarea id="description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
+
+      <label for="color_code" style="margin-top:12px">Kleurcode</label>
+      <input id="color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
 
       <div class="btnRow" style="margin-top:16px">
         <button class="btn primary" id="btn_create" type="button">Opslaan</button>
@@ -229,7 +256,7 @@
 
   <div class="card" style="margin-top:16px">
     <h3>3) Bestaande artikelen beheren</h3>
-    <div class="muted">Gebruik dit blok om verkeerd aangemaakte SKU’s definitief te verwijderen.</div>
+    <div class="muted">Gebruik dit blok om artikelen te bewerken of verkeerd aangemaakte SKU’s definitief te verwijderen.</div>
 
     <div class="row" style="margin-top:14px">
       <div>
@@ -260,6 +287,32 @@
   </div>
 </div>
 
+<div id="editModal" class="modal-backdrop">
+  <div class="modal-card">
+    <h3 class="modal-title">Artikel bewerken</h3>
+    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info of kleurcode aan.</div>
+
+    <div class="modal-info" id="editModalInfo"></div>
+
+    <label for="edit_sku_base">SKU basis</label>
+    <input id="edit_sku_base" placeholder="SKU basis"/>
+
+    <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
+    <input id="edit_name" placeholder="Naam / omschrijving"/>
+
+    <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
+    <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
+
+    <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
+    <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+
+    <div class="btnRow" style="margin-top:16px">
+      <button class="btn primary" id="btnConfirmEdit" type="button">Opslaan wijzigingen</button>
+      <button class="btn" id="btnCancelEdit" type="button">Annuleren</button>
+    </div>
+  </div>
+</div>
+
 <script>
 setActiveNav();
 
@@ -270,6 +323,7 @@ const LABEL_H_MM = 110;
 const elSkuBase = byId('sku_base');
 const elName = byId('name');
 const elDesc = byId('description');
+const elColor = byId('color_code');
 const elSelect = byId('product_select');
 const elQty = byId('qty');
 
@@ -286,11 +340,18 @@ const stickersEl = byId('stickers');
 let lastGenerated = [];
 let lastProduct = null;
 let currentDeleteProduct = null;
+let currentEditProduct = null;
+
+function getColorPreview(value){
+  const v = String(value || '').trim();
+  if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return v;
+  return '#ffffff';
+}
 
 async function loadProducts(selectId = null){
   const { data, error } = await client
     .from('products')
-    .select('id,sku_base,name,description,created_at')
+    .select('id,sku_base,name,description,color_code,created_at')
     .order('created_at',{ascending:false});
 
   if(error) throw error;
@@ -311,13 +372,14 @@ async function createProduct(){
   const sku_base = cleanSku(elSkuBase.value);
   const name = (elName.value || '').trim();
   const description = (elDesc.value || '').trim();
+  const color_code = (elColor.value || '').trim();
 
   if(!sku_base) return toast('Vul een SKU basis in.','err');
   if(!name) return toast('Vul een naam / omschrijving in.','err');
 
   const { data, error } = await client
     .from('products')
-    .insert([{ sku_base, name, description }])
+    .insert([{ sku_base, name, description, color_code }])
     .select()
     .single();
 
@@ -327,6 +389,7 @@ async function createProduct(){
   elSkuBase.value = '';
   elName.value = '';
   elDesc.value = '';
+  elColor.value = '';
 
   await loadProducts(data.id);
   await loadManageList();
@@ -374,6 +437,7 @@ function renderSticker(product, item){
           <div class="st-prod">${escapeHtml(product.name)}</div>
           <div class="st-sku">${escapeHtml(item.sku_unique)}</div>
           <div class="st-notes">${escapeHtml(product.description || '')}</div>
+          ${product.color_code ? `<div class="st-notes">Kleurcode: ${escapeHtml(product.color_code)}</div>` : ''}
         </div>
         <div class="st-badge">RVD</div>
       </div>
@@ -494,7 +558,7 @@ async function loadManageList(){
 
   const { data:products, error } = await client
     .from('products')
-    .select('id,sku_base,name,description,created_at')
+    .select('id,sku_base,name,description,color_code,created_at')
     .order('created_at',{ascending:false});
 
   if(error) throw error;
@@ -528,7 +592,8 @@ async function loadManageList(){
     rows = rows.filter(r =>
       String(r.sku_base || '').toLowerCase().includes(q) ||
       String(r.name || '').toLowerCase().includes(q) ||
-      String(r.description || '').toLowerCase().includes(q)
+      String(r.description || '').toLowerCase().includes(q) ||
+      String(r.color_code || '').toLowerCase().includes(q)
     );
   }
 
@@ -544,6 +609,10 @@ async function loadManageList(){
       <div class="manage-info">
         <b>${escapeHtml(r.name)}</b>
         <div class="small">${escapeHtml(r.description || 'Geen overige vermelding')}</div>
+        <div class="color-pill">
+          <span class="color-dot" style="background:${escapeHtml(getColorPreview(r.color_code))}"></span>
+          Kleurcode: ${escapeHtml(r.color_code || '-')}
+        </div>
       </div>
 
       <div class="manage-count">
@@ -553,12 +622,26 @@ async function loadManageList(){
 
       <div class="manage-actions">
         <button
+          class="btn"
+          type="button"
+          data-edit-id="${escapeHtml(r.id)}"
+          data-edit-sku="${escapeHtml(r.sku_base)}"
+          data-edit-name="${escapeHtml(r.name)}"
+          data-edit-description="${escapeHtml(r.description || '')}"
+          data-edit-color="${escapeHtml(r.color_code || '')}"
+          data-edit-count="${r.item_count}"
+        >
+          Bewerken
+        </button>
+
+        <button
           class="btn danger"
           type="button"
           data-delete-id="${escapeHtml(r.id)}"
           data-delete-sku="${escapeHtml(r.sku_base)}"
           data-delete-name="${escapeHtml(r.name)}"
           data-delete-description="${escapeHtml(r.description || '')}"
+          data-delete-color="${escapeHtml(r.color_code || '')}"
           data-delete-count="${r.item_count}"
         >
           Verwijderen
@@ -567,7 +650,35 @@ async function loadManageList(){
     </div>
   `).join('');
 
+  bindEditButtons();
   bindDeleteButtons();
+}
+
+function bindEditButtons(){
+  document.querySelectorAll('[data-edit-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      currentEditProduct = {
+        id: btn.getAttribute('data-edit-id'),
+        sku_base: btn.getAttribute('data-edit-sku'),
+        name: btn.getAttribute('data-edit-name'),
+        description: btn.getAttribute('data-edit-description'),
+        color_code: btn.getAttribute('data-edit-color'),
+        item_count: Number(btn.getAttribute('data-edit-count') || 0)
+      };
+
+      byId('editModalInfo').innerHTML = `
+        <div><b>Huidige SKU basis:</b> ${escapeHtml(currentEditProduct.sku_base)}</div>
+        <div><b>Gekoppelde items:</b> ${currentEditProduct.item_count}</div>
+      `;
+
+      byId('edit_sku_base').value = currentEditProduct.sku_base || '';
+      byId('edit_name').value = currentEditProduct.name || '';
+      byId('edit_description').value = currentEditProduct.description || '';
+      byId('edit_color_code').value = currentEditProduct.color_code || '';
+
+      byId('editModal').classList.add('show');
+    });
+  });
 }
 
 function bindDeleteButtons(){
@@ -578,6 +689,7 @@ function bindDeleteButtons(){
         sku_base: btn.getAttribute('data-delete-sku'),
         name: btn.getAttribute('data-delete-name'),
         description: btn.getAttribute('data-delete-description'),
+        color_code: btn.getAttribute('data-delete-color'),
         item_count: Number(btn.getAttribute('data-delete-count') || 0)
       };
 
@@ -585,6 +697,7 @@ function bindDeleteButtons(){
         <div><b>SKU basis:</b> ${escapeHtml(currentDeleteProduct.sku_base)}</div>
         <div><b>Omschrijving:</b> ${escapeHtml(currentDeleteProduct.name)}</div>
         <div><b>Overige vermelding:</b> ${escapeHtml(currentDeleteProduct.description || '-')}</div>
+        <div><b>Kleurcode:</b> ${escapeHtml(currentDeleteProduct.color_code || '-')}</div>
         <div><b>Gekoppelde items:</b> ${currentDeleteProduct.item_count}</div>
       `;
 
@@ -596,6 +709,49 @@ function bindDeleteButtons(){
 function closeDeleteModal(){
   currentDeleteProduct = null;
   byId('deleteModal').classList.remove('show');
+}
+
+function closeEditModal(){
+  currentEditProduct = null;
+  byId('editModal').classList.remove('show');
+}
+
+async function saveProductEdit(){
+  if(!currentEditProduct){
+    toast('Geen artikel geselecteerd.','err');
+    return;
+  }
+
+  const sku_base = cleanSku(byId('edit_sku_base').value);
+  const name = (byId('edit_name').value || '').trim();
+  const description = (byId('edit_description').value || '').trim();
+  const color_code = (byId('edit_color_code').value || '').trim();
+
+  if(!sku_base) return toast('Vul een SKU basis in.','err');
+  if(!name) return toast('Vul een naam / omschrijving in.','err');
+
+  try{
+    const { error } = await client
+      .from('products')
+      .update({
+        sku_base,
+        name,
+        description,
+        color_code
+      })
+      .eq('id', currentEditProduct.id);
+
+    if(error) throw error;
+
+    closeEditModal();
+    toast(`Artikel ${sku_base} is bijgewerkt.`,'ok');
+
+    await loadProducts(currentEditProduct.id);
+    await loadManageList();
+    clearPreview();
+  }catch(e){
+    toast(e.message || String(e),'err');
+  }
 }
 
 async function deleteProductDefinitive(){
@@ -657,9 +813,18 @@ byId('manage_q').addEventListener('keydown', e => {
 byId('btnCancelDelete').addEventListener('click', closeDeleteModal);
 byId('btnConfirmDelete').addEventListener('click', deleteProductDefinitive);
 
+byId('btnCancelEdit').addEventListener('click', closeEditModal);
+byId('btnConfirmEdit').addEventListener('click', saveProductEdit);
+
 byId('deleteModal').addEventListener('click', e => {
   if(e.target === byId('deleteModal')){
     closeDeleteModal();
+  }
+});
+
+byId('editModal').addEventListener('click', e => {
+  if(e.target === byId('editModal')){
+    closeEditModal();
   }
 });
 
