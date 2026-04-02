@@ -28,6 +28,29 @@
       margin-bottom:2px;
     }
 
+    .page-url{
+      margin:12px 0 0;
+      color:var(--navy);
+      font-size:14px;
+      font-weight:700;
+      display:flex;
+      align-items:center;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .page-url strong{
+      display:inline-flex;
+      align-items:center;
+      padding:5px 12px;
+      border-radius:999px;
+      background:rgba(196,154,108,.14);
+      border:1px solid rgba(196,154,108,.28);
+      color:#6e4f36;
+      font-weight:900;
+      letter-spacing:.01em;
+    }
+
     .upload-card,
     .scan-card,
     .edit-photo-panel{
@@ -124,30 +147,6 @@
       display:block;
       margin-bottom:4px;
       color:var(--navy);
-    }
-
-    .color-pill{
-      display:inline-flex;
-      align-items:center;
-      gap:8px;
-      padding:6px 10px;
-      border-radius:999px;
-      border:1px solid var(--border);
-      background:#fff;
-      font-size:12px;
-      font-weight:800;
-      margin-top:8px;
-      flex-wrap:wrap;
-    }
-
-    .color-dot{
-      width:14px;
-      height:14px;
-      border-radius:999px;
-      border:1px solid rgba(0,0,0,.12);
-      display:inline-block;
-      background:#fff;
-      flex:0 0 auto;
     }
 
     .manage-count{
@@ -318,16 +317,23 @@
     </div>
 
     <nav class="nav">
-      <a href="/">Dashboard</a>
-      <a href="/products" class="active">Artikelen + Stickers</a>
-      <a href="/scan">In-/Uitscan</a>
-      <a href="/stock">Huidige voorraad</a>
-      <a href="/outscans">Uitscans</a>
-      <a href="/picklists">Picklijsten</a>
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html" class="active">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a href="/stock.html">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html">Picklijsten</a>
     </nav>
 
     <div class="rightbar">
-      <span class="pill"><span id="userEmail"></span></span>
+      <a class="site-link" href="https://www.rv-voorraad.nl" target="_blank" rel="noopener">
+        www.rv-voorraad.nl
+      </a>
+
+      <span class="pill">
+        <span id="userEmail"></span>
+      </span>
+
       <button class="btn" id="btnLogout" type="button">Uitloggen</button>
     </div>
   </div>
@@ -342,6 +348,11 @@
       Artikelbeheer met productfoto op SKU-basis. Je kunt artikelen aanmaken, stickers genereren, bestaande artikelen beheren
       en op mobiel de QR of barcode scannen en daarna direct een foto maken die automatisch aan die bestaande SKU wordt gekoppeld.
     </div>
+
+    <p class="page-url">
+      Actieve omgeving:
+      <strong>www.rv-voorraad.nl</strong>
+    </p>
   </div>
 
   <div class="products-stack">
@@ -356,10 +367,7 @@
         <input id="name" placeholder="Ronald Verdult Stoel"/>
 
         <label for="description" style="margin-top:12px">Overige vermelding</label>
-        <textarea id="description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
-
-        <label for="color_code" style="margin-top:12px">Kleurcode</label>
-        <input id="color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+        <textarea id="description" placeholder="Bijvoorbeeld serie, uitvoering of extra info"></textarea>
 
         <div class="upload-card" style="margin-top:12px">
           <label for="new_product_photo">Productfoto</label>
@@ -473,7 +481,7 @@
       <div class="row" style="margin-top:14px">
         <div>
           <label for="manage_q">Zoeken</label>
-          <input id="manage_q" placeholder="Zoek op SKU, omschrijving, kleurcode of extra info"/>
+          <input id="manage_q" placeholder="Zoek op SKU, omschrijving of extra info"/>
         </div>
         <div>
           <label>&nbsp;</label>
@@ -503,7 +511,7 @@
 <div id="editModal" class="modal-backdrop">
   <div class="modal-card">
     <h3 class="modal-title">Artikel bewerken</h3>
-    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info, kleurcode en productfoto aan.</div>
+    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info en productfoto aan.</div>
     <div class="modal-info" id="editModalInfo"></div>
 
     <div class="edit-grid">
@@ -515,10 +523,7 @@
         <input id="edit_name" placeholder="Naam / omschrijving"/>
 
         <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
-        <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
-
-        <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
-        <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+        <textarea id="edit_description" placeholder="Bijvoorbeeld serie of extra info"></textarea>
       </div>
 
       <div class="edit-photo-panel" id="editPhotoPanel">
@@ -625,12 +630,6 @@ function setBusy(button, busy){
       button.textContent = button.dataset.originalText;
     }
   }
-}
-
-function getColorPreview(value){
-  const v = safeText(value);
-  if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return v;
-  return '#ffffff';
 }
 
 function getProductImageUrl(imagePath){
@@ -810,7 +809,7 @@ async function loadProducts(selectId = null){
 
   const { data, error } = await client
     .from('products')
-    .select('id, sku_base, name, description, color_code, image_path, created_at')
+    .select('id, sku_base, name, description, image_path, created_at')
     .order('created_at', { ascending: false });
 
   if(error) throw error;
@@ -861,7 +860,6 @@ async function createProduct(){
   const sku_base = cleanSku(byId('sku_base').value);
   const name = safeText(byId('name').value);
   const description = safeText(byId('description').value);
-  const color_code = safeText(byId('color_code').value);
 
   if(!sku_base) return toast('Vul een SKU basis in.', 'err');
   if(!name) return toast('Vul een naam / omschrijving in.', 'err');
@@ -873,7 +871,7 @@ async function createProduct(){
   try{
     const { data, error } = await client
       .from('products')
-      .insert([{ sku_base, name, description, color_code }])
+      .insert([{ sku_base, name, description }])
       .select()
       .single();
 
@@ -886,7 +884,6 @@ async function createProduct(){
     byId('sku_base').value = '';
     byId('name').value = '';
     byId('description').value = '';
-    byId('color_code').value = '';
 
     state.newProductPhotoFile = null;
     byId('new_product_photo').value = '';
@@ -945,7 +942,6 @@ function renderSticker(product, item){
           <div class="st-prod">${escapeHtml(product.name)}</div>
           <div class="st-sku">${escapeHtml(item.sku_unique)}</div>
           <div class="st-notes">${escapeHtml(product.description || '')}</div>
-          ${product.color_code ? `<div class="st-notes">Kleurcode: ${escapeHtml(product.color_code)}</div>` : ''}
         </div>
         <div class="st-badge">${escapeHtml(STICKER_PREFIX)}</div>
       </div>
@@ -1106,7 +1102,7 @@ async function loadManageList(){
 
   if(q){
     rows = rows.filter(r =>
-      [r.sku_base, r.name, r.description, r.color_code]
+      [r.sku_base, r.name, r.description]
         .map(v => String(v || '').toLowerCase())
         .some(v => v.includes(q))
     );
@@ -1124,10 +1120,6 @@ async function loadManageList(){
       <div class="manage-info">
         <b>${escapeHtml(r.name)}</b>
         <div class="small">${escapeHtml(r.description || 'Geen overige vermelding')}</div>
-        <div class="color-pill">
-          <span class="color-dot" style="background:${escapeHtml(getColorPreview(r.color_code))}"></span>
-          Kleurcode: ${escapeHtml(r.color_code || '-')}
-        </div>
       </div>
       <div class="manage-count">
         <div class="n">${r.item_count}</div>
@@ -1141,7 +1133,6 @@ async function loadManageList(){
           data-edit-sku="${escapeHtml(r.sku_base)}"
           data-edit-name="${escapeHtml(r.name)}"
           data-edit-description="${escapeHtml(r.description || '')}"
-          data-edit-color="${escapeHtml(r.color_code || '')}"
           data-edit-image="${escapeHtml(r.image_path || '')}"
           data-edit-count="${r.item_count}"
         >Bewerken</button>
@@ -1153,7 +1144,6 @@ async function loadManageList(){
           data-delete-sku="${escapeHtml(r.sku_base)}"
           data-delete-name="${escapeHtml(r.name)}"
           data-delete-description="${escapeHtml(r.description || '')}"
-          data-delete-color="${escapeHtml(r.color_code || '')}"
           data-delete-image="${escapeHtml(r.image_path || '')}"
           data-delete-count="${r.item_count}"
         >Verwijderen</button>
@@ -1173,7 +1163,6 @@ function bindEditButtons(){
         sku_base: btn.getAttribute('data-edit-sku'),
         name: btn.getAttribute('data-edit-name'),
         description: btn.getAttribute('data-edit-description'),
-        color_code: btn.getAttribute('data-edit-color'),
         image_path: btn.getAttribute('data-edit-image'),
         item_count: Number(btn.getAttribute('data-edit-count') || 0)
       };
@@ -1186,7 +1175,6 @@ function bindEditButtons(){
       byId('edit_sku_base').value = state.currentEditProduct.sku_base || '';
       byId('edit_name').value = state.currentEditProduct.name || '';
       byId('edit_description').value = state.currentEditProduct.description || '';
-      byId('edit_color_code').value = state.currentEditProduct.color_code || '';
       byId('edit_product_photo').value = '';
       byId('edit_product_photo_camera').value = '';
       setEditPhotoPreview(state.currentEditProduct.image_path || '', null);
@@ -1204,7 +1192,6 @@ function bindDeleteButtons(){
         sku_base: btn.getAttribute('data-delete-sku'),
         name: btn.getAttribute('data-delete-name'),
         description: btn.getAttribute('data-delete-description'),
-        color_code: btn.getAttribute('data-delete-color'),
         image_path: btn.getAttribute('data-delete-image'),
         item_count: Number(btn.getAttribute('data-delete-count') || 0)
       };
@@ -1213,7 +1200,6 @@ function bindDeleteButtons(){
         <div><b>SKU basis:</b> ${escapeHtml(state.currentDeleteProduct.sku_base)}</div>
         <div><b>Omschrijving:</b> ${escapeHtml(state.currentDeleteProduct.name)}</div>
         <div><b>Overige vermelding:</b> ${escapeHtml(state.currentDeleteProduct.description || '-')}</div>
-        <div><b>Kleurcode:</b> ${escapeHtml(state.currentDeleteProduct.color_code || '-')}</div>
         <div><b>Foto aanwezig:</b> ${state.currentDeleteProduct.image_path ? 'Ja' : 'Nee'}</div>
         <div><b>Gekoppelde items:</b> ${state.currentDeleteProduct.item_count}</div>
       `;
@@ -1240,7 +1226,6 @@ async function saveProductEdit(){
   const sku_base = cleanSku(byId('edit_sku_base').value);
   const name = safeText(byId('edit_name').value);
   const description = safeText(byId('edit_description').value);
-  const color_code = safeText(byId('edit_color_code').value);
 
   if(!sku_base) return toast('Vul een SKU basis in.', 'err');
   if(!name) return toast('Vul een naam / omschrijving in.', 'err');
@@ -1251,7 +1236,7 @@ async function saveProductEdit(){
   try{
     const { error } = await client
       .from('products')
-      .update({ sku_base, name, description, color_code })
+      .update({ sku_base, name, description })
       .eq('id', state.currentEditProduct.id);
 
     if(error) throw error;
@@ -1337,7 +1322,7 @@ async function findProductByScannedSku(){
   try{
     const { data, error } = await client
       .from('products')
-      .select('id, sku_base, name, description, color_code, image_path, created_at')
+      .select('id, sku_base, name, description, image_path, created_at')
       .eq('sku_base', skuBase)
       .maybeSingle();
 
@@ -1358,7 +1343,6 @@ async function findProductByScannedSku(){
       <div><b>SKU basis:</b> ${escapeHtml(data.sku_base)}</div>
       <div><b>Omschrijving:</b> ${escapeHtml(data.name || '-')}</div>
       <div><b>Overige vermelding:</b> ${escapeHtml(data.description || '-')}</div>
-      <div><b>Kleurcode:</b> ${escapeHtml(data.color_code || '-')}</div>
       <div><b>Bestaande foto:</b> ${data.image_path ? 'Ja' : 'Nee'}</div>
     `;
 
