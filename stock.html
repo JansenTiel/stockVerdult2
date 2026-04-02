@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="nl" class="auth-pending">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -7,13 +7,14 @@
 
   <link rel="stylesheet" href="/css/theme.css"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="/js/supabase.js"></script>
-  <script src="/js/app.js"></script>
-  <script src="/js/auth.js"></script>
-
   <style>
+    html.auth-pending body{
+      visibility:hidden;
+    }
+    html.auth-ready body{
+      visibility:visible;
+    }
+
     .page-url{
       margin:12px 0 0;
       color:var(--navy);
@@ -35,6 +36,35 @@
       color:#6e4f36;
       font-weight:900;
       letter-spacing:.01em;
+    }
+
+    .bulk-panel{
+      margin-top:16px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#f8fafc;
+      padding:14px;
+    }
+
+    .bulk-panel-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+      align-items:center;
+      margin-bottom:10px;
+    }
+
+    .bulk-summary{
+      font-weight:800;
+      color:var(--navy);
+    }
+
+    .bulk-note{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      margin-top:8px;
     }
 
     .stock-group{
@@ -209,6 +239,34 @@
       color:var(--navy);
     }
 
+    .sku-bulk-bar{
+      border:1px dashed var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:12px;
+      margin-top:12px;
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+
+    .sku-bulk-left{
+      display:flex;
+      align-items:center;
+      gap:14px;
+      flex-wrap:wrap;
+    }
+
+    .sku-bulk-check{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      font-weight:800;
+      color:var(--navy);
+    }
+
     .stock-toolbar{
       display:grid;
       grid-template-columns:1fr 1fr auto auto;
@@ -269,6 +327,12 @@
       min-height:auto;
     }
 
+    .row-check{
+      width:18px;
+      height:18px;
+      accent-color:var(--navy);
+    }
+
     .modal-backdrop{
       position:fixed;
       inset:0;
@@ -285,7 +349,7 @@
     }
 
     .modal-card{
-      width:min(520px,100%);
+      width:min(560px,100%);
       background:#fff;
       border:1px solid var(--border);
       border-radius:20px;
@@ -386,6 +450,10 @@
       line-height:1.35;
     }
 
+    .hidden{
+      display:none !important;
+    }
+
     @media(max-width:1100px){
       .stock-toolbar{
         grid-template-columns:1fr 1fr;
@@ -438,8 +506,25 @@
         height:auto;
         aspect-ratio:1/1;
       }
+
+      .sku-bulk-bar,
+      .bulk-panel-top{
+        flex-direction:column;
+        align-items:flex-start;
+      }
     }
   </style>
+
+  <script>
+    document.documentElement.classList.add("auth-pending");
+    document.documentElement.classList.remove("auth-ready");
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
 </head>
 
 <body data-page="stock">
@@ -483,7 +568,8 @@
   <div class="card">
     <h2>Huidige voorraad</h2>
     <div class="muted">
-      Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen. Vanuit de detailregels kun je losse colli direct uitboeken.
+      Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
+      Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
     </div>
 
     <p class="page-url">
@@ -519,6 +605,23 @@
       </div>
     </div>
 
+    <div id="specialActionsPanel" class="bulk-panel hidden">
+      <div class="bulk-panel-top">
+        <div class="bulk-summary" id="bulkSummary">Geselecteerd: 0 artikelen</div>
+
+        <div class="btnRow">
+          <button class="btn" id="btnSelectAllVisible" type="button">Alles op pagina selecteren</button>
+          <button class="btn" id="btnSelectNone" type="button">Selectie wissen</button>
+          <button class="btn primary" id="btnBulkAllocate" type="button">Bulk: toewijzen aan order</button>
+          <button class="btn accent" id="btnBulkHulst" type="button">Bulk: naar Hulst</button>
+        </div>
+      </div>
+
+      <div class="bulk-note">
+        Alleen zichtbaar voor geautoriseerde accounts. Bij elke actie wordt het uitvoerende e-mailadres opgeslagen.
+      </div>
+    </div>
+
     <div class="row-3" style="margin-top:16px">
       <div class="card" style="padding:16px">
         <div class="kpi">
@@ -548,22 +651,32 @@
   </div>
 </div>
 
-<div id="outModal" class="modal-backdrop">
+<div id="actionModal" class="modal-backdrop">
   <div class="modal-card">
-    <h3 class="modal-title">Los collo uitboeken</h3>
-    <div class="modal-sub">Vul het ordernummer in. Dit item wordt daarna direct uit de huidige voorraad gehaald en toegevoegd aan de uitscans.</div>
+    <h3 class="modal-title" id="actionModalTitle">Actie uitvoeren</h3>
+    <div class="modal-sub" id="actionModalSub">Voer de gegevens in voor deze actie.</div>
 
     <div class="modal-grid">
-      <div class="modal-info" id="outModalInfo"></div>
+      <div class="modal-info" id="actionModalInfo"></div>
+
+      <div id="actionOrderWrap">
+        <label for="modalOrderNo">Ordernummer</label>
+        <input id="modalOrderNo" placeholder="Bijv. ORD-12345"/>
+      </div>
+
+      <div id="actionDestinationWrap" class="hidden">
+        <label for="modalDestination">Bestemming</label>
+        <input id="modalDestination" value="Hulst"/>
+      </div>
 
       <div>
-        <label for="modalOrderNo">Ordernummer</label>
-        <input id="modalOrderNo" placeholder="Bijv. ORD-12345 of Retour Hulst"/>
+        <label for="modalNote">Opmerking</label>
+        <textarea id="modalNote" placeholder="Optioneel"></textarea>
       </div>
 
       <div class="btnRow" style="margin-top:4px">
-        <button class="btn primary" id="btnConfirmOut" type="button">Uitboeken</button>
-        <button class="btn" id="btnCancelOut" type="button">Annuleren</button>
+        <button class="btn primary" id="btnConfirmAction" type="button">Opslaan</button>
+        <button class="btn" id="btnCancelAction" type="button">Annuleren</button>
       </div>
     </div>
   </div>
@@ -582,9 +695,41 @@ setActiveNav();
 
 const client = sb();
 const STORAGE_BUCKET = 'product-images';
+const SPECIAL_ACTION_USERS = [
+  'sales@ronaldverdultdesign.nl',
+  'cmjinhuur@gmail.com'
+];
+
+// Optioneel: zet hier je Supabase Edge Function naam.
+// Laat leeg als je mailfunctie nog niet bestaat.
+const STOCK_ACTION_EMAIL_FUNCTION = 'send-stock-action-email';
 
 let currentGroups = [];
-let currentOutItem = null;
+let currentUserEmail = '';
+let canUseSpecialActions = false;
+let currentActionContext = null;
+const selectedItemIds = new Set();
+
+function esc(value){
+  return String(value ?? '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function byId(id){
+  return document.getElementById(id);
+}
+
+function showToast(msg, type='ok'){
+  if(typeof toast === 'function'){
+    toast(msg, type);
+  }else{
+    alert(msg);
+  }
+}
 
 function getProductImageUrl(imagePath){
   if(!imagePath) return '';
@@ -631,6 +776,65 @@ function sortGroups(groups, sort){
   return rows;
 }
 
+function getCurrentVisibleItems(){
+  return currentGroups.flatMap(g => g.items);
+}
+
+function updateBulkSummary(){
+  byId('bulkSummary').textContent = `Geselecteerd: ${selectedItemIds.size} artikelen`;
+}
+
+function clearSelection(){
+  selectedItemIds.clear();
+  syncSelectionUI();
+}
+
+function toggleItemSelection(itemId, checked){
+  if(checked){
+    selectedItemIds.add(itemId);
+  }else{
+    selectedItemIds.delete(itemId);
+  }
+  syncSelectionUI();
+}
+
+function selectAllVisibleItems(){
+  getCurrentVisibleItems().forEach(it => selectedItemIds.add(it.id));
+  syncSelectionUI();
+}
+
+function selectAllSkuItems(skuBase){
+  const group = currentGroups.find(g => g.sku_base === skuBase);
+  if(!group) return;
+  group.items.forEach(it => selectedItemIds.add(it.id));
+  syncSelectionUI();
+}
+
+function clearAllSkuItems(skuBase){
+  const group = currentGroups.find(g => g.sku_base === skuBase);
+  if(!group) return;
+  group.items.forEach(it => selectedItemIds.delete(it.id));
+  syncSelectionUI();
+}
+
+function isSkuFullySelected(group){
+  return group.items.length > 0 && group.items.every(it => selectedItemIds.has(it.id));
+}
+
+function syncSelectionUI(){
+  document.querySelectorAll('[data-select-item-id]').forEach(cb => {
+    cb.checked = selectedItemIds.has(cb.getAttribute('data-select-item-id'));
+  });
+
+  document.querySelectorAll('[data-select-sku]').forEach(cb => {
+    const sku = cb.getAttribute('data-select-sku');
+    const group = currentGroups.find(g => g.sku_base === sku);
+    cb.checked = !!group && isSkuFullySelected(group);
+  });
+
+  updateBulkSummary();
+}
+
 function makeHeaderPhotoHtml(group){
   const url = getProductImageUrl(group.image_path);
 
@@ -641,11 +845,11 @@ function makeHeaderPhotoHtml(group){
   return `
     <div
       class="sg-photo has-image"
-      data-image-url="${escapeHtml(url)}"
-      data-image-title="${escapeHtml(group.sku_base)}"
-      data-image-name="${escapeHtml(group.name || '')}"
+      data-image-url="${esc(url)}"
+      data-image-title="${esc(group.sku_base)}"
+      data-image-name="${esc(group.name || '')}"
     >
-      <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
+      <img src="${esc(url)}" alt="${esc(group.name || group.sku_base)}"/>
     </div>
   `;
 }
@@ -658,18 +862,18 @@ function makeBodyPhotoHtml(group){
     <div class="stock-body-top">
       <div
         class="stock-body-photo"
-        data-image-url="${escapeHtml(url)}"
-        data-image-title="${escapeHtml(group.sku_base)}"
-        data-image-name="${escapeHtml(group.name || '')}"
+        data-image-url="${esc(url)}"
+        data-image-title="${esc(group.sku_base)}"
+        data-image-name="${esc(group.name || '')}"
       >
-        <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
+        <img src="${esc(url)}" alt="${esc(group.name || group.sku_base)}"/>
       </div>
 
       <div class="stock-body-meta">
         <div class="stock-meta-card">
-          <div><b>SKU basis:</b> ${escapeHtml(group.sku_base)}</div>
-          <div><b>Omschrijving:</b> ${escapeHtml(group.name || '')}</div>
-          ${group.description ? `<div><b>Overige vermelding:</b> ${escapeHtml(group.description)}</div>` : ''}
+          <div><b>SKU basis:</b> ${esc(group.sku_base)}</div>
+          <div><b>Omschrijving:</b> ${esc(group.name || '')}</div>
+          ${group.description ? `<div><b>Overige vermelding:</b> ${esc(group.description)}</div>` : ''}
           <div><b>Op voorraad:</b> ${group.items.length}</div>
         </div>
       </div>
@@ -677,8 +881,92 @@ function makeBodyPhotoHtml(group){
   `;
 }
 
+function makeSkuBulkBar(group){
+  if(!canUseSpecialActions) return '';
+
+  return `
+    <div class="sku-bulk-bar">
+      <div class="sku-bulk-left">
+        <label class="sku-bulk-check">
+          <input type="checkbox" data-select-sku="${esc(group.sku_base)}"/>
+          Selecteer alle artikelen van deze SKU
+        </label>
+
+        <button class="btn small-btn" type="button" data-clear-sku="${esc(group.sku_base)}">
+          Selectie van deze SKU wissen
+        </button>
+      </div>
+
+      <div class="btnRow">
+        <button class="btn primary small-btn" type="button" data-action-sku="ALLOCATE_ORDER" data-sku-base="${esc(group.sku_base)}">
+          Deze SKU toewijzen aan order
+        </button>
+        <button class="btn accent small-btn" type="button" data-action-sku="SEND_TO_HULST" data-sku-base="${esc(group.sku_base)}">
+          Deze SKU naar Hulst
+        </button>
+      </div>
+    </div>
+  `;
+}
+
+function makeActionButtons(item){
+  const base = `
+    <button
+      class="btn small-btn"
+      type="button"
+      data-action-row="OUT"
+      data-item-id="${esc(item.id)}"
+    >
+      Uitboeken
+    </button>
+  `;
+
+  if(!canUseSpecialActions) return base;
+
+  return `
+    ${base}
+    <button
+      class="btn primary small-btn"
+      type="button"
+      data-action-row="ALLOCATE_ORDER"
+      data-item-id="${esc(item.id)}"
+    >
+      Toewijzen order
+    </button>
+    <button
+      class="btn accent small-btn"
+      type="button"
+      data-action-row="SEND_TO_HULST"
+      data-item-id="${esc(item.id)}"
+    >
+      Naar Hulst
+    </button>
+  `;
+}
+
+function makeSelectCell(item){
+  if(!canUseSpecialActions) return '';
+  return `
+    <td>
+      <input class="row-check" type="checkbox" data-select-item-id="${esc(item.id)}"/>
+    </td>
+  `;
+}
+
+function makeMobileSelect(item){
+  if(!canUseSpecialActions) return '';
+  return `
+    <div class="mobile-line">
+      <div class="mobile-k">Selectie</div>
+      <div class="mobile-v">
+        <input class="row-check" type="checkbox" data-select-item-id="${esc(item.id)}"/>
+      </div>
+    </div>
+  `;
+}
+
 function makeGroupHtml(group, idx){
-  const desc = group.description ? escapeHtml(group.description) : 'Geen extra vermelding';
+  const desc = group.description ? esc(group.description) : 'Geen extra vermelding';
   const bodyId = `group_${idx}`;
   const hasPhoto = !!getProductImageUrl(group.image_path);
 
@@ -687,10 +975,10 @@ function makeGroupHtml(group, idx){
       <button class="stock-group-head" type="button" data-target="${bodyId}" aria-expanded="false">
         ${makeHeaderPhotoHtml(group)}
 
-        <div class="sg-sku">${escapeHtml(group.sku_base)}</div>
+        <div class="sg-sku">${esc(group.sku_base)}</div>
 
         <div class="sg-name">
-          <b>${escapeHtml(group.name)}</b>
+          <b>${esc(group.name)}</b>
           <span>${desc}</span>
         </div>
 
@@ -704,11 +992,13 @@ function makeGroupHtml(group, idx){
 
       <div class="stock-group-body" id="${bodyId}">
         ${hasPhoto ? makeBodyPhotoHtml(group) : ''}
+        ${makeSkuBulkBar(group)}
 
         <div class="table-wrap desktop-detail-table" style="margin-top:12px">
           <table>
             <thead>
               <tr>
+                ${canUseSpecialActions ? '<th>Selectie</th>' : ''}
                 <th>Inslag tijd</th>
                 <th>Unieke SKU</th>
                 <th>Locatie</th>
@@ -719,24 +1009,14 @@ function makeGroupHtml(group, idx){
             <tbody>
               ${group.items.map(it => `
                 <tr>
+                  ${makeSelectCell(it)}
                   <td>${nlTime(it.in_at || it.created_at)}</td>
-                  <td><b>${escapeHtml(it.sku_unique)}</b></td>
-                  <td>${escapeHtml(it.location || '')}</td>
-                  <td>${escapeHtml(it.status || '')}</td>
+                  <td><b>${esc(it.sku_unique)}</b></td>
+                  <td>${esc(it.location || '')}</td>
+                  <td>${esc(it.status || '')}</td>
                   <td>
                     <div class="detail-actions">
-                      <button
-                        class="btn small-btn"
-                        type="button"
-                        data-out-id="${escapeHtml(it.id)}"
-                        data-out-sku="${escapeHtml(it.sku_unique)}"
-                        data-out-base="${escapeHtml(it.sku_base)}"
-                        data-out-name="${escapeHtml(it.name)}"
-                        data-out-location="${escapeHtml(it.location || '')}"
-                        data-out-product-id="${escapeHtml(it.product_id)}"
-                      >
-                        Uitboeken
-                      </button>
+                      ${makeActionButtons(it)}
                     </div>
                   </td>
                 </tr>
@@ -748,35 +1028,27 @@ function makeGroupHtml(group, idx){
         <div class="mobile-cards">
           ${group.items.map(it => `
             <div class="mobile-card">
+              ${makeMobileSelect(it)}
               <div class="mobile-line">
                 <div class="mobile-k">Inslag</div>
                 <div class="mobile-v">${nlTime(it.in_at || it.created_at)}</div>
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Unieke SKU</div>
-                <div class="mobile-v"><b>${escapeHtml(it.sku_unique)}</b></div>
+                <div class="mobile-v"><b>${esc(it.sku_unique)}</b></div>
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Locatie</div>
-                <div class="mobile-v">${escapeHtml(it.location || '')}</div>
+                <div class="mobile-v">${esc(it.location || '')}</div>
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Status</div>
-                <div class="mobile-v">${escapeHtml(it.status || '')}</div>
+                <div class="mobile-v">${esc(it.status || '')}</div>
               </div>
               <div class="mobile-line" style="margin-top:10px">
-                <button
-                  class="btn small-btn"
-                  type="button"
-                  data-out-id="${escapeHtml(it.id)}"
-                  data-out-sku="${escapeHtml(it.sku_unique)}"
-                  data-out-base="${escapeHtml(it.sku_base)}"
-                  data-out-name="${escapeHtml(it.name)}"
-                  data-out-location="${escapeHtml(it.location || '')}"
-                  data-out-product-id="${escapeHtml(it.product_id)}"
-                >
-                  Uitboeken
-                </button>
+                <div class="detail-actions">
+                  ${makeActionButtons(it)}
+                </div>
               </div>
             </div>
           `).join('')}
@@ -828,95 +1100,236 @@ function bindImageZoom(){
   });
 }
 
-function bindOutButtons(){
-  document.querySelectorAll('[data-out-id]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentOutItem = {
-        id: btn.getAttribute('data-out-id'),
-        sku_unique: btn.getAttribute('data-out-sku'),
-        sku_base: btn.getAttribute('data-out-base'),
-        name: btn.getAttribute('data-out-name'),
-        location: btn.getAttribute('data-out-location'),
-        product_id: btn.getAttribute('data-out-product-id')
-      };
-
-      byId('outModalInfo').innerHTML = `
-        <div><b>SKU uniek:</b> ${escapeHtml(currentOutItem.sku_unique)}</div>
-        <div><b>SKU basis:</b> ${escapeHtml(currentOutItem.sku_base)}</div>
-        <div><b>Omschrijving:</b> ${escapeHtml(currentOutItem.name)}</div>
-        <div><b>Locatie:</b> ${escapeHtml(currentOutItem.location || '-')}</div>
-      `;
-
-      byId('modalOrderNo').value = '';
-      byId('outModal').classList.add('show');
-      byId('modalOrderNo').focus();
-    });
-  });
+function findItemById(itemId){
+  return getCurrentVisibleItems().find(it => String(it.id) === String(itemId)) || null;
 }
 
-function closeOutModal(){
-  currentOutItem = null;
-  byId('outModal').classList.remove('show');
-  byId('modalOrderNo').value = '';
+function getItemsBySku(skuBase){
+  const group = currentGroups.find(g => g.sku_base === skuBase);
+  return group ? group.items : [];
 }
 
-async function doManualOut(){
-  if(!currentOutItem){
-    toast('Geen item geselecteerd.', 'err');
+function openActionModal(actionType, itemIds){
+  if(!itemIds || !itemIds.length){
+    showToast('Geen artikelen geselecteerd.', 'err');
     return;
   }
 
-  const orderNo = (byId('modalOrderNo').value || '').trim();
-  if(!orderNo){
-    toast('Vul een ordernummer in.', 'err');
+  currentActionContext = { actionType, itemIds: [...itemIds] };
+
+  const items = itemIds.map(findItemById).filter(Boolean);
+  const skuBases = [...new Set(items.map(it => it.sku_base))];
+
+  const titles = {
+    OUT: 'Artikelen uitboeken',
+    ALLOCATE_ORDER: 'Artikelen toewijzen aan order',
+    SEND_TO_HULST: 'Artikelen naar Hulst sturen'
+  };
+
+  const subs = {
+    OUT: 'Vul het ordernummer in. De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en toegevoegd aan de uitscans.',
+    ALLOCATE_ORDER: 'Vul het ordernummer in. De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en krijgen in de uitscans de vermelding dat ze aan een order zijn toegewezen.',
+    SEND_TO_HULST: 'De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en krijgen in de uitscans de vermelding dat ze naar Hulst zijn gestuurd.'
+  };
+
+  byId('actionModalTitle').textContent = titles[actionType] || 'Actie uitvoeren';
+  byId('actionModalSub').textContent = subs[actionType] || '';
+
+  byId('actionModalInfo').innerHTML = `
+    <div><b>Aantal artikelen:</b> ${itemIds.length}</div>
+    <div><b>SKU's:</b> ${esc(skuBases.join(', '))}</div>
+    <div><b>Uitgevoerd door:</b> ${esc(currentUserEmail || '-')}</div>
+  `;
+
+  byId('modalOrderNo').value = '';
+  byId('modalNote').value = '';
+  byId('modalDestination').value = 'Hulst';
+
+  byId('actionOrderWrap').classList.toggle('hidden', actionType === 'SEND_TO_HULST');
+  byId('actionDestinationWrap').classList.toggle('hidden', actionType !== 'SEND_TO_HULST');
+
+  byId('actionModal').classList.add('show');
+
+  if(actionType === 'SEND_TO_HULST'){
+    byId('modalNote').focus();
+  }else{
+    byId('modalOrderNo').focus();
+  }
+}
+
+function closeActionModal(){
+  currentActionContext = null;
+  byId('actionModal').classList.remove('show');
+  byId('modalOrderNo').value = '';
+  byId('modalNote').value = '';
+  byId('modalDestination').value = 'Hulst';
+}
+
+async function countOrderUsesLocal(orderNo){
+  const { count, error } = await client
+    .from('movements')
+    .select('*', { count:'exact', head:true })
+    .eq('order_no', orderNo);
+
+  if(error) throw error;
+  return count || 0;
+}
+
+async function sendActionEmailIfConfigured(payload){
+  if(!STOCK_ACTION_EMAIL_FUNCTION) return;
+
+  try{
+    await client.functions.invoke(STOCK_ACTION_EMAIL_FUNCTION, {
+      body: payload
+    });
+  }catch(e){
+    console.warn('Mailfunctie niet uitgevoerd:', e);
+  }
+}
+
+async function performStockAction(actionType, itemIds, options = {}){
+  if(!itemIds?.length){
+    showToast('Geen artikelen geselecteerd.', 'err');
+    return;
+  }
+
+  const orderNo = String(options.orderNo || '').trim();
+  const note = String(options.note || '').trim();
+  const destination = String(options.destination || '').trim();
+
+  if((actionType === 'OUT' || actionType === 'ALLOCATE_ORDER') && !orderNo){
+    showToast('Vul een ordernummer in.', 'err');
+    return;
+  }
+
+  if(actionType === 'SEND_TO_HULST' && !destination){
+    showToast('Vul een bestemming in.', 'err');
     return;
   }
 
   try{
-    const used = await countOrderUses(client, orderNo).catch(() => 0);
-    if(used > 0){
-      const ok = confirm(`Ordernummer ${orderNo} is al ${used}x gebruikt. Doorgaan?`);
-      if(!ok) return;
+    if((actionType === 'OUT' || actionType === 'ALLOCATE_ORDER') && orderNo){
+      const used = await countOrderUsesLocal(orderNo).catch(() => 0);
+      if(used > 0){
+        const ok = confirm(`Ordernummer ${orderNo} is al ${used}x gebruikt. Doorgaan?`);
+        if(!ok) return;
+      }
     }
 
-    const { data:item, error:itemErr } = await client
+    const { data: items, error: itemsErr } = await client
       .from('items')
       .select('id, product_id, sku_unique, status, location')
-      .eq('id', currentOutItem.id)
-      .maybeSingle();
+      .in('id', itemIds);
 
-    if(itemErr) throw itemErr;
-    if(!item) throw new Error('Item niet gevonden.');
-    if(item.status !== 'IN_STOCK') throw new Error('Dit item staat niet meer op voorraad.');
+    if(itemsErr) throw itemsErr;
+    if(!items?.length) throw new Error('Geen items gevonden.');
+
+    const invalid = items.filter(it => it.status !== 'IN_STOCK');
+    if(invalid.length){
+      throw new Error(`Er zijn ${invalid.length} items die niet meer op voorraad staan.`);
+    }
+
+    const nowIso = new Date().toISOString();
 
     const { error:updateErr } = await client
       .from('items')
       .update({
         status: 'OUT',
-        out_at: new Date().toISOString()
+        out_at: nowIso
       })
-      .eq('id', item.id);
+      .in('id', itemIds);
 
     if(updateErr) throw updateErr;
 
+    const movements = items.map(it => ({
+      type: 'OUT',
+      action_type: actionType,
+      product_id: it.product_id,
+      sku_unique: it.sku_unique,
+      location: it.location || null,
+      order_no: orderNo || null,
+      destination: destination || null,
+      note: note || null,
+      handled_by_email: currentUserEmail || null
+    }));
+
     const { error:moveErr } = await client
       .from('movements')
-      .insert([{
-        type: 'OUT',
-        product_id: item.product_id,
-        sku_unique: item.sku_unique,
-        location: item.location || null,
-        order_no: orderNo
-      }]);
+      .insert(movements);
 
     if(moveErr) throw moveErr;
 
-    closeOutModal();
-    toast(`Item ${item.sku_unique} is uitgeboekt op order ${orderNo}.`, 'ok');
+    if(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST'){
+      await sendActionEmailIfConfigured({
+        action_type: actionType,
+        handled_by_email: currentUserEmail || '',
+        order_no: orderNo || '',
+        destination: destination || '',
+        note: note || '',
+        item_count: items.length,
+        items: items.map(it => ({
+          sku_unique: it.sku_unique,
+          location: it.location || ''
+        }))
+      });
+    }
+
+    clearSelection();
+    closeActionModal();
+
+    const labels = {
+      OUT: `uitgeboekt op order ${orderNo}`,
+      ALLOCATE_ORDER: `toegewezen aan order ${orderNo}`,
+      SEND_TO_HULST: `naar ${destination || 'Hulst'} gestuurd`
+    };
+
+    showToast(`${items.length} artikel(en) ${labels[actionType] || 'verwerkt'}.`, 'ok');
     await load();
+
   }catch(e){
-    toast(e.message || String(e), 'err');
+    showToast(e.message || String(e), 'err');
   }
+}
+
+function bindSelectionControls(){
+  document.querySelectorAll('[data-select-item-id]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      toggleItemSelection(cb.getAttribute('data-select-item-id'), cb.checked);
+    });
+  });
+
+  document.querySelectorAll('[data-select-sku]').forEach(cb => {
+    cb.addEventListener('change', () => {
+      const sku = cb.getAttribute('data-select-sku');
+      if(cb.checked){
+        selectAllSkuItems(sku);
+      }else{
+        clearAllSkuItems(sku);
+      }
+    });
+  });
+
+  document.querySelectorAll('[data-clear-sku]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      clearAllSkuItems(btn.getAttribute('data-clear-sku'));
+    });
+  });
+}
+
+function bindActionButtons(){
+  document.querySelectorAll('[data-action-row]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      openActionModal(btn.getAttribute('data-action-row'), [btn.getAttribute('data-item-id')]);
+    });
+  });
+
+  document.querySelectorAll('[data-action-sku]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sku = btn.getAttribute('data-sku-base');
+      const ids = getItemsBySku(sku).map(it => it.id);
+      openActionModal(btn.getAttribute('data-action-sku'), ids);
+    });
+  });
 }
 
 function exportGroupedToExcel(groups){
@@ -971,6 +1384,24 @@ function exportGroupedToExcel(groups){
   XLSX.writeFile(wb, filename);
 }
 
+async function resolveCurrentUser(){
+  try{
+    const { data, error } = await client.auth.getUser();
+    if(error) throw error;
+
+    currentUserEmail = String(data?.user?.email || '').toLowerCase().trim();
+    canUseSpecialActions = SPECIAL_ACTION_USERS.includes(currentUserEmail);
+
+    byId('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
+    updateBulkSummary();
+  }catch(e){
+    console.warn('Gebruiker ophalen mislukt:', e);
+    currentUserEmail = '';
+    canUseSpecialActions = false;
+    byId('specialActionsPanel').classList.add('hidden');
+  }
+}
+
 async function load(){
   const q = (byId('q').value || '').trim();
   const sort = byId('sort').value;
@@ -991,6 +1422,13 @@ async function load(){
   const groups = sortGroups(groupItems(items), sort);
   currentGroups = groups;
 
+  const visibleIds = new Set(items.map(it => String(it.id)));
+  [...selectedItemIds].forEach(id => {
+    if(!visibleIds.has(String(id))){
+      selectedItemIds.delete(id);
+    }
+  });
+
   byId('stockSkuCount').textContent = `${groups.length}`;
   byId('stockItemCount').textContent = `${items.length}`;
   byId('stockFilteredCount').textContent = `${items.length}`;
@@ -999,39 +1437,56 @@ async function load(){
 
   if(!groups.length){
     el.innerHTML = `<div class="card" style="box-shadow:none;border:none">Geen voorraad gevonden.</div>`;
+    updateBulkSummary();
     return;
   }
 
   el.innerHTML = groups.map((g, i) => makeGroupHtml(g, i)).join('');
   bindExpanders();
   bindImageZoom();
-  bindOutButtons();
+  bindSelectionControls();
+  bindActionButtons();
+  syncSelectionUI();
 }
 
-byId('btn_refresh').addEventListener('click', () => load().catch(e => toast(e.message || String(e), 'err')));
+byId('btn_refresh').addEventListener('click', () => load().catch(e => showToast(e.message || String(e), 'err')));
 
 byId('q').addEventListener('keydown', e => {
   if(e.key === 'Enter'){
-    load().catch(err => toast(err.message || String(err), 'err'));
+    load().catch(err => showToast(err.message || String(err), 'err'));
   }
 });
 
-byId('sort').addEventListener('change', () => load().catch(e => toast(e.message || String(e), 'err')));
+byId('sort').addEventListener('change', () => load().catch(e => showToast(e.message || String(e), 'err')));
 byId('btn_export').addEventListener('click', () => exportGroupedToExcel(currentGroups));
 
-byId('btnCancelOut').addEventListener('click', closeOutModal);
-byId('btnConfirmOut').addEventListener('click', doManualOut);
+byId('btnSelectAllVisible').addEventListener('click', selectAllVisibleItems);
+byId('btnSelectNone').addEventListener('click', clearSelection);
+byId('btnBulkAllocate').addEventListener('click', () => openActionModal('ALLOCATE_ORDER', [...selectedItemIds]));
+byId('btnBulkHulst').addEventListener('click', () => openActionModal('SEND_TO_HULST', [...selectedItemIds]));
+
+byId('btnCancelAction').addEventListener('click', closeActionModal);
+
+byId('btnConfirmAction').addEventListener('click', async () => {
+  if(!currentActionContext) return;
+
+  await performStockAction(currentActionContext.actionType, currentActionContext.itemIds, {
+    orderNo: byId('modalOrderNo').value,
+    destination: byId('modalDestination').value,
+    note: byId('modalNote').value
+  });
+});
 
 byId('modalOrderNo').addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
+  if(e.key === 'Enter' && !byId('actionOrderWrap').classList.contains('hidden')){
     e.preventDefault();
-    doManualOut();
+    byId('btnConfirmAction').click();
   }
 });
 
-byId('outModal').addEventListener('click', e => {
-  if(e.target === byId('outModal')){
-    closeOutModal();
+byId('actionModal').addEventListener('click', e => {
+  if(e.target === byId('actionModal')){
+    closeActionModal();
   }
 });
 
@@ -1048,13 +1503,16 @@ document.addEventListener('keydown', e => {
     if(byId('imageLightbox').classList.contains('show')){
       closeImageLightbox();
     }
-    if(byId('outModal').classList.contains('show')){
-      closeOutModal();
+    if(byId('actionModal').classList.contains('show')){
+      closeActionModal();
     }
   }
 });
 
-load().catch(e => toast(e.message || String(e), 'err'));
+(async function init(){
+  await resolveCurrentUser();
+  await load().catch(e => showToast(e.message || String(e), 'err'));
+})();
 </script>
 
 </body>
