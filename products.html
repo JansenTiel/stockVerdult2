@@ -1,15 +1,14 @@
 <!doctype html>
 <html lang="nl">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Artikelen + Stickers</title>
 
-  <link rel="stylesheet" href="/css/theme.css"/>
+  <link rel="stylesheet" href="/css/theme.css" />
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js"></script>
-  <script src="/js/app.js"></script>
   <script src="/js/auth.js"></script>
 
   <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.6/dist/JsBarcode.all.min.js"></script>
@@ -18,6 +17,451 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
   <style>
+    :root{
+      --navy:#16385b;
+      --muted:#6b7280;
+      --border:#dbe3ea;
+      --bgsoft:#fafbfc;
+      --danger:#bf3b3b;
+      --success:#1f8a4c;
+    }
+
+    *{ box-sizing:border-box; }
+
+    body{
+      margin:0;
+      font-family:Arial,Helvetica,sans-serif;
+      background:#f4f6f8;
+      color:#1f2937;
+    }
+
+    .topbar{
+      position:sticky;
+      top:0;
+      z-index:50;
+      background:#fff;
+      border-bottom:1px solid var(--border);
+    }
+
+    .topbar .inner{
+      max-width:1400px;
+      margin:0 auto;
+      padding:14px 18px;
+      display:flex;
+      align-items:center;
+      gap:18px;
+      flex-wrap:wrap;
+    }
+
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+      min-width:240px;
+    }
+
+    .logo{
+      width:38px;
+      height:38px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:var(--navy);
+      color:#fff;
+      font-weight:900;
+      font-size:22px;
+      flex:0 0 auto;
+    }
+
+    .title{
+      font-weight:900;
+      color:var(--navy);
+      line-height:1.1;
+    }
+
+    .title small{
+      display:block;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:700;
+      margin-top:3px;
+    }
+
+    .nav{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      flex:1 1 auto;
+    }
+
+    .nav a{
+      text-decoration:none;
+      color:var(--navy);
+      font-weight:800;
+      padding:10px 12px;
+      border-radius:10px;
+    }
+
+    .nav a.active,
+    .nav a:hover{
+      background:#eef4f8;
+    }
+
+    .rightbar{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      flex-wrap:wrap;
+    }
+
+    .pill,
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid var(--border);
+      background:#fff;
+      font-size:12px;
+      font-weight:800;
+      color:var(--navy);
+    }
+
+    .container{
+      max-width:1400px;
+      margin:0 auto;
+      padding:18px;
+    }
+
+    .card{
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:18px;
+      box-shadow:0 4px 18px rgba(0,0,0,.04);
+    }
+
+    .card h2,
+    .card h3{
+      margin:0 0 8px 0;
+      color:var(--navy);
+    }
+
+    .muted{
+      color:var(--muted);
+      line-height:1.45;
+    }
+
+    .page-stack{
+      display:grid;
+      gap:16px;
+      margin-top:16px;
+    }
+
+    .split-2{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:16px;
+    }
+
+    label{
+      display:block;
+      font-size:13px;
+      font-weight:800;
+      color:var(--navy);
+      margin-bottom:6px;
+    }
+
+    input, select, textarea{
+      width:100%;
+      padding:12px 14px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      outline:none;
+      background:#fff;
+      font:inherit;
+    }
+
+    textarea{
+      min-height:100px;
+      resize:vertical;
+    }
+
+    input:focus, select:focus, textarea:focus{
+      border-color:#9cb7cd;
+      box-shadow:0 0 0 3px rgba(22,56,91,.08);
+    }
+
+    .row{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .btnRow{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn{
+      border:1px solid var(--border);
+      background:#fff;
+      color:var(--navy);
+      border-radius:12px;
+      padding:11px 14px;
+      font-weight:800;
+      cursor:pointer;
+      font:inherit;
+    }
+
+    .btn:hover{
+      background:#f7fafc;
+    }
+
+    .btn.primary{
+      background:var(--navy);
+      color:#fff;
+      border-color:var(--navy);
+    }
+
+    .btn.primary:hover{
+      filter:brightness(1.05);
+    }
+
+    .btn.accent{
+      background:#f28c13;
+      color:#fff;
+      border-color:#f28c13;
+    }
+
+    .btn.ghost{
+      background:#fff;
+    }
+
+    .btn.danger{
+      background:var(--danger);
+      color:#fff;
+      border-color:var(--danger);
+    }
+
+    .btn:disabled{
+      opacity:.55;
+      cursor:not-allowed;
+    }
+
+    .upload-card,
+    .scan-card,
+    .soft-box{
+      border:1px dashed var(--border);
+      border-radius:14px;
+      background:var(--bgsoft);
+      padding:14px;
+    }
+
+    .upload-preview,
+    .scan-preview,
+    .edit-photo-preview{
+      width:160px;
+      height:160px;
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      overflow:hidden;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      text-align:center;
+      font-size:12px;
+      font-weight:800;
+      padding:8px;
+      margin-bottom:12px;
+    }
+
+    .edit-photo-preview{
+      width:100%;
+      max-width:260px;
+      aspect-ratio:1 / 1;
+      height:auto;
+    }
+
+    .upload-preview img,
+    .scan-preview img,
+    .edit-photo-preview img,
+    .photo-thumb img{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      display:block;
+    }
+
+    .small-muted{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.45;
+    }
+
+    .previewWrap{
+      display:grid;
+      grid-template-columns:repeat(auto-fill,minmax(320px,1fr));
+      gap:16px;
+      align-items:start;
+    }
+
+    .sticker-wrap{
+      border:1px solid var(--border);
+      border-radius:18px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .sticker-head{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      margin-bottom:10px;
+      font-size:13px;
+      font-weight:800;
+      color:var(--navy);
+    }
+
+    .sticker-head label{
+      margin:0;
+      display:flex;
+      align-items:center;
+      gap:8px;
+      cursor:pointer;
+    }
+
+    .sticker{
+      width:100%;
+      background:#fff;
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:16px;
+      min-height:250px;
+    }
+
+    .st-hdr{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:12px;
+    }
+
+    .st-company{
+      font-size:16px;
+      font-weight:900;
+      color:var(--navy);
+      margin-bottom:2px;
+    }
+
+    .st-customer{
+      font-size:13px;
+      font-weight:800;
+      margin-bottom:8px;
+    }
+
+    .st-prod{
+      font-size:18px;
+      font-weight:900;
+      line-height:1.2;
+      margin-bottom:6px;
+    }
+
+    .st-sku{
+      font-size:16px;
+      font-weight:900;
+      margin-bottom:6px;
+    }
+
+    .st-notes{
+      font-size:13px;
+      line-height:1.35;
+    }
+
+    .st-small{
+      font-size:12px;
+      font-weight:900;
+      margin-bottom:8px;
+      text-transform:uppercase;
+      letter-spacing:.05em;
+    }
+
+    .st-badge{
+      min-width:54px;
+      height:54px;
+      border-radius:999px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      background:#eef4f8;
+      color:var(--navy);
+      font-weight:900;
+      border:1px solid var(--border);
+    }
+
+    .st-codes{
+      margin-top:14px;
+      display:grid;
+      grid-template-columns:1.2fr .8fr;
+      gap:12px;
+      align-items:end;
+    }
+
+    .st-block{
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:10px;
+      background:#fff;
+    }
+
+    .st-barcode svg{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+
+    .st-qr{
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+    }
+
+    .scan-video{
+      display:none;
+      width:100%;
+      max-width:420px;
+      border:1px solid var(--border);
+      border-radius:12px;
+      margin-top:14px;
+      background:#000;
+    }
+
+    .scan-result{
+      display:none;
+      margin-top:14px;
+    }
+
+    .scan-found{
+      border:1px solid var(--border);
+      border-radius:12px;
+      background:#fff;
+      padding:12px;
+      margin-bottom:12px;
+      line-height:1.45;
+    }
+
+    .scan-found b{
+      color:var(--navy);
+    }
+
     .manage-grid{
       display:grid;
       gap:12px;
@@ -39,7 +483,7 @@
       aspect-ratio:1/1;
       border:1px solid var(--border);
       border-radius:12px;
-      background:#fafbfc;
+      background:var(--bgsoft);
       overflow:hidden;
       display:flex;
       align-items:center;
@@ -49,13 +493,6 @@
       font-weight:800;
       text-align:center;
       padding:8px;
-    }
-
-    .photo-thumb img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
     }
 
     .manage-sku{
@@ -68,10 +505,11 @@
     .manage-info b{
       display:block;
       margin-bottom:4px;
+      color:var(--navy);
     }
 
     .manage-info .small{
-      line-height:1.35;
+      line-height:1.4;
     }
 
     .color-pill{
@@ -84,7 +522,8 @@
       background:#fff;
       font-size:12px;
       font-weight:800;
-      margin-top:6px;
+      margin-top:8px;
+      flex-wrap:wrap;
     }
 
     .color-dot{
@@ -94,6 +533,7 @@
       border:1px solid rgba(0,0,0,.12);
       display:inline-block;
       background:#fff;
+      flex:0 0 auto;
     }
 
     .manage-count{
@@ -121,45 +561,6 @@
       gap:8px;
       flex-wrap:wrap;
       justify-content:flex-end;
-    }
-
-    .upload-card{
-      border:1px dashed var(--border);
-      border-radius:14px;
-      background:#fafbfc;
-      padding:14px;
-      margin-top:12px;
-    }
-
-    .upload-preview{
-      width:160px;
-      height:160px;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-      text-align:center;
-      padding:8px;
-      margin-bottom:12px;
-    }
-
-    .upload-preview img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
-    }
-
-    .small-muted{
-      color:var(--muted);
-      font-size:12px;
-      line-height:1.4;
     }
 
     .modal-backdrop{
@@ -204,7 +605,7 @@
     .modal-info{
       border:1px solid var(--border);
       border-radius:12px;
-      background:#fafbfc;
+      background:var(--bgsoft);
       padding:12px;
       font-size:14px;
       line-height:1.5;
@@ -225,34 +626,8 @@
     .edit-photo-panel{
       border:1px solid var(--border);
       border-radius:14px;
-      background:#fafbfc;
+      background:var(--bgsoft);
       padding:14px;
-    }
-
-    .edit-photo-preview{
-      width:100%;
-      max-width:260px;
-      aspect-ratio:1/1;
-      border:1px solid var(--border);
-      border-radius:14px;
-      background:#fff;
-      overflow:hidden;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      color:var(--muted);
-      font-size:12px;
-      font-weight:800;
-      text-align:center;
-      padding:8px;
-      margin-bottom:12px;
-    }
-
-    .edit-photo-preview img{
-      width:100%;
-      height:100%;
-      object-fit:cover;
-      display:block;
     }
 
     .uploading{
@@ -260,1028 +635,1421 @@
       pointer-events:none;
     }
 
-    @media(max-width:1100px){
+    .notice{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      z-index:1200;
+      background:#fff;
+      border:1px solid var(--border);
+      border-left:6px solid var(--success);
+      border-radius:14px;
+      padding:12px 14px;
+      min-width:220px;
+      max-width:380px;
+      box-shadow:0 18px 40px rgba(0,0,0,.12);
+      display:none;
+      font-weight:700;
+    }
+
+    .notice.show{
+      display:block;
+    }
+
+    .notice.err{
+      border-left-color:var(--danger);
+    }
+
+    .notice.ok{
+      border-left-color:var(--success);
+    }
+
+    @media (max-width:1100px){
       .manage-row{
         grid-template-columns:100px 1fr;
       }
-
       .manage-count{
         text-align:left;
       }
-
       .manage-actions{
         justify-content:flex-start;
       }
     }
 
-    @media(max-width:860px){
-      .edit-grid{
+    @media (max-width:900px){
+      .split-2,
+      .edit-grid,
+      .st-codes,
+      .row{
         grid-template-columns:1fr;
       }
     }
 
-    @media(max-width:760px){
+    @media (max-width:760px){
       .manage-row{
         grid-template-columns:1fr;
+      }
+      .upload-preview,
+      .scan-preview{
+        width:100%;
+        max-width:220px;
       }
     }
   </style>
 </head>
 <body data-page="products">
+  <div class="topbar">
+    <div class="inner">
+      <div class="brand">
+        <div class="logo">o</div>
+        <div class="title">
+          Oegema Logistics
+          <small>Ronald Verdult Design · Voorraadbeheer</small>
+        </div>
+      </div>
 
-<div class="topbar no-print">
-  <div class="inner">
-    <div class="brand">
-      <div class="logo">o</div>
-      <div class="title">
-        Oegema Logistics
-        <small>Ronald Verdult Design · Voorraadbeheer</small>
+      <nav class="nav">
+        <a href="/" id="nav-dashboard">Dashboard</a>
+        <a href="/products" id="nav-products" class="active">Artikelen + Stickers</a>
+        <a href="/scan" id="nav-scan">In-/Uitscan</a>
+        <a href="/stock" id="nav-stock">Huidige voorraad</a>
+        <a href="/outscans" id="nav-outscans">Uitscans</a>
+      </nav>
+
+      <div class="rightbar">
+        <span class="pill"><span id="userEmail"></span></span>
+        <button class="btn" id="btnLogout" type="button">Uitloggen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div id="toast" class="notice"></div>
+
+    <div class="card">
+      <h2>Artikelen + Stickers</h2>
+      <div class="muted">
+        Artikelbeheer met productfoto op SKU-basis. Je kunt artikelen aanmaken, stickers genereren, bestaande artikelen beheren
+        en op mobiel eerst de SKU of QR scannen en daarna direct een foto maken die automatisch aan die bestaande SKU wordt gekoppeld.
       </div>
     </div>
 
-    <nav class="nav">
-      <a href="/">Dashboard</a>
-      <a href="/products">Artikelen + Stickers</a>
-      <a href="/scan">In-/Uitscan</a>
-      <a href="/stock">Huidige voorraad</a>
-      <a href="/outscans">Uitscans</a>
-    </nav>
+    <div class="page-stack">
+      <div class="split-2">
+        <div class="card">
+          <h3>1) Artikel aanmaken</h3>
 
-    <div class="rightbar">
-      <span class="pill"><span id="userEmail"></span></span>
-      <button class="btn" id="btnLogout" type="button">Uitloggen</button>
-    </div>
-  </div>
-</div>
+          <label for="sku_base">SKU basis</label>
+          <input id="sku_base" placeholder="RVD001" />
 
-<div class="container">
-  <div id="toast" class="notice"></div>
+          <label for="name" style="margin-top:12px">Naam / omschrijving</label>
+          <input id="name" placeholder="Ronald Verdult Stoel" />
 
-  <div class="card">
-    <h2>Artikelen + Stickers</h2>
-    <div class="muted">
-      Artikelbeheer met foto op productniveau. Foto’s worden vóór upload automatisch gecomprimeerd, zodat je binnen de opslaglimiet van Supabase zoveel mogelijk artikelen kunt opslaan.
-    </div>
-  </div>
+          <label for="description" style="margin-top:12px">Overige vermelding</label>
+          <textarea id="description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
 
-  <div class="split" style="margin-top:16px">
-    <div class="card">
-      <h3>1) Artikel aanmaken</h3>
+          <label for="color_code" style="margin-top:12px">Kleurcode</label>
+          <input id="color_code" placeholder="Bijv. ZWART / RAL9005 / #000000" />
 
-      <label for="sku_base">SKU basis</label>
-      <input id="sku_base" placeholder="RVD001"/>
+          <div class="upload-card" style="margin-top:12px">
+            <label for="new_product_photo">Productfoto</label>
+            <div class="small-muted" style="margin-bottom:10px">
+              Kies een bestaande foto of maak direct een foto met mobiel. De afbeelding wordt automatisch gecomprimeerd tot ongeveer 0,5 MB.
+            </div>
 
-      <label for="name" style="margin-top:12px">Naam / omschrijving</label>
-      <input id="name" placeholder="Ronald Verdult Stoel"/>
+            <div class="upload-preview" id="newPhotoPreview">Nog geen foto gekozen</div>
 
-      <label for="description" style="margin-top:12px">Overige vermelding</label>
-      <textarea id="description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
+            <div class="btnRow">
+              <label class="btn" for="new_product_photo" style="cursor:pointer">Foto kiezen</label>
+              <label class="btn" for="new_product_photo_camera" style="cursor:pointer">Foto maken</label>
+              <button class="btn ghost" id="btn_clear_new_photo" type="button">Foto wissen</button>
+            </div>
 
-      <label for="color_code" style="margin-top:12px">Kleurcode</label>
-      <input id="color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
+            <input id="new_product_photo" type="file" accept="image/*" style="display:none" />
+            <input id="new_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none" />
+          </div>
 
-      <div class="upload-card">
-        <label for="new_product_photo">Productfoto</label>
-        <div class="small-muted" style="margin-bottom:10px">
-          Kies een bestaande foto of maak direct een foto met mobiel. De afbeelding wordt automatisch teruggebracht naar ongeveer 0,5 MB.
+          <div class="btnRow" style="margin-top:16px">
+            <button class="btn primary" id="btn_create" type="button">Opslaan</button>
+            <button class="btn" id="btn_reload" type="button">Ververs lijst</button>
+          </div>
         </div>
 
-        <div class="upload-preview" id="newPhotoPreview">Nog geen foto gekozen</div>
+        <div class="card">
+          <h3>2) Stickers genereren</h3>
 
-        <div class="btnRow">
-          <label class="btn" for="new_product_photo" style="cursor:pointer">Foto kiezen</label>
-          <label class="btn" for="new_product_photo_camera" style="cursor:pointer">Foto maken</label>
-          <button class="btn ghost" id="btn_clear_new_photo" type="button">Foto wissen</button>
+          <label for="product_select">Kies artikel</label>
+          <select id="product_select"></select>
+
+          <div class="row" style="margin-top:12px">
+            <div>
+              <label for="qty">Aantal stickers</label>
+              <input id="qty" type="number" min="1" max="500" value="10" />
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button class="btn primary" id="btn_generate" type="button" style="width:100%">Genereer stickers</button>
+            </div>
+          </div>
+
+          <div class="btnRow" style="margin-top:16px">
+            <button class="btn" id="btn_select_all" type="button" disabled>Alles</button>
+            <button class="btn" id="btn_select_none" type="button" disabled>Niks</button>
+            <button class="btn accent" id="btn_pdf" type="button" disabled>Download PDF</button>
+            <button class="btn ghost" id="btn_clear" type="button" disabled>Leegmaken</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Sticker preview</h3>
+        <div class="muted">Alleen aangevinkte stickers worden in de PDF gezet.</div>
+        <div id="stickers" class="previewWrap" style="margin-top:14px"></div>
+      </div>
+
+      <div class="card">
+        <h3>3) SKU / QR scannen en foto koppelen</h3>
+        <div class="muted">
+          Scan op mobiel de QR-code of barcode, of plak een gescande waarde in het veld. Daarna kun je direct een foto maken.
+          De foto wordt opgeslagen op dezelfde bestaande SKU-basis als in het productoverzicht.
         </div>
 
-        <input id="new_product_photo" type="file" accept="image/*" style="display:none"/>
-        <input id="new_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none"/>
+        <div class="row" style="margin-top:14px">
+          <div>
+            <label for="scan_product_sku">Gescoonde SKU</label>
+            <input id="scan_product_sku" placeholder="Scan of vul SKU in" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <div class="btnRow">
+              <button class="btn" id="btn_start_product_scan" type="button">Scan SKU / QR</button>
+              <button class="btn primary" id="btn_find_product_by_scan" type="button">Zoek SKU</button>
+              <button class="btn ghost" id="btn_stop_product_scan" type="button" style="display:none">Stop scan</button>
+            </div>
+          </div>
+        </div>
+
+        <video id="productScanVideo" class="scan-video" playsinline></video>
+
+        <div id="scanProductResult" class="scan-result">
+          <div class="scan-card">
+            <div id="scanProductInfo" class="scan-found"></div>
+
+            <div class="scan-preview" id="scanProductPhotoPreview">Nog geen foto gekozen</div>
+
+            <div class="btnRow">
+              <label class="btn primary" for="scan_product_photo_camera" style="cursor:pointer">Foto maken</label>
+              <label class="btn" for="scan_product_photo" style="cursor:pointer">Foto kiezen</label>
+              <button class="btn ghost" id="btn_clear_scan_product_photo" type="button">Foto wissen</button>
+              <button class="btn accent" id="btn_save_scan_product_photo" type="button" disabled>Foto opslaan op SKU</button>
+            </div>
+
+            <input id="scan_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none" />
+            <input id="scan_product_photo" type="file" accept="image/*" style="display:none" />
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>4) Bestaande artikelen beheren</h3>
+        <div class="muted">
+          Gebruik dit blok om artikelen te zoeken, foto’s toe te voegen of te wijzigen, gegevens aan te passen of
+          een fout aangemaakte SKU definitief te verwijderen.
+        </div>
+
+        <div class="row" style="margin-top:14px">
+          <div>
+            <label for="manage_q">Zoeken</label>
+            <input id="manage_q" placeholder="Zoek op SKU, omschrijving, kleurcode of extra info" />
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button class="btn primary" id="btn_manage_refresh" type="button" style="width:100%">Ververs beheerlijst</button>
+          </div>
+        </div>
+
+        <div id="manage_list" class="manage-grid" style="margin-top:14px"></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="deleteModal" class="modal-backdrop">
+    <div class="modal-card">
+      <h3 class="modal-title">SKU definitief verwijderen</h3>
+      <div class="modal-sub">
+        Controleer goed wat je verwijdert. Als er al items of scans gekoppeld zijn, wordt dat ook verwijderd door database-koppelingen.
+      </div>
+      <div class="modal-info" id="deleteModalInfo"></div>
+      <div class="btnRow">
+        <button class="btn danger" id="btnConfirmDelete" type="button">Definitief verwijderen</button>
+        <button class="btn" id="btnCancelDelete" type="button">Annuleren</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="editModal" class="modal-backdrop">
+    <div class="modal-card">
+      <h3 class="modal-title">Artikel bewerken</h3>
+      <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info, kleurcode en productfoto aan.</div>
+      <div class="modal-info" id="editModalInfo"></div>
+
+      <div class="edit-grid">
+        <div>
+          <label for="edit_sku_base">SKU basis</label>
+          <input id="edit_sku_base" placeholder="SKU basis" />
+
+          <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
+          <input id="edit_name" placeholder="Naam / omschrijving" />
+
+          <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
+          <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
+
+          <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
+          <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000" />
+        </div>
+
+        <div class="edit-photo-panel" id="editPhotoPanel">
+          <div class="small-muted" style="margin-bottom:10px">
+            Productfoto. Nieuwe foto wordt automatisch gecomprimeerd vóór upload.
+          </div>
+
+          <div class="edit-photo-preview" id="editPhotoPreview">Geen foto aanwezig</div>
+
+          <div class="btnRow">
+            <label class="btn" for="edit_product_photo" style="cursor:pointer">Foto kiezen</label>
+            <label class="btn" for="edit_product_photo_camera" style="cursor:pointer">Foto maken</label>
+            <button class="btn ghost" id="btnDeletePhoto" type="button">Foto verwijderen</button>
+          </div>
+
+          <input id="edit_product_photo" type="file" accept="image/*" style="display:none" />
+          <input id="edit_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none" />
+
+          <div class="small-muted" id="editPhotoStatus" style="margin-top:10px"></div>
+        </div>
       </div>
 
       <div class="btnRow" style="margin-top:16px">
-        <button class="btn primary" id="btn_create" type="button">Opslaan</button>
-        <button class="btn" id="btn_reload" type="button">Ververs lijst</button>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3>2) Stickers genereren</h3>
-
-      <label for="product_select">Kies artikel</label>
-      <select id="product_select"></select>
-
-      <div class="row" style="margin-top:12px">
-        <div>
-          <label for="qty">Aantal stickers</label>
-          <input id="qty" type="number" min="1" max="500" value="10"/>
-        </div>
-        <div>
-          <label>&nbsp;</label>
-          <button class="btn primary" id="btn_generate" type="button" style="width:100%">Genereer stickers</button>
-        </div>
-      </div>
-
-      <div class="btnRow" style="margin-top:16px">
-        <button class="btn" id="btn_select_all" type="button" disabled>Alles</button>
-        <button class="btn" id="btn_select_none" type="button" disabled>Niks</button>
-        <button class="btn accent" id="btn_pdf" type="button" disabled>Download PDF</button>
-        <button class="btn ghost" id="btn_clear" type="button" disabled>Leegmaken</button>
+        <button class="btn primary" id="btnConfirmEdit" type="button">Opslaan wijzigingen</button>
+        <button class="btn" id="btnCancelEdit" type="button">Annuleren</button>
       </div>
     </div>
   </div>
 
-  <div class="card" style="margin-top:16px">
-    <h3>Sticker preview</h3>
-    <div class="muted">Alleen aangevinkte stickers worden in de PDF gezet.</div>
-    <div id="stickers" class="previewWrap" style="margin-top:14px"></div>
-  </div>
+  <script>
+    const client = typeof sb === 'function' ? sb() : null;
 
-  <div class="card" style="margin-top:16px">
-    <h3>3) Bestaande artikelen beheren</h3>
-    <div class="muted">Gebruik dit blok om artikelen te bewerken, foto’s toe te voegen of een fout aangemaakte SKU definitief te verwijderen.</div>
+    const LABEL_W_MM = 140;
+    const LABEL_H_MM = 110;
+    const STORAGE_BUCKET = 'product-images';
+    const TARGET_IMAGE_BYTES = 500 * 1024;
+    const CUSTOMER_NAME = 'Ronald Verdult Design';
+    const STICKER_PREFIX = 'RVD';
 
-    <div class="row" style="margin-top:14px">
-      <div>
-        <label for="manage_q">Zoeken</label>
-        <input id="manage_q" placeholder="Zoek op SKU, omschrijving, kleurcode of extra info"/>
-      </div>
-      <div>
-        <label>&nbsp;</label>
-        <button class="btn primary" id="btn_manage_refresh" type="button" style="width:100%">Ververs beheerlijst</button>
-      </div>
-    </div>
-
-    <div id="manage_list" class="manage-grid" style="margin-top:14px"></div>
-  </div>
-</div>
-
-<div id="deleteModal" class="modal-backdrop">
-  <div class="modal-card">
-    <h3 class="modal-title">SKU definitief verwijderen</h3>
-    <div class="modal-sub">Controleer goed wat je verwijdert. Als er al items of scans gekoppeld zijn, wordt dat ook verwijderd door de database-koppelingen.</div>
-
-    <div class="modal-info" id="deleteModalInfo"></div>
-
-    <div class="btnRow">
-      <button class="btn danger" id="btnConfirmDelete" type="button">Definitief verwijderen</button>
-      <button class="btn" id="btnCancelDelete" type="button">Annuleren</button>
-    </div>
-  </div>
-</div>
-
-<div id="editModal" class="modal-backdrop">
-  <div class="modal-card">
-    <h3 class="modal-title">Artikel bewerken</h3>
-    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info, kleurcode en productfoto aan.</div>
-
-    <div class="modal-info" id="editModalInfo"></div>
-
-    <div class="edit-grid">
-      <div>
-        <label for="edit_sku_base">SKU basis</label>
-        <input id="edit_sku_base" placeholder="SKU basis"/>
-
-        <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
-        <input id="edit_name" placeholder="Naam / omschrijving"/>
-
-        <label for="edit_description" style="margin-top:12px">Overige vermelding</label>
-        <textarea id="edit_description" placeholder="Bijvoorbeeld kleur, serie of extra info"></textarea>
-
-        <label for="edit_color_code" style="margin-top:12px">Kleurcode</label>
-        <input id="edit_color_code" placeholder="Bijv. ZWART / RAL9005 / #000000"/>
-      </div>
-
-      <div class="edit-photo-panel" id="editPhotoPanel">
-        <div class="small-muted" style="margin-bottom:10px">
-          Productfoto. Nieuwe foto wordt automatisch gecomprimeerd vóór upload.
-        </div>
-
-        <div class="edit-photo-preview" id="editPhotoPreview">Geen foto aanwezig</div>
-
-        <div class="btnRow">
-          <label class="btn" for="edit_product_photo" style="cursor:pointer">Foto kiezen</label>
-          <label class="btn" for="edit_product_photo_camera" style="cursor:pointer">Foto maken</label>
-          <button class="btn ghost" id="btnDeletePhoto" type="button">Foto verwijderen</button>
-        </div>
-
-        <input id="edit_product_photo" type="file" accept="image/*" style="display:none"/>
-        <input id="edit_product_photo_camera" type="file" accept="image/*" capture="environment" style="display:none"/>
-
-        <div class="small-muted" id="editPhotoStatus" style="margin-top:10px"></div>
-      </div>
-    </div>
-
-    <div class="btnRow" style="margin-top:16px">
-      <button class="btn primary" id="btnConfirmEdit" type="button">Opslaan wijzigingen</button>
-      <button class="btn" id="btnCancelEdit" type="button">Annuleren</button>
-    </div>
-  </div>
-</div>
-
-<script>
-setActiveNav();
-
-const client = sb();
-const LABEL_W_MM = 140;
-const LABEL_H_MM = 110;
-const STORAGE_BUCKET = 'product-images';
-const TARGET_IMAGE_BYTES = 500 * 1024;
-
-const elSkuBase = byId('sku_base');
-const elName = byId('name');
-const elDesc = byId('description');
-const elColor = byId('color_code');
-const elSelect = byId('product_select');
-const elQty = byId('qty');
-
-const btnCreate = byId('btn_create');
-const btnReload = byId('btn_reload');
-const btnGen = byId('btn_generate');
-const btnSelectAll = byId('btn_select_all');
-const btnSelectNone = byId('btn_select_none');
-const btnPdf = byId('btn_pdf');
-const btnClear = byId('btn_clear');
-
-const stickersEl = byId('stickers');
-
-let lastGenerated = [];
-let lastProduct = null;
-let currentDeleteProduct = null;
-let currentEditProduct = null;
-let newProductPhotoFile = null;
-
-function safeText(v){
-  return String(v || '').trim();
-}
-
-function getColorPreview(value){
-  const v = String(value || '').trim();
-  if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return v;
-  return '#ffffff';
-}
-
-function getProductImageUrl(imagePath){
-  if(!imagePath) return '';
-  const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
-  return data?.publicUrl || '';
-}
-
-function renderPhotoBox(imagePath, emptyText = 'Geen foto'){
-  const url = getProductImageUrl(imagePath);
-  if(url){
-    return `<img src="${escapeHtml(url)}" alt="Productfoto"/>`;
-  }
-  return `<span>${escapeHtml(emptyText)}</span>`;
-}
-
-function setNewPhotoPreview(file){
-  const box = byId('newPhotoPreview');
-  if(!file){
-    box.innerHTML = 'Nog geen foto gekozen';
-    return;
-  }
-
-  const url = URL.createObjectURL(file);
-  box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview"/>`;
-}
-
-function setEditPhotoPreview(imagePath = '', localFile = null){
-  const box = byId('editPhotoPreview');
-
-  if(localFile){
-    const url = URL.createObjectURL(localFile);
-    box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview"/>`;
-    return;
-  }
-
-  const url = getProductImageUrl(imagePath);
-  if(url){
-    box.innerHTML = `<img src="${escapeHtml(url)}" alt="Bestaande productfoto"/>`;
-    return;
-  }
-
-  box.innerHTML = 'Geen foto aanwezig';
-}
-
-function setEditPhotoStatus(msg = ''){
-  byId('editPhotoStatus').textContent = msg;
-}
-
-async function compressImageToTarget(file, options = {}){
-  const maxWidth = options.maxWidth || 1600;
-  const maxHeight = options.maxHeight || 1600;
-  const targetBytes = options.targetBytes || TARGET_IMAGE_BYTES;
-  const mimeType = 'image/jpeg';
-
-  const img = await new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => {
-      const image = new Image();
-      image.onload = () => resolve(image);
-      image.onerror = reject;
-      image.src = reader.result;
+    const state = {
+      products: [],
+      itemCounts: {},
+      lastGenerated: [],
+      lastProduct: null,
+      currentDeleteProduct: null,
+      currentEditProduct: null,
+      newProductPhotoFile: null,
+      scannedProduct: null,
+      scannedProductPhotoFile: null,
+      productScanStream: null,
+      productScanRunning: false
     };
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
 
-  let { width, height } = img;
-
-  const ratio = Math.min(1, maxWidth / width, maxHeight / height);
-  width = Math.round(width * ratio);
-  height = Math.round(height * ratio);
-
-  const canvas = document.createElement('canvas');
-  canvas.width = width;
-  canvas.height = height;
-
-  const ctx = canvas.getContext('2d');
-  ctx.drawImage(img, 0, 0, width, height);
-
-  async function canvasToBlob(quality){
-    return await new Promise(resolve => {
-      canvas.toBlob(blob => resolve(blob), mimeType, quality);
-    });
-  }
-
-  let quality = 0.82;
-  let blob = await canvasToBlob(quality);
-
-  while(blob && blob.size > targetBytes && quality > 0.45){
-    quality -= 0.07;
-    blob = await canvasToBlob(quality);
-  }
-
-  if(!blob){
-    throw new Error('Afbeelding comprimeren mislukt.');
-  }
-
-  return new File(
-    [blob],
-    (file.name || 'productfoto').replace(/\.[^.]+$/, '') + '.jpg',
-    { type: mimeType }
-  );
-}
-
-async function uploadProductImage(productId, file){
-  if(!productId) throw new Error('Geen productId ontvangen.');
-  if(!file) throw new Error('Geen bestand gekozen.');
-
-  const compressed = await compressImageToTarget(file, {
-    maxWidth: 1600,
-    maxHeight: 1600,
-    targetBytes: TARGET_IMAGE_BYTES
-  });
-
-  const filePath = `products/${productId}.jpg`;
-
-  const { error: uploadError } = await client
-    .storage
-    .from(STORAGE_BUCKET)
-    .upload(filePath, compressed, {
-      upsert: true,
-      contentType: 'image/jpeg'
-    });
-
-  if(uploadError) throw uploadError;
-
-  const { error: dbError } = await client
-    .from('products')
-    .update({ image_path: filePath })
-    .eq('id', productId);
-
-  if(dbError) throw dbError;
-
-  return filePath;
-}
-
-async function deleteProductImage(productId, imagePath){
-  if(!productId) throw new Error('Geen product geselecteerd.');
-
-  if(imagePath){
-    const { error: storageError } = await client
-      .storage
-      .from(STORAGE_BUCKET)
-      .remove([imagePath]);
-
-    if(storageError && !String(storageError.message || '').toLowerCase().includes('not found')){
-      throw storageError;
-    }
-  }
-
-  const { error: dbError } = await client
-    .from('products')
-    .update({ image_path: null })
-    .eq('id', productId);
-
-  if(dbError) throw dbError;
-}
-
-async function loadProducts(selectId = null){
-  const { data, error } = await client
-    .from('products')
-    .select('id,sku_base,name,description,color_code,image_path,created_at')
-    .order('created_at', { ascending:false });
-
-  if(error) throw error;
-
-  elSelect.innerHTML = '';
-
-  (data || []).forEach(p => {
-    const opt = document.createElement('option');
-    opt.value = p.id;
-    opt.textContent = `${p.sku_base} — ${p.name}`;
-    elSelect.appendChild(opt);
-  });
-
-  if(selectId) elSelect.value = selectId;
-}
-
-async function createProduct(){
-  const sku_base = cleanSku(elSkuBase.value);
-  const name = safeText(elName.value);
-  const description = safeText(elDesc.value);
-  const color_code = safeText(elColor.value);
-
-  if(!sku_base) return toast('Vul een SKU basis in.','err');
-  if(!name) return toast('Vul een naam / omschrijving in.','err');
-
-  btnCreate.disabled = true;
-
-  try{
-    const { data, error } = await client
-      .from('products')
-      .insert([{ sku_base, name, description, color_code }])
-      .select()
-      .single();
-
-    if(error) throw error;
-
-    if(newProductPhotoFile){
-      await uploadProductImage(data.id, newProductPhotoFile);
+    function byId(id){
+      return document.getElementById(id);
     }
 
-    toast('Artikel opgeslagen.','ok');
-
-    elSkuBase.value = '';
-    elName.value = '';
-    elDesc.value = '';
-    elColor.value = '';
-    newProductPhotoFile = null;
-    setNewPhotoPreview(null);
-
-    await loadProducts(data.id);
-    await loadManageList();
-  }catch(e){
-    toast(e.message || String(e), 'err');
-  }finally{
-    btnCreate.disabled = false;
-  }
-}
-
-function updateButtons(){
-  const has = lastGenerated.length > 0;
-  btnSelectAll.disabled = !has;
-  btnSelectNone.disabled = !has;
-  btnClear.disabled = !has;
-  btnPdf.disabled = document.querySelectorAll('.sticker-check:checked').length === 0;
-}
-
-function setAllChecks(v){
-  document.querySelectorAll('.sticker-check').forEach(cb => cb.checked = v);
-  updateButtons();
-}
-
-function clearPreview(){
-  stickersEl.innerHTML = '';
-  lastGenerated = [];
-  lastProduct = null;
-  updateButtons();
-}
-
-function renderSticker(product, item){
-  const wrap = document.createElement('div');
-  wrap.className = 'sticker-wrap';
-  wrap.dataset.itemId = item.id;
-
-  wrap.innerHTML = `
-    <div class="sticker-head">
-      <label>
-        <input class="sticker-check" type="checkbox" checked/>
-        Print ${escapeHtml(item.sku_unique)}
-      </label>
-      <span class="badge">14 × 11 cm</span>
-    </div>
-
-    <div class="sticker" id="sticker_${item.id}">
-      <div class="st-hdr">
-        <div>
-          <div class="st-company">Oegema Logistics Betuwe</div>
-          <div class="st-customer">Klant: Ronald Verdult Design</div>
-          <div class="st-prod">${escapeHtml(product.name)}</div>
-          <div class="st-sku">${escapeHtml(item.sku_unique)}</div>
-          <div class="st-notes">${escapeHtml(product.description || '')}</div>
-          ${product.color_code ? `<div class="st-notes">Kleurcode: ${escapeHtml(product.color_code)}</div>` : ''}
-        </div>
-        <div class="st-badge">RVD</div>
-      </div>
-
-      <div class="st-codes">
-        <div class="st-block st-barcode">
-          <div class="st-small">Barcode</div>
-          <svg id="bc_${item.id}"></svg>
-        </div>
-
-        <div class="st-block st-qr">
-          <div class="st-small">QR</div>
-          <div id="qr_${item.id}"></div>
-        </div>
-      </div>
-    </div>
-  `;
-
-  JsBarcode(wrap.querySelector(`#bc_${item.id}`), item.sku_unique, {
-    format:'CODE128',
-    displayValue:true,
-    fontSize:14,
-    height:70,
-    margin:0
-  });
-
-  new QRCode(wrap.querySelector(`#qr_${item.id}`), {
-    text:item.sku_unique,
-    width:120,
-    height:120,
-    correctLevel:QRCode.CorrectLevel.M
-  });
-
-  wrap.querySelector('.sticker-check').addEventListener('change', updateButtons);
-
-  return wrap;
-}
-
-async function generateStickers(){
-  const product_id = elSelect.value;
-  const qty = Number(elQty.value || 0);
-
-  if(!product_id) return toast('Kies een artikel.','err');
-  if(!qty || qty < 1 || qty > 500) return toast('Aantal moet tussen 1 en 500 zijn.','err');
-
-  const { data:product, error:pErr } = await client
-    .from('products')
-    .select('*')
-    .eq('id', product_id)
-    .single();
-
-  if(pErr) throw pErr;
-
-  const { data:items, error } = await client.rpc('create_items', {
-    p_product_id: product_id,
-    p_qty: qty
-  });
-
-  if(error) throw error;
-
-  lastProduct = product;
-  lastGenerated = items || [];
-  stickersEl.innerHTML = '';
-
-  lastGenerated.forEach(it => stickersEl.appendChild(renderSticker(product, it)));
-
-  toast(`Gegenereerd: ${lastGenerated.length} stickers.`,'ok');
-  updateButtons();
-  await loadManageList();
-}
-
-function getSelectedStickerNodes(){
-  const selected = [];
-
-  document.querySelectorAll('.sticker-wrap').forEach(w => {
-    const cb = w.querySelector('.sticker-check');
-    if(cb?.checked){
-      const node = byId(`sticker_${w.dataset.itemId}`);
-      if(node) selected.push(node);
+    function safeText(v){
+      return String(v ?? '').trim();
     }
-  });
 
-  return selected;
-}
+    function escapeHtml(value){
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
 
-async function downloadSelectedPDF(){
-  const nodes = getSelectedStickerNodes();
-  if(!nodes.length) return toast('Vink eerst stickers aan.','err');
+    function cleanSku(value){
+      return safeText(value).toUpperCase().replace(/\s+/g, '').replace(/[^A-Z0-9_-]/g, '');
+    }
 
-  const { jsPDF } = window.jspdf;
-  const pdf = new jsPDF({
-    orientation:'landscape',
-    unit:'mm',
-    format:[LABEL_W_MM, LABEL_H_MM]
-  });
+    function toast(msg, type='ok'){
+      const el = byId('toast');
+      if(!el){
+        alert(msg);
+        return;
+      }
+      el.textContent = msg;
+      el.className = 'notice show ' + (type === 'err' ? 'err' : 'ok');
+      clearTimeout(toast._timer);
+      toast._timer = setTimeout(() => {
+        el.className = 'notice';
+      }, 3200);
+    }
 
-  let page = 0;
+    function setBusy(button, busy){
+      if(!button) return;
+      if(busy){
+        button.dataset.originalText = button.textContent;
+        button.disabled = true;
+        button.textContent = 'Bezig...';
+      }else{
+        button.disabled = false;
+        if(button.dataset.originalText) button.textContent = button.dataset.originalText;
+      }
+    }
 
-  for(const node of nodes){
-    const canvas = await html2canvas(node, {
-      scale:2,
-      backgroundColor:'#ffffff',
-      useCORS:true
-    });
+    function getColorPreview(value){
+      const v = safeText(value);
+      if(/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.test(v)) return v;
+      return '#ffffff';
+    }
 
-    const img = canvas.toDataURL('image/png');
+    function getProductImageUrl(imagePath){
+      if(!imagePath || !client) return '';
+      const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
+      return data?.publicUrl || '';
+    }
 
-    if(page > 0) pdf.addPage([LABEL_W_MM, LABEL_H_MM], 'landscape');
-    pdf.addImage(img, 'PNG', 0, 0, LABEL_W_MM, LABEL_H_MM);
-    page++;
-  }
+    function renderPhotoBox(imagePath, emptyText='Geen foto'){
+      const url = getProductImageUrl(imagePath);
+      if(url){
+        return `<img src="${escapeHtml(url)}" alt="Productfoto" />`;
+      }
+      return `<span>${escapeHtml(emptyText)}</span>`;
+    }
 
-  pdf.save('ronald-verdult-stickers-14x11cm.pdf');
-}
+    function setNewPhotoPreview(file){
+      const box = byId('newPhotoPreview');
+      if(!file){
+        box.innerHTML = 'Nog geen foto gekozen';
+        return;
+      }
+      const url = URL.createObjectURL(file);
+      box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview" />`;
+    }
 
-async function loadManageList(){
-  const q = safeText(byId('manage_q').value).toLowerCase();
+    function setEditPhotoPreview(imagePath='', localFile=null){
+      const box = byId('editPhotoPreview');
+      if(localFile){
+        const url = URL.createObjectURL(localFile);
+        box.innerHTML = `<img src="${url}" alt="Nieuwe productfoto preview" />`;
+        return;
+      }
+      const url = getProductImageUrl(imagePath);
+      if(url){
+        box.innerHTML = `<img src="${escapeHtml(url)}" alt="Bestaande productfoto" />`;
+        return;
+      }
+      box.innerHTML = 'Geen foto aanwezig';
+    }
 
-  const { data:products, error } = await client
-    .from('products')
-    .select('id,sku_base,name,description,color_code,image_path,created_at')
-    .order('created_at', { ascending:false });
+    function setEditPhotoStatus(msg=''){
+      byId('editPhotoStatus').textContent = msg;
+    }
 
-  if(error) throw error;
+    function setScannedProductPhotoPreview(file=null, imagePath=''){
+      const box = byId('scanProductPhotoPreview');
 
-  const listEl = byId('manage_list');
+      if(file){
+        const url = URL.createObjectURL(file);
+        box.innerHTML = `<img src="${url}" alt="Foto preview" />`;
+        return;
+      }
 
-  if(!products || !products.length){
-    listEl.innerHTML = `<div class="card" style="box-shadow:none;border:none;padding:0">Nog geen artikelen gevonden.</div>`;
-    return;
-  }
+      const url = getProductImageUrl(imagePath);
+      if(url){
+        box.innerHTML = `<img src="${escapeHtml(url)}" alt="Bestaande productfoto" />`;
+        return;
+      }
 
-  let itemCounts = {};
-  const { data:items } = await client
-    .from('items')
-    .select('id,product_id');
+      box.innerHTML = 'Nog geen foto gekozen';
+    }
 
-  (items || []).forEach(it => {
-    itemCounts[it.product_id] = (itemCounts[it.product_id] || 0) + 1;
-  });
+    async function compressImageToTarget(file, options = {}){
+      const maxWidth = options.maxWidth || 1600;
+      const maxHeight = options.maxHeight || 1600;
+      const targetBytes = options.targetBytes || TARGET_IMAGE_BYTES;
+      const mimeType = 'image/jpeg';
 
-  let rows = products.map(p => ({
-    ...p,
-    item_count: itemCounts[p.id] || 0
-  }));
+      const img = await new Promise((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => {
+          const image = new Image();
+          image.onload = () => resolve(image);
+          image.onerror = reject;
+          image.src = reader.result;
+        };
+        reader.onerror = reject;
+        reader.readAsDataURL(file);
+      });
 
-  if(q){
-    rows = rows.filter(r =>
-      String(r.sku_base || '').toLowerCase().includes(q) ||
-      String(r.name || '').toLowerCase().includes(q) ||
-      String(r.description || '').toLowerCase().includes(q) ||
-      String(r.color_code || '').toLowerCase().includes(q)
-    );
-  }
+      let { width, height } = img;
+      const ratio = Math.min(1, maxWidth / width, maxHeight / height);
+      width = Math.round(width * ratio);
+      height = Math.round(height * ratio);
 
-  if(!rows.length){
-    listEl.innerHTML = `<div class="card" style="box-shadow:none;border:none;padding:0">Geen artikelen gevonden voor deze zoekopdracht.</div>`;
-    return;
-  }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
 
-  listEl.innerHTML = rows.map(r => `
-    <div class="manage-row">
-      <div class="photo-thumb">
-        ${renderPhotoBox(r.image_path, 'Geen foto')}
-      </div>
+      const ctx = canvas.getContext('2d');
+      ctx.drawImage(img, 0, 0, width, height);
 
-      <div class="manage-sku">${escapeHtml(r.sku_base)}</div>
+      async function canvasToBlob(quality){
+        return new Promise(resolve => canvas.toBlob(resolve, mimeType, quality));
+      }
 
-      <div class="manage-info">
-        <b>${escapeHtml(r.name)}</b>
-        <div class="small">${escapeHtml(r.description || 'Geen overige vermelding')}</div>
-        <div class="color-pill">
-          <span class="color-dot" style="background:${escapeHtml(getColorPreview(r.color_code))}"></span>
-          Kleurcode: ${escapeHtml(r.color_code || '-')}
-        </div>
-      </div>
+      let quality = 0.82;
+      let blob = await canvasToBlob(quality);
 
-      <div class="manage-count">
-        <div class="n">${r.item_count}</div>
-        <div class="t">items</div>
-      </div>
+      while(blob && blob.size > targetBytes && quality > 0.45){
+        quality -= 0.07;
+        blob = await canvasToBlob(quality);
+      }
 
-      <div class="manage-actions">
-        <button
-          class="btn"
-          type="button"
-          data-edit-id="${escapeHtml(r.id)}"
-          data-edit-sku="${escapeHtml(r.sku_base)}"
-          data-edit-name="${escapeHtml(r.name)}"
-          data-edit-description="${escapeHtml(r.description || '')}"
-          data-edit-color="${escapeHtml(r.color_code || '')}"
-          data-edit-image="${escapeHtml(r.image_path || '')}"
-          data-edit-count="${r.item_count}"
-        >
-          Bewerken
-        </button>
+      if(!blob){
+        throw new Error('Afbeelding comprimeren mislukt.');
+      }
 
-        <button
-          class="btn danger"
-          type="button"
-          data-delete-id="${escapeHtml(r.id)}"
-          data-delete-sku="${escapeHtml(r.sku_base)}"
-          data-delete-name="${escapeHtml(r.name)}"
-          data-delete-description="${escapeHtml(r.description || '')}"
-          data-delete-color="${escapeHtml(r.color_code || '')}"
-          data-delete-image="${escapeHtml(r.image_path || '')}"
-          data-delete-count="${r.item_count}"
-        >
-          Verwijderen
-        </button>
-      </div>
-    </div>
-  `).join('');
-
-  bindEditButtons();
-  bindDeleteButtons();
-}
-
-function bindEditButtons(){
-  document.querySelectorAll('[data-edit-id]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentEditProduct = {
-        id: btn.getAttribute('data-edit-id'),
-        sku_base: btn.getAttribute('data-edit-sku'),
-        name: btn.getAttribute('data-edit-name'),
-        description: btn.getAttribute('data-edit-description'),
-        color_code: btn.getAttribute('data-edit-color'),
-        image_path: btn.getAttribute('data-edit-image'),
-        item_count: Number(btn.getAttribute('data-edit-count') || 0)
-      };
-
-      byId('editModalInfo').innerHTML = `
-        <div><b>Huidige SKU basis:</b> ${escapeHtml(currentEditProduct.sku_base)}</div>
-        <div><b>Gekoppelde items:</b> ${currentEditProduct.item_count}</div>
-      `;
-
-      byId('edit_sku_base').value = currentEditProduct.sku_base || '';
-      byId('edit_name').value = currentEditProduct.name || '';
-      byId('edit_description').value = currentEditProduct.description || '';
-      byId('edit_color_code').value = currentEditProduct.color_code || '';
-
-      setEditPhotoPreview(currentEditProduct.image_path || '', null);
-      setEditPhotoStatus('');
-
-      byId('edit_product_photo').value = '';
-      byId('edit_product_photo_camera').value = '';
-
-      byId('editModal').classList.add('show');
-    });
-  });
-}
-
-function bindDeleteButtons(){
-  document.querySelectorAll('[data-delete-id]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentDeleteProduct = {
-        id: btn.getAttribute('data-delete-id'),
-        sku_base: btn.getAttribute('data-delete-sku'),
-        name: btn.getAttribute('data-delete-name'),
-        description: btn.getAttribute('data-delete-description'),
-        color_code: btn.getAttribute('data-delete-color'),
-        image_path: btn.getAttribute('data-delete-image'),
-        item_count: Number(btn.getAttribute('data-delete-count') || 0)
-      };
-
-      byId('deleteModalInfo').innerHTML = `
-        <div><b>SKU basis:</b> ${escapeHtml(currentDeleteProduct.sku_base)}</div>
-        <div><b>Omschrijving:</b> ${escapeHtml(currentDeleteProduct.name)}</div>
-        <div><b>Overige vermelding:</b> ${escapeHtml(currentDeleteProduct.description || '-')}</div>
-        <div><b>Kleurcode:</b> ${escapeHtml(currentDeleteProduct.color_code || '-')}</div>
-        <div><b>Foto aanwezig:</b> ${currentDeleteProduct.image_path ? 'Ja' : 'Nee'}</div>
-        <div><b>Gekoppelde items:</b> ${currentDeleteProduct.item_count}</div>
-      `;
-
-      byId('deleteModal').classList.add('show');
-    });
-  });
-}
-
-function closeDeleteModal(){
-  currentDeleteProduct = null;
-  byId('deleteModal').classList.remove('show');
-}
-
-function closeEditModal(){
-  currentEditProduct = null;
-  byId('editModal').classList.remove('show');
-}
-
-async function saveProductEdit(){
-  if(!currentEditProduct){
-    toast('Geen artikel geselecteerd.','err');
-    return;
-  }
-
-  const sku_base = cleanSku(byId('edit_sku_base').value);
-  const name = safeText(byId('edit_name').value);
-  const description = safeText(byId('edit_description').value);
-  const color_code = safeText(byId('edit_color_code').value);
-
-  if(!sku_base) return toast('Vul een SKU basis in.','err');
-  if(!name) return toast('Vul een naam / omschrijving in.','err');
-
-  try{
-    const { error } = await client
-      .from('products')
-      .update({
-        sku_base,
-        name,
-        description,
-        color_code
-      })
-      .eq('id', currentEditProduct.id);
-
-    if(error) throw error;
-
-    closeEditModal();
-    toast(`Artikel ${sku_base} is bijgewerkt.`,'ok');
-
-    await loadProducts(currentEditProduct.id);
-    await loadManageList();
-    clearPreview();
-  }catch(e){
-    toast(e.message || String(e),'err');
-  }
-}
-
-async function deleteProductDefinitive(){
-  if(!currentDeleteProduct){
-    toast('Geen SKU geselecteerd.','err');
-    return;
-  }
-
-  try{
-    if(currentDeleteProduct.item_count > 0){
-      const ok = confirm(
-        `SKU ${currentDeleteProduct.sku_base} heeft nog ${currentDeleteProduct.item_count} gekoppelde items. ` +
-        `Door verwijderen worden ook gekoppelde stickers/items verwijderd. Doorgaan?`
+      return new File(
+        [blob],
+        (file.name || 'productfoto').replace(/\.[^.]+$/, '') + '.jpg',
+        { type: mimeType }
       );
+    }
+
+    async function uploadProductImage(productId, file){
+      if(!productId) throw new Error('Geen productId ontvangen.');
+      if(!file) throw new Error('Geen bestand gekozen.');
+      if(!client) throw new Error('Supabase client ontbreekt.');
+
+      const compressed = await compressImageToTarget(file, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        targetBytes: TARGET_IMAGE_BYTES
+      });
+
+      const filePath = `products/${productId}.jpg`;
+
+      const { error: uploadError } = await client
+        .storage
+        .from(STORAGE_BUCKET)
+        .upload(filePath, compressed, {
+          upsert: true,
+          contentType: 'image/jpeg'
+        });
+
+      if(uploadError) throw uploadError;
+
+      const { error: dbError } = await client
+        .from('products')
+        .update({ image_path: filePath })
+        .eq('id', productId);
+
+      if(dbError) throw dbError;
+
+      return filePath;
+    }
+
+    async function deleteProductImage(productId, imagePath){
+      if(!productId) throw new Error('Geen product geselecteerd.');
+      if(!client) throw new Error('Supabase client ontbreekt.');
+
+      if(imagePath){
+        const { error: storageError } = await client
+          .storage
+          .from(STORAGE_BUCKET)
+          .remove([imagePath]);
+
+        if(storageError && !String(storageError.message || '').toLowerCase().includes('not found')){
+          throw storageError;
+        }
+      }
+
+      const { error: dbError } = await client
+        .from('products')
+        .update({ image_path: null })
+        .eq('id', productId);
+
+      if(dbError) throw dbError;
+    }
+
+    async function loadProducts(selectId = null){
+      if(!client) throw new Error('Supabase client ontbreekt.');
+
+      const { data, error } = await client
+        .from('products')
+        .select('id, sku_base, name, description, color_code, image_path, created_at')
+        .order('created_at', { ascending: false });
+
+      if(error) throw error;
+
+      state.products = data || [];
+
+      const elSelect = byId('product_select');
+      elSelect.innerHTML = '';
+
+      if(!state.products.length){
+        const opt = document.createElement('option');
+        opt.value = '';
+        opt.textContent = 'Nog geen artikelen';
+        elSelect.appendChild(opt);
+        return;
+      }
+
+      state.products.forEach(p => {
+        const opt = document.createElement('option');
+        opt.value = p.id;
+        opt.textContent = `${p.sku_base} — ${p.name}`;
+        elSelect.appendChild(opt);
+      });
+
+      if(selectId && state.products.some(p => p.id === selectId)){
+        elSelect.value = selectId;
+      }
+    }
+
+    async function loadItemCounts(){
+      if(!client) throw new Error('Supabase client ontbreekt.');
+
+      const { data, error } = await client
+        .from('items')
+        .select('id, product_id');
+
+      if(error) throw error;
+
+      const counts = {};
+      (data || []).forEach(it => {
+        counts[it.product_id] = (counts[it.product_id] || 0) + 1;
+      });
+      state.itemCounts = counts;
+    }
+
+    async function createProduct(){
+      const sku_base = cleanSku(byId('sku_base').value);
+      const name = safeText(byId('name').value);
+      const description = safeText(byId('description').value);
+      const color_code = safeText(byId('color_code').value);
+
+      if(!sku_base) return toast('Vul een SKU basis in.', 'err');
+      if(!name) return toast('Vul een naam / omschrijving in.', 'err');
+      if(!client) return toast('Supabase client ontbreekt.', 'err');
+
+      const btn = byId('btn_create');
+      setBusy(btn, true);
+
+      try{
+        const { data, error } = await client
+          .from('products')
+          .insert([{ sku_base, name, description, color_code }])
+          .select()
+          .single();
+
+        if(error) throw error;
+
+        if(state.newProductPhotoFile){
+          await uploadProductImage(data.id, state.newProductPhotoFile);
+        }
+
+        byId('sku_base').value = '';
+        byId('name').value = '';
+        byId('description').value = '';
+        byId('color_code').value = '';
+
+        state.newProductPhotoFile = null;
+        byId('new_product_photo').value = '';
+        byId('new_product_photo_camera').value = '';
+        setNewPhotoPreview(null);
+
+        await loadProducts(data.id);
+        await loadManageList();
+
+        toast('Artikel opgeslagen.', 'ok');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }finally{
+        setBusy(btn, false);
+      }
+    }
+
+    function updateButtons(){
+      const has = state.lastGenerated.length > 0;
+      byId('btn_select_all').disabled = !has;
+      byId('btn_select_none').disabled = !has;
+      byId('btn_clear').disabled = !has;
+      byId('btn_pdf').disabled = document.querySelectorAll('.sticker-check:checked').length === 0;
+    }
+
+    function setAllChecks(v){
+      document.querySelectorAll('.sticker-check').forEach(cb => cb.checked = v);
+      updateButtons();
+    }
+
+    function clearPreview(){
+      byId('stickers').innerHTML = '';
+      state.lastGenerated = [];
+      state.lastProduct = null;
+      updateButtons();
+    }
+
+    function renderSticker(product, item){
+      const wrap = document.createElement('div');
+      wrap.className = 'sticker-wrap';
+      wrap.dataset.itemId = item.id;
+
+      wrap.innerHTML = `
+        <div class="sticker-head">
+          <label>
+            <input class="sticker-check" type="checkbox" checked />
+            Print ${escapeHtml(item.sku_unique)}
+          </label>
+          <span class="badge">14 × 11 cm</span>
+        </div>
+        <div class="sticker" id="sticker_${item.id}">
+          <div class="st-hdr">
+            <div>
+              <div class="st-company">Oegema Logistics Betuwe</div>
+              <div class="st-customer">Klant: ${escapeHtml(CUSTOMER_NAME)}</div>
+              <div class="st-prod">${escapeHtml(product.name)}</div>
+              <div class="st-sku">${escapeHtml(item.sku_unique)}</div>
+              <div class="st-notes">${escapeHtml(product.description || '')}</div>
+              ${product.color_code ? `<div class="st-notes">Kleurcode: ${escapeHtml(product.color_code)}</div>` : ''}
+            </div>
+            <div class="st-badge">${escapeHtml(STICKER_PREFIX)}</div>
+          </div>
+
+          <div class="st-codes">
+            <div class="st-block st-barcode">
+              <div class="st-small">Barcode</div>
+              <svg id="bc_${item.id}"></svg>
+            </div>
+            <div class="st-block st-qr">
+              <div class="st-small">QR</div>
+              <div id="qr_${item.id}"></div>
+            </div>
+          </div>
+        </div>
+      `;
+
+      const barcodeSvg = wrap.querySelector(`#bc_${CSS.escape(String(item.id))}`);
+      if(barcodeSvg){
+        JsBarcode(barcodeSvg, item.sku_unique, {
+          format: 'CODE128',
+          displayValue: true,
+          fontSize: 14,
+          height: 70,
+          margin: 0
+        });
+      }
+
+      const qrEl = wrap.querySelector(`#qr_${CSS.escape(String(item.id))}`);
+      if(qrEl){
+        new QRCode(qrEl, {
+          text: item.sku_unique,
+          width: 120,
+          height: 120,
+          correctLevel: QRCode.CorrectLevel.M
+        });
+      }
+
+      wrap.querySelector('.sticker-check').addEventListener('change', updateButtons);
+
+      return wrap;
+    }
+
+    async function generateStickers(){
+      const product_id = byId('product_select').value;
+      const qty = Number(byId('qty').value || 0);
+
+      if(!product_id) return toast('Kies een artikel.', 'err');
+      if(!qty || qty < 1 || qty > 500) return toast('Aantal moet tussen 1 en 500 zijn.', 'err');
+      if(!client) return toast('Supabase client ontbreekt.', 'err');
+
+      const btn = byId('btn_generate');
+      setBusy(btn, true);
+
+      try{
+        const { data: product, error: pErr } = await client
+          .from('products')
+          .select('*')
+          .eq('id', product_id)
+          .single();
+
+        if(pErr) throw pErr;
+
+        const { data: items, error } = await client.rpc('create_items', {
+          p_product_id: product_id,
+          p_qty: qty
+        });
+
+        if(error) throw error;
+
+        state.lastProduct = product;
+        state.lastGenerated = items || [];
+
+        const stickersEl = byId('stickers');
+        stickersEl.innerHTML = '';
+        state.lastGenerated.forEach(it => {
+          stickersEl.appendChild(renderSticker(product, it));
+        });
+
+        await loadManageList();
+
+        toast(`Gegenereerd: ${state.lastGenerated.length} stickers.`, 'ok');
+        updateButtons();
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }finally{
+        setBusy(btn, false);
+      }
+    }
+
+    function getSelectedStickerNodes(){
+      const selected = [];
+      document.querySelectorAll('.sticker-wrap').forEach(w => {
+        const cb = w.querySelector('.sticker-check');
+        if(cb?.checked){
+          const node = byId(`sticker_${w.dataset.itemId}`);
+          if(node) selected.push(node);
+        }
+      });
+      return selected;
+    }
+
+    async function downloadSelectedPDF(){
+      const nodes = getSelectedStickerNodes();
+      if(!nodes.length) return toast('Vink eerst stickers aan.', 'err');
+
+      const btn = byId('btn_pdf');
+      setBusy(btn, true);
+
+      try{
+        const { jsPDF } = window.jspdf;
+        const pdf = new jsPDF({
+          orientation: 'landscape',
+          unit: 'mm',
+          format: [LABEL_W_MM, LABEL_H_MM]
+        });
+
+        let page = 0;
+
+        for(const node of nodes){
+          const canvas = await html2canvas(node, {
+            scale: 2,
+            backgroundColor: '#ffffff',
+            useCORS: true
+          });
+
+          const img = canvas.toDataURL('image/png');
+
+          if(page > 0){
+            pdf.addPage([LABEL_W_MM, LABEL_H_MM], 'landscape');
+          }
+
+          pdf.addImage(img, 'PNG', 0, 0, LABEL_W_MM, LABEL_H_MM);
+          page++;
+        }
+
+        pdf.save('ronald-verdult-stickers-14x11cm.pdf');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }finally{
+        setBusy(btn, false);
+      }
+    }
+
+    async function loadManageList(){
+      await loadProducts(byId('product_select').value || null);
+      await loadItemCounts();
+
+      const q = safeText(byId('manage_q').value).toLowerCase();
+      const listEl = byId('manage_list');
+
+      if(!state.products.length){
+        listEl.innerHTML = '<div class="card" style="box-shadow:none;border:none;padding:0">Nog geen artikelen gevonden.</div>';
+        return;
+      }
+
+      let rows = state.products.map(p => ({
+        ...p,
+        item_count: state.itemCounts[p.id] || 0
+      }));
+
+      if(q){
+        rows = rows.filter(r => {
+          return [r.sku_base, r.name, r.description, r.color_code]
+            .map(v => String(v || '').toLowerCase())
+            .some(v => v.includes(q));
+        });
+      }
+
+      if(!rows.length){
+        listEl.innerHTML = '<div class="card" style="box-shadow:none;border:none;padding:0">Geen artikelen gevonden voor deze zoekopdracht.</div>';
+        return;
+      }
+
+      listEl.innerHTML = rows.map(r => `
+        <div class="manage-row">
+          <div class="photo-thumb">${renderPhotoBox(r.image_path, 'Geen foto')}</div>
+          <div class="manage-sku">${escapeHtml(r.sku_base)}</div>
+          <div class="manage-info">
+            <b>${escapeHtml(r.name)}</b>
+            <div class="small">${escapeHtml(r.description || 'Geen overige vermelding')}</div>
+            <div class="color-pill">
+              <span class="color-dot" style="background:${escapeHtml(getColorPreview(r.color_code))}"></span>
+              Kleurcode: ${escapeHtml(r.color_code || '-')}
+            </div>
+          </div>
+          <div class="manage-count">
+            <div class="n">${r.item_count}</div>
+            <div class="t">items</div>
+          </div>
+          <div class="manage-actions">
+            <button
+              class="btn"
+              type="button"
+              data-edit-id="${escapeHtml(r.id)}"
+              data-edit-sku="${escapeHtml(r.sku_base)}"
+              data-edit-name="${escapeHtml(r.name)}"
+              data-edit-description="${escapeHtml(r.description || '')}"
+              data-edit-color="${escapeHtml(r.color_code || '')}"
+              data-edit-image="${escapeHtml(r.image_path || '')}"
+              data-edit-count="${r.item_count}"
+            >Bewerken</button>
+
+            <button
+              class="btn danger"
+              type="button"
+              data-delete-id="${escapeHtml(r.id)}"
+              data-delete-sku="${escapeHtml(r.sku_base)}"
+              data-delete-name="${escapeHtml(r.name)}"
+              data-delete-description="${escapeHtml(r.description || '')}"
+              data-delete-color="${escapeHtml(r.color_code || '')}"
+              data-delete-image="${escapeHtml(r.image_path || '')}"
+              data-delete-count="${r.item_count}"
+            >Verwijderen</button>
+          </div>
+        </div>
+      `).join('');
+
+      bindEditButtons();
+      bindDeleteButtons();
+    }
+
+    function bindEditButtons(){
+      document.querySelectorAll('[data-edit-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.currentEditProduct = {
+            id: btn.getAttribute('data-edit-id'),
+            sku_base: btn.getAttribute('data-edit-sku'),
+            name: btn.getAttribute('data-edit-name'),
+            description: btn.getAttribute('data-edit-description'),
+            color_code: btn.getAttribute('data-edit-color'),
+            image_path: btn.getAttribute('data-edit-image'),
+            item_count: Number(btn.getAttribute('data-edit-count') || 0)
+          };
+
+          byId('editModalInfo').innerHTML = `
+            <div><b>Huidige SKU basis:</b> ${escapeHtml(state.currentEditProduct.sku_base)}</div>
+            <div><b>Gekoppelde items:</b> ${state.currentEditProduct.item_count}</div>
+          `;
+
+          byId('edit_sku_base').value = state.currentEditProduct.sku_base || '';
+          byId('edit_name').value = state.currentEditProduct.name || '';
+          byId('edit_description').value = state.currentEditProduct.description || '';
+          byId('edit_color_code').value = state.currentEditProduct.color_code || '';
+          byId('edit_product_photo').value = '';
+          byId('edit_product_photo_camera').value = '';
+          setEditPhotoPreview(state.currentEditProduct.image_path || '', null);
+          setEditPhotoStatus('');
+
+          byId('editModal').classList.add('show');
+        });
+      });
+    }
+
+    function bindDeleteButtons(){
+      document.querySelectorAll('[data-delete-id]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          state.currentDeleteProduct = {
+            id: btn.getAttribute('data-delete-id'),
+            sku_base: btn.getAttribute('data-delete-sku'),
+            name: btn.getAttribute('data-delete-name'),
+            description: btn.getAttribute('data-delete-description'),
+            color_code: btn.getAttribute('data-delete-color'),
+            image_path: btn.getAttribute('data-delete-image'),
+            item_count: Number(btn.getAttribute('data-delete-count') || 0)
+          };
+
+          byId('deleteModalInfo').innerHTML = `
+            <div><b>SKU basis:</b> ${escapeHtml(state.currentDeleteProduct.sku_base)}</div>
+            <div><b>Omschrijving:</b> ${escapeHtml(state.currentDeleteProduct.name)}</div>
+            <div><b>Overige vermelding:</b> ${escapeHtml(state.currentDeleteProduct.description || '-')}</div>
+            <div><b>Kleurcode:</b> ${escapeHtml(state.currentDeleteProduct.color_code || '-')}</div>
+            <div><b>Foto aanwezig:</b> ${state.currentDeleteProduct.image_path ? 'Ja' : 'Nee'}</div>
+            <div><b>Gekoppelde items:</b> ${state.currentDeleteProduct.item_count}</div>
+          `;
+
+          byId('deleteModal').classList.add('show');
+        });
+      });
+    }
+
+    function closeDeleteModal(){
+      state.currentDeleteProduct = null;
+      byId('deleteModal').classList.remove('show');
+    }
+
+    function closeEditModal(){
+      state.currentEditProduct = null;
+      byId('editModal').classList.remove('show');
+    }
+
+    async function saveProductEdit(){
+      if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
+      if(!client) return toast('Supabase client ontbreekt.', 'err');
+
+      const sku_base = cleanSku(byId('edit_sku_base').value);
+      const name = safeText(byId('edit_name').value);
+      const description = safeText(byId('edit_description').value);
+      const color_code = safeText(byId('edit_color_code').value);
+
+      if(!sku_base) return toast('Vul een SKU basis in.', 'err');
+      if(!name) return toast('Vul een naam / omschrijving in.', 'err');
+
+      const btn = byId('btnConfirmEdit');
+      setBusy(btn, true);
+
+      try{
+        const { error } = await client
+          .from('products')
+          .update({ sku_base, name, description, color_code })
+          .eq('id', state.currentEditProduct.id);
+
+        if(error) throw error;
+
+        closeEditModal();
+        clearPreview();
+        await loadManageList();
+        await loadProducts(state.currentEditProduct.id);
+
+        toast(`Artikel ${sku_base} is bijgewerkt.`, 'ok');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }finally{
+        setBusy(btn, false);
+      }
+    }
+
+    async function deleteProductDefinitive(){
+      if(!state.currentDeleteProduct) return toast('Geen SKU geselecteerd.', 'err');
+      if(!client) return toast('Supabase client ontbreekt.', 'err');
+
+      const btn = byId('btnConfirmDelete');
+      setBusy(btn, true);
+
+      try{
+        if(state.currentDeleteProduct.item_count > 0){
+          const ok = confirm(
+            `SKU ${state.currentDeleteProduct.sku_base} heeft nog ${state.currentDeleteProduct.item_count} gekoppelde items. Door verwijderen worden ook gekoppelde stickers/items verwijderd. Doorgaan?`
+          );
+          if(!ok) return;
+        }
+
+        if(state.currentDeleteProduct.image_path){
+          await client.storage.from(STORAGE_BUCKET).remove([state.currentDeleteProduct.image_path]);
+        }
+
+        const { error } = await client
+          .from('products')
+          .delete()
+          .eq('id', state.currentDeleteProduct.id);
+
+        if(error) throw error;
+
+        closeDeleteModal();
+        clearPreview();
+        await loadManageList();
+        await loadProducts();
+
+        toast(`SKU ${state.currentDeleteProduct.sku_base} is verwijderd.`, 'ok');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }finally{
+        setBusy(btn, false);
+      }
+    }
+
+    function normalizeScannedToSkuBase(raw){
+      const value = safeText(raw).toUpperCase();
+      if(!value) return '';
+
+      if(value.includes('_')){
+        return value.split('_')[0].trim();
+      }
+
+      if(value.includes('-')){
+        const parts = value.split('-');
+        if(parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])){
+          parts.pop();
+          return parts.join('-').trim();
+        }
+      }
+
+      return value.trim();
+    }
+
+    async function findProductByScannedSku(){
+      const raw = safeText(byId('scan_product_sku').value);
+      if(!raw) return toast('Scan of vul eerst een SKU in.', 'err');
+      if(!client) return toast('Supabase client ontbreekt.', 'err');
+
+      const skuBase = normalizeScannedToSkuBase(raw);
+
+      try{
+        const { data, error } = await client
+          .from('products')
+          .select('id, sku_base, name, description, color_code, image_path, created_at')
+          .eq('sku_base', skuBase)
+          .maybeSingle();
+
+        if(error) throw error;
+
+        if(!data){
+          state.scannedProduct = null;
+          state.scannedProductPhotoFile = null;
+          byId('scanProductResult').style.display = 'none';
+          toast(`Geen product gevonden voor ${skuBase}.`, 'err');
+          return;
+        }
+
+        state.scannedProduct = data;
+        state.scannedProductPhotoFile = null;
+
+        byId('scanProductInfo').innerHTML = `
+          <div><b>SKU basis:</b> ${escapeHtml(data.sku_base)}</div>
+          <div><b>Omschrijving:</b> ${escapeHtml(data.name || '-')}</div>
+          <div><b>Overige vermelding:</b> ${escapeHtml(data.description || '-')}</div>
+          <div><b>Kleurcode:</b> ${escapeHtml(data.color_code || '-')}</div>
+          <div><b>Bestaande foto:</b> ${data.image_path ? 'Ja' : 'Nee'}</div>
+        `;
+
+        setScannedProductPhotoPreview(null, data.image_path || '');
+        byId('scanProductResult').style.display = 'block';
+        byId('btn_save_scan_product_photo').disabled = true;
+
+        toast(`SKU ${data.sku_base} gevonden.`, 'ok');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }
+    }
+
+    function handleScannedProductPhotoInput(file){
+      if(!file) return;
+      state.scannedProductPhotoFile = file;
+      setScannedProductPhotoPreview(file, '');
+      byId('btn_save_scan_product_photo').disabled = false;
+    }
+
+    async function saveScannedProductPhoto(){
+      if(!state.scannedProduct) return toast('Er is nog geen SKU gevonden.', 'err');
+      if(!state.scannedProductPhotoFile) return toast('Maak of kies eerst een foto.', 'err');
+
+      try{
+        const path = await uploadProductImage(state.scannedProduct.id, state.scannedProductPhotoFile);
+        state.scannedProduct.image_path = path;
+
+        setScannedProductPhotoPreview(null, path);
+        byId('btn_save_scan_product_photo').disabled = true;
+
+        await loadManageList();
+        await loadProducts(state.scannedProduct.id);
+
+        toast(`Foto opgeslagen op SKU ${state.scannedProduct.sku_base}.`, 'ok');
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }
+    }
+
+    async function startProductScanner(){
+      if(!('BarcodeDetector' in window)){
+        toast('Deze telefoon/browser ondersteunt de barcode scanner niet. Vul de SKU handmatig in.', 'err');
+        return;
+      }
+
+      try{
+        const formats = await BarcodeDetector.getSupportedFormats();
+        const wanted = ['code_128', 'qr_code'];
+        const supported = wanted.filter(f => formats.includes(f));
+
+        if(!supported.length){
+          toast('CODE128 of QR wordt niet ondersteund op dit toestel.', 'err');
+          return;
+        }
+
+        const detector = new BarcodeDetector({ formats: supported });
+        const video = byId('productScanVideo');
+
+        state.productScanStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: { ideal: 'environment' } },
+          audio: false
+        });
+
+        video.srcObject = state.productScanStream;
+        video.style.display = 'block';
+        byId('btn_stop_product_scan').style.display = '';
+        await video.play();
+
+        state.productScanRunning = true;
+
+        const loop = async () => {
+          if(!state.productScanRunning) return;
+
+          try{
+            const barcodes = await detector.detect(video);
+            if(barcodes && barcodes.length){
+              const raw = safeText(barcodes[0].rawValue);
+              if(raw){
+                byId('scan_product_sku').value = raw;
+                stopProductScanner();
+                await findProductByScannedSku();
+                return;
+              }
+            }
+          }catch(err){
+            console.error(err);
+          }
+
+          requestAnimationFrame(loop);
+        };
+
+        requestAnimationFrame(loop);
+      }catch(e){
+        toast('Camera openen mislukt: ' + (e.message || String(e)), 'err');
+      }
+    }
+
+    function stopProductScanner(){
+      state.productScanRunning = false;
+
+      const video = byId('productScanVideo');
+      video.pause();
+      video.srcObject = null;
+      video.style.display = 'none';
+      byId('btn_stop_product_scan').style.display = 'none';
+
+      if(state.productScanStream){
+        state.productScanStream.getTracks().forEach(t => t.stop());
+        state.productScanStream = null;
+      }
+    }
+
+    async function handleEditPhotoUpload(file){
+      if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
+      if(!file) return;
+
+      const panel = byId('editPhotoPanel');
+      panel.classList.add('uploading');
+      setEditPhotoStatus('Foto wordt gecomprimeerd en geüpload...');
+
+      try{
+        const path = await uploadProductImage(state.currentEditProduct.id, file);
+        state.currentEditProduct.image_path = path;
+        setEditPhotoPreview(path, null);
+        setEditPhotoStatus('Foto opgeslagen.');
+
+        await loadManageList();
+        await loadProducts(state.currentEditProduct.id);
+
+        toast('Productfoto bijgewerkt.', 'ok');
+      }catch(e){
+        setEditPhotoStatus('');
+        toast(e.message || String(e), 'err');
+      }finally{
+        panel.classList.remove('uploading');
+        byId('edit_product_photo').value = '';
+        byId('edit_product_photo_camera').value = '';
+      }
+    }
+
+    async function handleDeleteEditPhoto(){
+      if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
+      if(!state.currentEditProduct.image_path) return toast('Er is geen foto om te verwijderen.', 'err');
+
+      const ok = confirm('Weet je zeker dat je de productfoto wilt verwijderen?');
       if(!ok) return;
+
+      const panel = byId('editPhotoPanel');
+      panel.classList.add('uploading');
+      setEditPhotoStatus('Foto wordt verwijderd...');
+
+      try{
+        await deleteProductImage(state.currentEditProduct.id, state.currentEditProduct.image_path);
+        state.currentEditProduct.image_path = '';
+        setEditPhotoPreview('', null);
+        setEditPhotoStatus('Foto verwijderd.');
+
+        await loadManageList();
+        await loadProducts(state.currentEditProduct.id);
+
+        toast('Productfoto verwijderd.', 'ok');
+      }catch(e){
+        setEditPhotoStatus('');
+        toast(e.message || String(e), 'err');
+      }finally{
+        panel.classList.remove('uploading');
+      }
     }
 
-    if(currentDeleteProduct.image_path){
-      await client.storage.from(STORAGE_BUCKET).remove([currentDeleteProduct.image_path]);
+    function bindBasicEvents(){
+      byId('btn_create').addEventListener('click', createProduct);
+
+      byId('btn_reload').addEventListener('click', async () => {
+        try{
+          await loadProducts();
+          await loadManageList();
+        }catch(e){
+          toast(e.message || String(e), 'err');
+        }
+      });
+
+      byId('btn_generate').addEventListener('click', generateStickers);
+      byId('btn_select_all').addEventListener('click', () => setAllChecks(true));
+      byId('btn_select_none').addEventListener('click', () => setAllChecks(false));
+      byId('btn_clear').addEventListener('click', clearPreview);
+      byId('btn_pdf').addEventListener('click', downloadSelectedPDF);
+
+      byId('btn_manage_refresh').addEventListener('click', () => {
+        loadManageList().catch(e => toast(e.message || String(e), 'err'));
+      });
+
+      byId('manage_q').addEventListener('keydown', e => {
+        if(e.key === 'Enter'){
+          loadManageList().catch(err => toast(err.message || String(err), 'err'));
+        }
+      });
+
+      byId('btnCancelDelete').addEventListener('click', closeDeleteModal);
+      byId('btnConfirmDelete').addEventListener('click', deleteProductDefinitive);
+      byId('btnCancelEdit').addEventListener('click', closeEditModal);
+      byId('btnConfirmEdit').addEventListener('click', saveProductEdit);
+      byId('btnDeletePhoto').addEventListener('click', handleDeleteEditPhoto);
+
+      byId('deleteModal').addEventListener('click', e => {
+        if(e.target === byId('deleteModal')) closeDeleteModal();
+      });
+
+      byId('editModal').addEventListener('click', e => {
+        if(e.target === byId('editModal')) closeEditModal();
+      });
+
+      byId('new_product_photo').addEventListener('change', e => {
+        const file = e.target.files?.[0] || null;
+        state.newProductPhotoFile = file;
+        setNewPhotoPreview(file);
+      });
+
+      byId('new_product_photo_camera').addEventListener('change', e => {
+        const file = e.target.files?.[0] || null;
+        state.newProductPhotoFile = file;
+        setNewPhotoPreview(file);
+      });
+
+      byId('btn_clear_new_photo').addEventListener('click', () => {
+        state.newProductPhotoFile = null;
+        byId('new_product_photo').value = '';
+        byId('new_product_photo_camera').value = '';
+        setNewPhotoPreview(null);
+      });
+
+      byId('edit_product_photo').addEventListener('change', e => {
+        handleEditPhotoUpload(e.target.files?.[0] || null);
+      });
+
+      byId('edit_product_photo_camera').addEventListener('change', e => {
+        handleEditPhotoUpload(e.target.files?.[0] || null);
+      });
+
+      byId('btn_start_product_scan').addEventListener('click', () => {
+        startProductScanner().catch(e => toast(e.message || String(e), 'err'));
+      });
+
+      byId('btn_stop_product_scan').addEventListener('click', stopProductScanner);
+
+      byId('btn_find_product_by_scan').addEventListener('click', () => {
+        findProductByScannedSku().catch(e => toast(e.message || String(e), 'err'));
+      });
+
+      byId('scan_product_sku').addEventListener('keydown', e => {
+        if(e.key === 'Enter'){
+          findProductByScannedSku().catch(err => toast(err.message || String(err), 'err'));
+        }
+      });
+
+      byId('scan_product_photo_camera').addEventListener('change', e => {
+        handleScannedProductPhotoInput(e.target.files?.[0] || null);
+      });
+
+      byId('scan_product_photo').addEventListener('change', e => {
+        handleScannedProductPhotoInput(e.target.files?.[0] || null);
+      });
+
+      byId('btn_clear_scan_product_photo').addEventListener('click', () => {
+        state.scannedProductPhotoFile = null;
+        byId('scan_product_photo_camera').value = '';
+        byId('scan_product_photo').value = '';
+        setScannedProductPhotoPreview(null, state.scannedProduct?.image_path || '');
+        byId('btn_save_scan_product_photo').disabled = true;
+      });
+
+      byId('btn_save_scan_product_photo').addEventListener('click', () => {
+        saveScannedProductPhoto().catch(e => toast(e.message || String(e), 'err'));
+      });
+
+      if(typeof requireAuth === 'function'){
+        requireAuth();
+      }
+
+      if(typeof bindLogout === 'function'){
+        bindLogout();
+      }
     }
 
-    const { error } = await client
-      .from('products')
-      .delete()
-      .eq('id', currentDeleteProduct.id);
+    async function init(){
+      if(!client){
+        toast('Supabase client ontbreekt. Controleer /js/supabase.js', 'err');
+        return;
+      }
 
-    if(error) throw error;
+      try{
+        if(client.auth && byId('userEmail')){
+          const { data } = await client.auth.getUser();
+          byId('userEmail').textContent = data?.user?.email || '';
+        }
+      }catch(e){
+        console.warn(e);
+      }
 
-    closeDeleteModal();
-    toast(`SKU ${currentDeleteProduct.sku_base} is verwijderd.`,'ok');
+      bindBasicEvents();
 
-    await loadProducts();
-    await loadManageList();
-    clearPreview();
-  }catch(e){
-    toast(e.message || String(e),'err');
-  }
-}
+      try{
+        await loadProducts();
+        await loadManageList();
+        updateButtons();
+      }catch(e){
+        toast(e.message || String(e), 'err');
+      }
+    }
 
-async function handleNewProductPhotoInput(file){
-  if(!file) return;
-  newProductPhotoFile = file;
-  setNewPhotoPreview(file);
-}
-
-async function handleEditPhotoUpload(file){
-  if(!currentEditProduct){
-    toast('Geen artikel geselecteerd.','err');
-    return;
-  }
-  if(!file) return;
-
-  const panel = byId('editPhotoPanel');
-  panel.classList.add('uploading');
-  setEditPhotoStatus('Foto wordt gecomprimeerd en geüpload...');
-
-  try{
-    const path = await uploadProductImage(currentEditProduct.id, file);
-    currentEditProduct.image_path = path;
-    setEditPhotoPreview(path, null);
-    setEditPhotoStatus('Foto opgeslagen.');
-    toast('Productfoto bijgewerkt.','ok');
-    await loadManageList();
-  }catch(e){
-    setEditPhotoStatus('');
-    toast(e.message || String(e), 'err');
-  }finally{
-    panel.classList.remove('uploading');
-    byId('edit_product_photo').value = '';
-    byId('edit_product_photo_camera').value = '';
-  }
-}
-
-async function handleDeleteEditPhoto(){
-  if(!currentEditProduct){
-    toast('Geen artikel geselecteerd.','err');
-    return;
-  }
-
-  if(!currentEditProduct.image_path){
-    toast('Er is geen foto om te verwijderen.','err');
-    return;
-  }
-
-  const ok = confirm('Weet je zeker dat je de productfoto wilt verwijderen?');
-  if(!ok) return;
-
-  const panel = byId('editPhotoPanel');
-  panel.classList.add('uploading');
-  setEditPhotoStatus('Foto wordt verwijderd...');
-
-  try{
-    await deleteProductImage(currentEditProduct.id, currentEditProduct.image_path);
-    currentEditProduct.image_path = '';
-    setEditPhotoPreview('', null);
-    setEditPhotoStatus('Foto verwijderd.');
-    toast('Productfoto verwijderd.','ok');
-    await loadManageList();
-  }catch(e){
-    setEditPhotoStatus('');
-    toast(e.message || String(e), 'err');
-  }finally{
-    panel.classList.remove('uploading');
-  }
-}
-
-btnCreate.addEventListener('click', () => createProduct().catch(e => toast(e.message || String(e),'err')));
-
-btnReload.addEventListener('click', async () => {
-  try{
-    await loadProducts();
-    await loadManageList();
-  }catch(e){
-    toast(e.message || String(e),'err');
-  }
-});
-
-btnGen.addEventListener('click', () => generateStickers().catch(e => toast(e.message || String(e),'err')));
-btnSelectAll.addEventListener('click', () => setAllChecks(true));
-btnSelectNone.addEventListener('click', () => setAllChecks(false));
-btnClear.addEventListener('click', clearPreview);
-btnPdf.addEventListener('click', () => downloadSelectedPDF().catch(e => toast(e.message || String(e),'err')));
-
-byId('btn_manage_refresh').addEventListener('click', () => loadManageList().catch(e => toast(e.message || String(e),'err')));
-byId('manage_q').addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
-    loadManageList().catch(err => toast(err.message || String(err),'err'));
-  }
-});
-
-byId('btnCancelDelete').addEventListener('click', closeDeleteModal);
-byId('btnConfirmDelete').addEventListener('click', deleteProductDefinitive);
-
-byId('btnCancelEdit').addEventListener('click', closeEditModal);
-byId('btnConfirmEdit').addEventListener('click', saveProductEdit);
-byId('btnDeletePhoto').addEventListener('click', handleDeleteEditPhoto);
-
-byId('deleteModal').addEventListener('click', e => {
-  if(e.target === byId('deleteModal')){
-    closeDeleteModal();
-  }
-});
-
-byId('editModal').addEventListener('click', e => {
-  if(e.target === byId('editModal')){
-    closeEditModal();
-  }
-});
-
-byId('new_product_photo').addEventListener('change', e => {
-  handleNewProductPhotoInput(e.target.files?.[0] || null);
-});
-
-byId('new_product_photo_camera').addEventListener('change', e => {
-  handleNewProductPhotoInput(e.target.files?.[0] || null);
-});
-
-byId('btn_clear_new_photo').addEventListener('click', () => {
-  newProductPhotoFile = null;
-  byId('new_product_photo').value = '';
-  byId('new_product_photo_camera').value = '';
-  setNewPhotoPreview(null);
-});
-
-byId('edit_product_photo').addEventListener('change', e => {
-  handleEditPhotoUpload(e.target.files?.[0] || null);
-});
-
-byId('edit_product_photo_camera').addEventListener('change', e => {
-  handleEditPhotoUpload(e.target.files?.[0] || null);
-});
-
-loadProducts().catch(e => toast(e.message || String(e),'err'));
-loadManageList().catch(e => toast(e.message || String(e),'err'));
-updateButtons();
-</script>
+    init();
+  </script>
 </body>
 </html>
