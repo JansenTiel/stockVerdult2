@@ -3,6 +3,16 @@
    Centrale authenticatie voor alle pagina’s
 ========================================= */
 
+function showProtectedPage(){
+  document.documentElement.classList.remove("auth-pending");
+  document.documentElement.classList.add("auth-ready");
+}
+
+function hideProtectedPage(){
+  document.documentElement.classList.remove("auth-ready");
+  document.documentElement.classList.add("auth-pending");
+}
+
 async function requireAuth(){
   try{
     const client = sb();
@@ -10,14 +20,14 @@ async function requireAuth(){
 
     if(error){
       console.error("Auth error:", error);
-      location.href = "/login.html";
+      location.replace("/login.html");
       return null;
     }
 
     const session = data?.session;
 
     if(!session){
-      location.href = "/login.html";
+      location.replace("/login.html");
       return null;
     }
 
@@ -30,7 +40,7 @@ async function requireAuth(){
 
   }catch(err){
     console.error("requireAuth crash:", err);
-    location.href = "/login.html";
+    location.replace("/login.html");
     return null;
   }
 }
@@ -47,7 +57,7 @@ function bindLogout(){
   btn.addEventListener("click", async ()=>{
     try{
       await sb().auth.signOut();
-      location.href = "/login.html";
+      location.replace("/login.html");
     }catch(e){
       console.error(e);
     }
@@ -69,9 +79,7 @@ function authNav(){
 ========================================= */
 
 function initLogin(){
-
   const form = document.getElementById("loginForm");
-
   if(!form) return;
 
   form.addEventListener("submit", async (e)=>{
@@ -81,7 +89,6 @@ function initLogin(){
     const password = document.getElementById("password").value;
 
     try{
-
       const { error } = await sb().auth.signInWithPassword({
         email,
         password
@@ -89,20 +96,16 @@ function initLogin(){
 
       if(error) throw error;
 
-      location.href = "/index.html";
+      location.replace("/index.html");
 
     }catch(err){
-
       if(typeof toast === "function"){
-        toast(err.message || String(err),"err");
+        toast(err.message || String(err), "err");
       }else{
         alert(err.message || String(err));
       }
-
     }
-
   });
-
 }
 
 
@@ -111,45 +114,36 @@ function initLogin(){
 ========================================= */
 
 function initResetPassword(){
-
   const form = document.getElementById("resetForm");
-
   if(!form) return;
 
   form.addEventListener("submit", async (e)=>{
-
     e.preventDefault();
 
     const email = document.getElementById("email").value.trim();
-
     const redirectTo = location.origin + "/update-password.html";
 
     try{
-
-      const { error } = await sb().auth.resetPasswordForEmail(email,{
+      const { error } = await sb().auth.resetPasswordForEmail(email, {
         redirectTo
       });
 
       if(error) throw error;
 
       if(typeof toast === "function"){
-        toast("Reset e-mail verzonden. Controleer je inbox.","ok");
+        toast("Reset e-mail verzonden. Controleer je inbox.", "ok");
       }else{
         alert("Reset e-mail verzonden.");
       }
 
     }catch(err){
-
       if(typeof toast === "function"){
-        toast(err.message || String(err),"err");
+        toast(err.message || String(err), "err");
       }else{
         alert(err.message || String(err));
       }
-
     }
-
   });
-
 }
 
 
@@ -158,13 +152,10 @@ function initResetPassword(){
 ========================================= */
 
 function initUpdatePassword(){
-
   const form = document.getElementById("updatePasswordForm");
-
   if(!form) return;
 
   form.addEventListener("submit", async (e)=>{
-
     e.preventDefault();
 
     const p1 = document.getElementById("password").value;
@@ -179,7 +170,6 @@ function initUpdatePassword(){
     }
 
     try{
-
       const { error } = await sb().auth.updateUser({
         password: p1
       });
@@ -189,15 +179,13 @@ function initUpdatePassword(){
       alert("Wachtwoord bijgewerkt.");
 
       setTimeout(()=>{
-        location.href="/login.html";
-      },1000);
+        location.replace("/login.html");
+      }, 1000);
 
     }catch(err){
       alert(err.message || String(err));
     }
-
   });
-
 }
 
 
@@ -220,8 +208,16 @@ document.addEventListener("DOMContentLoaded", async ()=>{
   ];
 
   if(protectedPages.includes(page)){
-    await requireAuth();
+    hideProtectedPage();
+
+    const session = await requireAuth();
+
+    if(!session){
+      return;
+    }
+
     authNav();
+    showProtectedPage();
   }
 
   if(page === "login"){
