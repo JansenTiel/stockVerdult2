@@ -297,7 +297,7 @@
     .modal-backdrop.show{display:flex}
 
     .modal-card{
-      width:min(560px,100%);
+      width:min(640px,100%);
       background:#fff;
       border:1px solid var(--border);
       border-radius:20px;
@@ -325,6 +325,12 @@
       line-height:1.5;
     }
     .modal-info b{color:var(--navy)}
+    .modal-hint{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      margin-top:4px;
+    }
 
     .image-lightbox{
       position:fixed;
@@ -459,6 +465,7 @@
       <a class="active" href="/stock">Huidige voorraad</a>
       <a href="/outscans">Uitscans</a>
       <a href="/picklists">Picklijsten</a>
+      <a href="/online-picklists">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -482,7 +489,8 @@
     <h2>Huidige voorraad</h2>
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
-      Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen. Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt.
+      Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
+      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
     </div>
 
     <p class="page-url">
@@ -531,7 +539,7 @@
       </div>
 
       <div class="bulk-note">
-        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken ook in de 2-uurs mailqueue gezet.
+        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken in de 2-uurs mailqueue gezet, inclusief picklijstnummer en online picklijstlink.
       </div>
     </div>
 
@@ -585,6 +593,7 @@
       <div>
         <label for="modalNote">Opmerking</label>
         <textarea id="modalNote" placeholder="Optioneel"></textarea>
+        <div class="modal-hint">Bij toewijzen aan order of Hulst wordt automatisch een navigatie-picklijst gemaakt.</div>
       </div>
 
       <div class="btnRow" style="margin-top:4px">
@@ -608,6 +617,7 @@ setActiveNav();
 
 const client = sb();
 const STORAGE_BUCKET = 'product-images';
+const ONLINE_PICK_PATH = '/online-picklists.html';
 
 const SPECIAL_ACTION_USERS = [
   'sales@ronaldverdultdesign.nl',
@@ -629,7 +639,7 @@ function esc(value){
     .replace(/'/g, '&#39;');
 }
 
-function byId(id){
+function byIdLocal(id){
   return document.getElementById(id);
 }
 
@@ -645,6 +655,12 @@ function getProductImageUrl(imagePath){
   if(!imagePath) return '';
   const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
   return data?.publicUrl || '';
+}
+
+function buildOnlinePickUrlFromNo(pickNo){
+  const url = new URL(location.origin + ONLINE_PICK_PATH);
+  url.searchParams.set('pick_no', pickNo);
+  return url.toString();
 }
 
 function groupItems(items){
@@ -691,7 +707,7 @@ function getCurrentVisibleItems(){
 }
 
 function updateBulkSummary(){
-  byId('bulkSummary').textContent = `Geselecteerd: ${selectedItemIds.size} artikelen`;
+  byIdLocal('bulkSummary').textContent = `Geselecteerd: ${selectedItemIds.size} artikelen`;
 }
 
 function clearSelection(){
@@ -983,15 +999,15 @@ function bindExpanders(){
 }
 
 function openImageLightbox(url, title, name){
-  byId('lightboxImg').src = url;
-  byId('lightboxCaption').textContent = name ? `${title} — ${name}` : title;
-  byId('imageLightbox').classList.add('show');
+  byIdLocal('lightboxImg').src = url;
+  byIdLocal('lightboxCaption').textContent = name ? `${title} — ${name}` : title;
+  byIdLocal('imageLightbox').classList.add('show');
 }
 
 function closeImageLightbox(){
-  byId('imageLightbox').classList.remove('show');
-  byId('lightboxImg').src = '';
-  byId('lightboxCaption').textContent = '';
+  byIdLocal('imageLightbox').classList.remove('show');
+  byIdLocal('lightboxImg').src = '';
+  byIdLocal('lightboxCaption').textContent = '';
 }
 
 function bindImageZoom(){
@@ -1118,7 +1134,11 @@ async function createNavigationPicklist(actionType, visibleItems, options = {}){
     if(lineErr) throw lineErr;
   }
 
-  return pickNo;
+  return {
+    pickNo,
+    pickId: pickOrder.id,
+    pickUrl: buildOnlinePickUrlFromNo(pickNo)
+  };
 }
 
 async function queueSalesBatchMail(actionType, visibleItems, options = {}){
@@ -1130,6 +1150,7 @@ async function queueSalesBatchMail(actionType, visibleItems, options = {}){
   const destination = String(options.destination || '').trim();
   const note = String(options.note || '').trim();
   const pickNo = String(options.pickNo || '').trim();
+  const pickUrl = String(options.pickUrl || '').trim() || null;
 
   const grouped = groupItemsForPicklist(visibleItems);
 
@@ -1141,7 +1162,9 @@ async function queueSalesBatchMail(actionType, visibleItems, options = {}){
     note: buildMovementNote(note, pickNo),
     sku_base: row.sku_base,
     product_name: row.product_name || null,
-    qty: row.qty
+    qty: row.qty,
+    pick_no: pickNo || null,
+    pick_url: pickUrl
   }));
 
   if(queueRows.length){
@@ -1176,37 +1199,37 @@ function openActionModal(actionType, itemIds){
     SEND_TO_HULST: 'De geselecteerde artikelen worden direct afgeboekt voor Hulst. Daarnaast wordt automatisch een navigatie-picklijst aangemaakt.'
   };
 
-  byId('actionModalTitle').textContent = titles[actionType] || 'Actie uitvoeren';
-  byId('actionModalSub').textContent = subs[actionType] || '';
+  byIdLocal('actionModalTitle').textContent = titles[actionType] || 'Actie uitvoeren';
+  byIdLocal('actionModalSub').textContent = subs[actionType] || '';
 
-  byId('actionModalInfo').innerHTML = `
+  byIdLocal('actionModalInfo').innerHTML = `
     <div><b>Aantal artikelen:</b> ${itemIds.length}</div>
     <div><b>SKU's:</b> ${esc(skuBases.join(', '))}</div>
     <div><b>Uitgevoerd door:</b> ${esc(currentUserEmail || '-')}</div>
   `;
 
-  byId('modalOrderNo').value = '';
-  byId('modalNote').value = '';
-  byId('modalDestination').value = 'Hulst';
+  byIdLocal('modalOrderNo').value = '';
+  byIdLocal('modalNote').value = '';
+  byIdLocal('modalDestination').value = 'Hulst';
 
-  byId('actionOrderWrap').classList.toggle('hidden', actionType === 'SEND_TO_HULST');
-  byId('actionDestinationWrap').classList.toggle('hidden', actionType !== 'SEND_TO_HULST');
+  byIdLocal('actionOrderWrap').classList.toggle('hidden', actionType === 'SEND_TO_HULST');
+  byIdLocal('actionDestinationWrap').classList.toggle('hidden', actionType !== 'SEND_TO_HULST');
 
-  byId('actionModal').classList.add('show');
+  byIdLocal('actionModal').classList.add('show');
 
   if(actionType === 'SEND_TO_HULST'){
-    byId('modalNote').focus();
+    byIdLocal('modalNote').focus();
   }else{
-    byId('modalOrderNo').focus();
+    byIdLocal('modalOrderNo').focus();
   }
 }
 
 function closeActionModal(){
   currentActionContext = null;
-  byId('actionModal').classList.remove('show');
-  byId('modalOrderNo').value = '';
-  byId('modalNote').value = '';
-  byId('modalDestination').value = 'Hulst';
+  byIdLocal('actionModal').classList.remove('show');
+  byIdLocal('modalOrderNo').value = '';
+  byIdLocal('modalNote').value = '';
+  byIdLocal('modalDestination').value = 'Hulst';
 }
 
 async function countOrderUsesLocal(orderNo){
@@ -1268,13 +1291,16 @@ async function performStockAction(actionType, itemIds, options = {}){
     }
 
     let pickNo = '';
+    let pickUrl = '';
 
     if(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST'){
-      pickNo = await createNavigationPicklist(actionType, visibleItems, {
+      const navigation = await createNavigationPicklist(actionType, visibleItems, {
         orderNo,
         destination,
         note
       });
+      pickNo = navigation.pickNo;
+      pickUrl = navigation.pickUrl;
     }
 
     const movementNote = buildMovementNote(note, pickNo);
@@ -1317,7 +1343,8 @@ async function performStockAction(actionType, itemIds, options = {}){
       orderNo,
       destination,
       note,
-      pickNo
+      pickNo,
+      pickUrl
     });
 
     clearSelection();
@@ -1440,19 +1467,19 @@ async function resolveCurrentUser(){
     currentUserEmail = String(data?.user?.email || '').toLowerCase().trim();
     canUseSpecialActions = SPECIAL_ACTION_USERS.includes(currentUserEmail);
 
-    byId('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
+    byIdLocal('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
     updateBulkSummary();
   }catch(e){
     console.warn('Gebruiker ophalen mislukt:', e);
     currentUserEmail = '';
     canUseSpecialActions = false;
-    byId('specialActionsPanel').classList.add('hidden');
+    byIdLocal('specialActionsPanel').classList.add('hidden');
   }
 }
 
 async function load(){
-  const q = (byId('q').value || '').trim();
-  const sort = byId('sort').value;
+  const q = (byIdLocal('q').value || '').trim();
+  const sort = byIdLocal('sort').value;
 
   let query = client
     .from('v_stock_items')
@@ -1477,11 +1504,11 @@ async function load(){
     }
   });
 
-  byId('stockSkuCount').textContent = `${groups.length}`;
-  byId('stockItemCount').textContent = `${items.length}`;
-  byId('stockFilteredCount').textContent = `${items.length}`;
+  byIdLocal('stockSkuCount').textContent = `${groups.length}`;
+  byIdLocal('stockItemCount').textContent = `${items.length}`;
+  byIdLocal('stockFilteredCount').textContent = `${items.length}`;
 
-  const el = byId('list');
+  const el = byIdLocal('list');
 
   if(!groups.length){
     el.innerHTML = `<div class="card" style="box-shadow:none;border:none">Geen voorraad gevonden.</div>`;
@@ -1497,61 +1524,61 @@ async function load(){
   syncSelectionUI();
 }
 
-byId('btn_refresh').addEventListener('click', () => load().catch(e => showToast(e.message || String(e), 'err')));
+byIdLocal('btn_refresh').addEventListener('click', () => load().catch(e => showToast(e.message || String(e), 'err')));
 
-byId('q').addEventListener('keydown', e => {
+byIdLocal('q').addEventListener('keydown', e => {
   if(e.key === 'Enter'){
     load().catch(err => showToast(err.message || String(err), 'err'));
   }
 });
 
-byId('sort').addEventListener('change', () => load().catch(e => showToast(e.message || String(e), 'err')));
-byId('btn_export').addEventListener('click', () => exportGroupedToExcel(currentGroups));
+byIdLocal('sort').addEventListener('change', () => load().catch(e => showToast(e.message || String(e), 'err')));
+byIdLocal('btn_export').addEventListener('click', () => exportGroupedToExcel(currentGroups));
 
-byId('btnSelectAllVisible').addEventListener('click', selectAllVisibleItems);
-byId('btnSelectNone').addEventListener('click', clearSelection);
-byId('btnBulkAllocate').addEventListener('click', () => openActionModal('ALLOCATE_ORDER', [...selectedItemIds]));
-byId('btnBulkHulst').addEventListener('click', () => openActionModal('SEND_TO_HULST', [...selectedItemIds]));
+byIdLocal('btnSelectAllVisible').addEventListener('click', selectAllVisibleItems);
+byIdLocal('btnSelectNone').addEventListener('click', clearSelection);
+byIdLocal('btnBulkAllocate').addEventListener('click', () => openActionModal('ALLOCATE_ORDER', [...selectedItemIds]));
+byIdLocal('btnBulkHulst').addEventListener('click', () => openActionModal('SEND_TO_HULST', [...selectedItemIds]));
 
-byId('btnCancelAction').addEventListener('click', closeActionModal);
+byIdLocal('btnCancelAction').addEventListener('click', closeActionModal);
 
-byId('btnConfirmAction').addEventListener('click', async () => {
+byIdLocal('btnConfirmAction').addEventListener('click', async () => {
   if(!currentActionContext) return;
 
   await performStockAction(currentActionContext.actionType, currentActionContext.itemIds, {
-    orderNo: byId('modalOrderNo').value,
-    destination: byId('modalDestination').value,
-    note: byId('modalNote').value
+    orderNo: byIdLocal('modalOrderNo').value,
+    destination: byIdLocal('modalDestination').value,
+    note: byIdLocal('modalNote').value
   });
 });
 
-byId('modalOrderNo').addEventListener('keydown', e => {
-  if(e.key === 'Enter' && !byId('actionOrderWrap').classList.contains('hidden')){
+byIdLocal('modalOrderNo').addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !byIdLocal('actionOrderWrap').classList.contains('hidden')){
     e.preventDefault();
-    byId('btnConfirmAction').click();
+    byIdLocal('btnConfirmAction').click();
   }
 });
 
-byId('actionModal').addEventListener('click', e => {
-  if(e.target === byId('actionModal')){
+byIdLocal('actionModal').addEventListener('click', e => {
+  if(e.target === byIdLocal('actionModal')){
     closeActionModal();
   }
 });
 
-byId('btnCloseImage').addEventListener('click', closeImageLightbox);
+byIdLocal('btnCloseImage').addEventListener('click', closeImageLightbox);
 
-byId('imageLightbox').addEventListener('click', e => {
-  if(e.target === byId('imageLightbox')){
+byIdLocal('imageLightbox').addEventListener('click', e => {
+  if(e.target === byIdLocal('imageLightbox')){
     closeImageLightbox();
   }
 });
 
 document.addEventListener('keydown', e => {
   if(e.key === 'Escape'){
-    if(byId('imageLightbox').classList.contains('show')){
+    if(byIdLocal('imageLightbox').classList.contains('show')){
       closeImageLightbox();
     }
-    if(byId('actionModal').classList.contains('show')){
+    if(byIdLocal('actionModal').classList.contains('show')){
       closeActionModal();
     }
   }
