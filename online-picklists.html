@@ -15,83 +15,34 @@
   <style>
     .hidden{ display:none !important; }
 
-    .mobile-shell{
+    .page-shell{
       max-width:920px;
       margin:0 auto;
       display:grid;
-      gap:14px;
+      gap:16px;
     }
 
-    .compact-topbar{
-      background:var(--navy);
-      color:#fff;
-      border-radius:22px;
-      padding:16px;
-      box-shadow:var(--shadow);
-    }
-
-    .compact-top-row{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:12px;
-      flex-wrap:wrap;
-    }
-
-    .compact-brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      min-width:0;
-    }
-
-    .compact-brand .logo{
-      width:44px;
-      height:44px;
-      font-size:28px;
-      border-radius:14px;
-      flex:0 0 auto;
-    }
-
-    .compact-brand-text{
-      min-width:0;
-    }
-
-    .compact-brand-title{
-      font-size:18px;
-      font-weight:900;
-      line-height:1.1;
-    }
-
-    .compact-brand-sub{
-      margin-top:4px;
-      font-size:13px;
-      color:#d2deeb;
+    .page-url{
+      margin:12px 0 0;
+      color:var(--navy);
+      font-size:14px;
       font-weight:700;
-      line-height:1.3;
-    }
-
-    .compact-user{
       display:flex;
-      gap:8px;
       align-items:center;
       flex-wrap:wrap;
-      justify-content:flex-end;
+      gap:8px;
     }
 
-    .compact-user .mail-pill{
+    .page-url strong{
       display:inline-flex;
       align-items:center;
-      max-width:280px;
-      padding:10px 14px;
+      padding:5px 12px;
       border-radius:999px;
-      background:#fff;
-      color:var(--text);
-      font-weight:800;
-      font-size:13px;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
+      background:rgba(196,154,108,.14);
+      border:1px solid rgba(196,154,108,.28);
+      color:#6e4f36;
+      font-weight:900;
+      letter-spacing:.01em;
     }
 
     .auth-shell{
@@ -636,19 +587,11 @@
       .available-item{
         grid-template-columns:1fr;
       }
-
-      .compact-user{
-        justify-content:flex-start;
-      }
     }
 
     @media(max-width:640px){
       .kpi-grid{
         grid-template-columns:1fr;
-      }
-
-      .compact-topbar{
-        padding:14px;
       }
 
       .section-card{
@@ -666,37 +609,48 @@
       .scan-input{
         font-size:18px;
       }
-
-      .compact-user .mail-pill{
-        max-width:100%;
-      }
     }
   </style>
 </head>
-<body data-page="online-picklists">
+<body data-page="picklists">
+
+<div class="topbar no-print">
+  <div class="inner">
+    <div class="brand">
+      <div class="logo">o</div>
+      <div class="title">
+        Oegema Logistics
+        <small>Ronald Verdult Design · Online picklijsten</small>
+      </div>
+    </div>
+
+    <nav class="nav">
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a href="/stock.html">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html" class="active">Picklijsten</a>
+    </nav>
+
+    <div class="rightbar">
+      <a class="site-link" href="https://www.rv-voorraad.nl" target="_blank" rel="noopener">
+        www.rv-voorraad.nl
+      </a>
+
+      <span class="pill">
+        <span id="userEmail"></span>
+      </span>
+
+      <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
+    </div>
+  </div>
+</div>
 
 <div class="container">
   <div id="toast" class="notice"></div>
 
-  <div class="mobile-shell">
-
-    <div class="compact-topbar">
-      <div class="compact-top-row">
-        <div class="compact-brand">
-          <div class="logo">o</div>
-          <div class="compact-brand-text">
-            <div class="compact-brand-title">Oegema Logistics</div>
-            <div class="compact-brand-sub">Ronald Verdult Design · Online picklijsten</div>
-          </div>
-        </div>
-
-        <div class="compact-user">
-          <span class="mail-pill"><span id="userEmail"></span></span>
-          <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
-        </div>
-      </div>
-    </div>
-
+  <div class="page-shell">
     <div id="loginGate" class="auth-shell">
       <div class="auth-card">
         <div class="auth-head">
@@ -720,12 +674,15 @@
     </div>
 
     <div id="appSection" class="hidden">
-
-      <div class="section-card" style="margin-bottom:14px">
+      <div class="section-card">
         <div class="section-head">
           <div>
             <h2>Overzicht</h2>
             <div class="section-sub">Één picklijst kan meerdere orders bevatten. Die zie je hieronder apart gegroepeerd.</div>
+            <p class="page-url">
+              Actieve omgeving:
+              <strong>www.rv-voorraad.nl</strong>
+            </p>
           </div>
           <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
         </div>
@@ -750,7 +707,7 @@
         </div>
       </div>
 
-      <div class="section-card" style="margin-bottom:14px">
+      <div class="section-card">
         <div class="section-head">
           <div>
             <h2>Actieve picklijst</h2>
@@ -761,7 +718,7 @@
         <div id="activePickHeader"></div>
       </div>
 
-      <div class="section-card" style="margin-bottom:14px">
+      <div class="section-card">
         <div class="section-head">
           <div>
             <h2>Open pickregels per order</h2>
@@ -772,7 +729,7 @@
         <div id="openPickOrderGroups" class="order-groups"></div>
       </div>
 
-      <div class="section-card" style="margin-bottom:14px">
+      <div class="section-card">
         <div class="section-head">
           <div>
             <h2>Scannen</h2>
@@ -813,7 +770,7 @@
         </div>
       </div>
 
-      <div class="section-card" style="margin-bottom:14px">
+      <div class="section-card">
         <div class="available-toggle">
           <div>
             <h3 style="margin:0">Andere vrijgegeven picklijsten</h3>
@@ -842,7 +799,6 @@
 
         <div id="scanLog" class="scan-log"></div>
       </div>
-
     </div>
   </div>
 </div>
