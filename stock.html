@@ -491,6 +491,8 @@
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
       Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
       Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
+      <br><br>
+      <b>Let op:</b> als er iets fout gaat bij opslaan, wordt de foutmelding nu direct weergegeven.
     </div>
 
     <p class="page-url">
@@ -644,6 +646,7 @@ function byIdLocal(id){
 }
 
 function showToast(msg, type='ok'){
+  console.log('showToast:', type, msg);
   if(typeof toast === 'function'){
     toast(msg, type);
   }else{
@@ -837,12 +840,7 @@ function makeSkuBulkBar(group){
 
 function makeActionButtons(item){
   const outBtn = `
-    <button
-      class="btn small-btn"
-      type="button"
-      data-action-row="OUT"
-      data-item-id="${esc(item.id)}"
-    >
+    <button class="btn small-btn" type="button" data-action-row="OUT" data-item-id="${esc(item.id)}">
       Uitboeken
     </button>
   `;
@@ -851,20 +849,10 @@ function makeActionButtons(item){
 
   return `
     ${outBtn}
-    <button
-      class="btn primary small-btn"
-      type="button"
-      data-action-row="ALLOCATE_ORDER"
-      data-item-id="${esc(item.id)}"
-    >
+    <button class="btn primary small-btn" type="button" data-action-row="ALLOCATE_ORDER" data-item-id="${esc(item.id)}">
       Toewijzen order
     </button>
-    <button
-      class="btn accent small-btn"
-      type="button"
-      data-action-row="SEND_TO_HULST"
-      data-item-id="${esc(item.id)}"
-    >
+    <button class="btn accent small-btn" type="button" data-action-row="SEND_TO_HULST" data-item-id="${esc(item.id)}">
       Naar Hulst
     </button>
   `;
@@ -872,11 +860,7 @@ function makeActionButtons(item){
 
 function makeSelectCell(item){
   if(!canUseSpecialActions) return '';
-  return `
-    <td>
-      <input class="row-check" type="checkbox" data-select-item-id="${esc(item.id)}"/>
-    </td>
-  `;
+  return `<td><input class="row-check" type="checkbox" data-select-item-id="${esc(item.id)}"/></td>`;
 }
 
 function makeMobileSelect(item){
@@ -1263,6 +1247,8 @@ async function performStockAction(actionType, itemIds, options = {}){
   }
 
   try{
+    console.log('performStockAction start', { actionType, itemIds, orderNo, destination, note });
+
     if((actionType === 'OUT' || actionType === 'ALLOCATE_ORDER') && orderNo){
       const used = await countOrderUsesLocal(orderNo).catch(() => 0);
       if(used > 0){
@@ -1272,7 +1258,6 @@ async function performStockAction(actionType, itemIds, options = {}){
     }
 
     const visibleItems = getCurrentVisibleItems().filter(x => itemIds.includes(x.id));
-
     if(!visibleItems.length){
       throw new Error('Geen zichtbare items gevonden voor deze actie.');
     }
@@ -1299,6 +1284,9 @@ async function performStockAction(actionType, itemIds, options = {}){
         destination,
         note
       });
+
+      console.log('createNavigationPicklist resultaat', navigation);
+
       pickNo = navigation.pickNo;
       pickUrl = navigation.pickUrl;
     }
@@ -1316,22 +1304,17 @@ async function performStockAction(actionType, itemIds, options = {}){
 
     if(updateErr) throw updateErr;
 
-    const itemMap = new Map(visibleItems.map(v => [String(v.id), v]));
-
-    const movements = items.map(it => {
-      const extra = itemMap.get(String(it.id));
-      return {
-        type: 'OUT',
-        action_type: actionType,
-        product_id: it.product_id,
-        sku_unique: it.sku_unique,
-        location: it.location || null,
-        order_no: orderNo || null,
-        destination: destination || null,
-        note: movementNote,
-        handled_by_email: currentUserEmail || null
-      };
-    });
+    const movements = items.map(it => ({
+      type: 'OUT',
+      action_type: actionType,
+      product_id: it.product_id,
+      sku_unique: it.sku_unique,
+      location: it.location || null,
+      order_no: orderNo || null,
+      destination: destination || null,
+      note: movementNote,
+      handled_by_email: currentUserEmail || null
+    }));
 
     const { error:moveErr } = await client
       .from('movements')
@@ -1360,9 +1343,10 @@ async function performStockAction(actionType, itemIds, options = {}){
     showToast(`${items.length} artikel(en) ${labels[actionType] || 'verwerkt'}.${pickMsg}`, 'ok');
 
     await load();
-
   }catch(e){
+    console.error('performStockAction fout:', e);
     showToast(e.message || String(e), 'err');
+    throw e;
   }
 }
 
@@ -1543,13 +1527,30 @@ byIdLocal('btnBulkHulst').addEventListener('click', () => openActionModal('SEND_
 byIdLocal('btnCancelAction').addEventListener('click', closeActionModal);
 
 byIdLocal('btnConfirmAction').addEventListener('click', async () => {
-  if(!currentActionContext) return;
+  if(!currentActionContext){
+    showToast('Actiecontext ontbreekt. Open de popup opnieuw.', 'err');
+    return;
+  }
 
-  await performStockAction(currentActionContext.actionType, currentActionContext.itemIds, {
-    orderNo: byIdLocal('modalOrderNo').value,
-    destination: byIdLocal('modalDestination').value,
-    note: byIdLocal('modalNote').value
-  });
+  const btn = byIdLocal('btnConfirmAction');
+  const oldText = btn.textContent;
+
+  try{
+    btn.disabled = true;
+    btn.textContent = 'Bezig...';
+
+    await performStockAction(currentActionContext.actionType, currentActionContext.itemIds, {
+      orderNo: byIdLocal('modalOrderNo').value,
+      destination: byIdLocal('modalDestination').value,
+      note: byIdLocal('modalNote').value
+    });
+  }catch(e){
+    console.error('Fout bij opslaan:', e);
+    showToast(e.message || String(e), 'err');
+  }finally{
+    btn.disabled = false;
+    btn.textContent = oldText;
+  }
 });
 
 byIdLocal('modalOrderNo').addEventListener('keydown', e => {
@@ -1585,8 +1586,13 @@ document.addEventListener('keydown', e => {
 });
 
 (async function init(){
-  await resolveCurrentUser();
-  await load().catch(e => showToast(e.message || String(e), 'err'));
+  try{
+    await resolveCurrentUser();
+    await load();
+  }catch(e){
+    console.error('Init fout:', e);
+    showToast(e.message || String(e), 'err');
+  }
 })();
 </script>
 
