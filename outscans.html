@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl" class="auth-pending">
+<html lang="nl">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1"/>
@@ -7,14 +7,13 @@
 
   <link rel="stylesheet" href="/css/theme.css"/>
 
-  <style>
-    html.auth-pending body{
-      visibility:hidden;
-    }
-    html.auth-ready body{
-      visibility:visible;
-    }
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
 
+  <style>
     .page-url{
       margin:12px 0 0;
       color:var(--navy);
@@ -212,7 +211,7 @@
 
     .out-toolbar{
       display:grid;
-      grid-template-columns:1fr 1fr 1fr 1fr 1fr auto auto;
+      grid-template-columns:1fr 1fr 1fr auto auto;
       gap:14px;
       align-items:end;
     }
@@ -248,7 +247,7 @@
       color:var(--muted);
       text-transform:uppercase;
       letter-spacing:.04em;
-      min-width:110px;
+      min-width:105px;
     }
 
     .mobile-v{
@@ -268,30 +267,6 @@
       background:rgba(15,47,79,.08);
       color:var(--navy);
       border:1px solid var(--border);
-    }
-
-    .action-badge{
-      display:inline-flex;
-      align-items:center;
-      padding:4px 10px;
-      border-radius:999px;
-      font-size:12px;
-      font-weight:800;
-      border:1px solid var(--border);
-      background:#fff;
-      color:var(--navy);
-    }
-
-    .action-badge.out{
-      background:rgba(15,47,79,.08);
-    }
-
-    .action-badge.allocate{
-      background:rgba(41,128,185,.10);
-    }
-
-    .action-badge.hulst{
-      background:rgba(46,125,50,.10);
     }
 
     .image-lightbox{
@@ -356,12 +331,6 @@
       line-height:1.35;
     }
 
-    @media(max-width:1400px){
-      .out-toolbar{
-        grid-template-columns:1fr 1fr 1fr 1fr;
-      }
-    }
-
     @media(max-width:1180px){
       .out-toolbar{
         grid-template-columns:1fr 1fr;
@@ -418,17 +387,6 @@
       }
     }
   </style>
-
-  <script>
-    document.documentElement.classList.add("auth-pending");
-    document.documentElement.classList.remove("auth-ready");
-  </script>
-
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="/js/supabase.js"></script>
-  <script src="/js/app.js"></script>
-  <script src="/js/auth.js"></script>
 </head>
 
 <body data-page="outscans">
@@ -472,8 +430,7 @@
   <div class="card">
     <h2>Uitscans</h2>
     <div class="muted">
-      Overzicht van alle uitgeboekte colli, gegroepeerd per <b>SKU</b>. Klik op een regel om alle uitscans van die SKU te tonen,
-      inclusief <b>ordernummer</b>, <b>actie</b>, <b>uitgevoerd door</b>, bestemming, opmerking en uitscantijd.
+      Overzicht van alle uitgeboekte colli, gegroepeerd per <b>SKU</b>. Iedere <b>unieke SKU</b> wordt hieronder nog maar <b>één keer</b> weergegeven, zodat dubbele uitscans van hetzelfde collo niet meer voor vervuiling zorgen.
     </div>
 
     <p class="page-url">
@@ -502,22 +459,7 @@
 
       <div>
         <label for="orderFilter">Ordernummer filter</label>
-        <input id="orderFilter" placeholder="Bijv. ORD-12345"/>
-      </div>
-
-      <div>
-        <label for="userFilter">Gebruiker filter</label>
-        <input id="userFilter" placeholder="Bijv. sales@ronaldverdultdesign.nl"/>
-      </div>
-
-      <div>
-        <label for="actionFilter">Actie filter</label>
-        <select id="actionFilter">
-          <option value="">Alle acties</option>
-          <option value="OUT">Uitboeken</option>
-          <option value="ALLOCATE_ORDER">Toegewezen aan order</option>
-          <option value="SEND_TO_HULST">Naar Hulst</option>
-        </select>
+        <input id="orderFilter" placeholder="Bijv. V26000496"/>
       </div>
 
       <div>
@@ -541,7 +483,7 @@
 
       <div class="card" style="padding:16px">
         <div class="kpi">
-          <div class="label">Totaal uitscans</div>
+          <div class="label">Unieke uitscans</div>
           <div class="value" id="outItemCount">0</div>
         </div>
       </div>
@@ -576,19 +518,6 @@ const STORAGE_BUCKET = 'product-images';
 
 let currentGroups = [];
 
-function byId(id){
-  return document.getElementById(id);
-}
-
-function esc(value){
-  return String(value ?? '')
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;')
-    .replace(/'/g, '&#39;');
-}
-
 function getProductImageUrl(imagePath){
   if(!imagePath) return '';
   const { data } = client.storage.from(STORAGE_BUCKET).getPublicUrl(imagePath);
@@ -605,41 +534,49 @@ function getSkuBaseFromUnique(skuUnique){
   return value;
 }
 
-function actionLabel(type){
-  if(type === 'ALLOCATE_ORDER') return 'Toegewezen aan order';
-  if(type === 'SEND_TO_HULST') return 'Naar Hulst';
-  return 'Uitboeken';
-}
+function dedupeRowsByUniqueSku(rows){
+  const map = new Map();
 
-function actionBadgeClass(type){
-  if(type === 'ALLOCATE_ORDER') return 'allocate';
-  if(type === 'SEND_TO_HULST') return 'hulst';
-  return 'out';
+  for(const row of rows){
+    const key = String(row.sku_unique || '').trim().toUpperCase();
+    if(!key) continue;
+
+    const existing = map.get(key);
+    if(!existing){
+      map.set(key, row);
+      continue;
+    }
+
+    const existingTime = new Date(existing.created_at || 0).getTime();
+    const newTime = new Date(row.created_at || 0).getTime();
+
+    if(newTime >= existingTime){
+      map.set(key, row);
+    }
+  }
+
+  return Array.from(map.values());
 }
 
 async function loadOutscanRows(){
   const q = (byId('q').value || '').trim();
   const orderFilter = (byId('orderFilter').value || '').trim();
-  const userFilter = (byId('userFilter').value || '').trim();
-  const actionFilter = (byId('actionFilter').value || '').trim();
 
   let movementsQuery = client
     .from('movements')
-    .select('id, product_id, sku_unique, location, order_no, created_at, type, action_type, handled_by_email, destination, note')
+    .select('id, product_id, sku_unique, location, order_no, created_at, type')
     .eq('type', 'OUT')
     .order('created_at', { ascending:false })
-    .limit(5000);
+    .limit(10000);
+
+  if(q){
+    movementsQuery = movementsQuery.or(
+      `sku_unique.ilike.%${q}%,order_no.ilike.%${q}%,location.ilike.%${q}%`
+    );
+  }
 
   if(orderFilter){
     movementsQuery = movementsQuery.ilike('order_no', `%${orderFilter}%`);
-  }
-
-  if(userFilter){
-    movementsQuery = movementsQuery.ilike('handled_by_email', `%${userFilter}%`);
-  }
-
-  if(actionFilter){
-    movementsQuery = movementsQuery.eq('action_type', actionFilter);
   }
 
   const { data: movements, error: moveErr } = await movementsQuery;
@@ -674,13 +611,11 @@ async function loadOutscanRows(){
       image_path: p?.image_path || '',
       location: m.location || '',
       order_no: m.order_no || '',
-      created_at: m.created_at || '',
-      action_type: m.action_type || 'OUT',
-      handled_by_email: m.handled_by_email || '',
-      destination: m.destination || '',
-      note: m.note || ''
+      created_at: m.created_at || ''
     };
   });
+
+  rows = dedupeRowsByUniqueSku(rows);
 
   if(q){
     const ql = q.toLowerCase();
@@ -691,11 +626,7 @@ async function loadOutscanRows(){
         r.name,
         r.description,
         r.location,
-        r.order_no,
-        r.handled_by_email,
-        r.destination,
-        r.note,
-        actionLabel(r.action_type)
+        r.order_no
       ].some(v => String(v || '').toLowerCase().includes(ql))
     );
   }
@@ -762,11 +693,11 @@ function makeHeaderPhotoHtml(group){
   return `
     <div
       class="og-photo has-image"
-      data-image-url="${esc(url)}"
-      data-image-title="${esc(group.sku_base)}"
-      data-image-name="${esc(group.name || '')}"
+      data-image-url="${escapeHtml(url)}"
+      data-image-title="${escapeHtml(group.sku_base)}"
+      data-image-name="${escapeHtml(group.name || '')}"
     >
-      <img src="${esc(url)}" alt="${esc(group.name || group.sku_base)}"/>
+      <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
     </div>
   `;
 }
@@ -779,19 +710,19 @@ function makeBodyPhotoHtml(group){
     <div class="out-body-top">
       <div
         class="out-body-photo"
-        data-image-url="${esc(url)}"
-        data-image-title="${esc(group.sku_base)}"
-        data-image-name="${esc(group.name || '')}"
+        data-image-url="${escapeHtml(url)}"
+        data-image-title="${escapeHtml(group.sku_base)}"
+        data-image-name="${escapeHtml(group.name || '')}"
       >
-        <img src="${esc(url)}" alt="${esc(group.name || group.sku_base)}"/>
+        <img src="${escapeHtml(url)}" alt="${escapeHtml(group.name || group.sku_base)}"/>
       </div>
 
       <div class="out-body-meta">
         <div class="out-meta-card">
-          <div><b>SKU basis:</b> ${esc(group.sku_base)}</div>
-          <div><b>Omschrijving:</b> ${esc(group.name || '')}</div>
-          ${group.description ? `<div><b>Overige vermelding:</b> ${esc(group.description)}</div>` : ''}
-          <div><b>Totaal uitscans:</b> ${group.rows.length}</div>
+          <div><b>SKU basis:</b> ${escapeHtml(group.sku_base)}</div>
+          <div><b>Omschrijving:</b> ${escapeHtml(group.name || '')}</div>
+          ${group.description ? `<div><b>Overige vermelding:</b> ${escapeHtml(group.description)}</div>` : ''}
+          <div><b>Unieke uitscans:</b> ${group.rows.length}</div>
         </div>
       </div>
     </div>
@@ -799,7 +730,7 @@ function makeBodyPhotoHtml(group){
 }
 
 function makeGroupHtml(group, idx){
-  const desc = group.description ? esc(group.description) : 'Geen extra vermelding';
+  const desc = group.description ? escapeHtml(group.description) : 'Geen extra vermelding';
   const bodyId = `group_${idx}`;
   const hasPhoto = !!getProductImageUrl(group.image_path);
 
@@ -808,16 +739,16 @@ function makeGroupHtml(group, idx){
       <button class="out-group-head" type="button" data-target="${bodyId}" aria-expanded="false">
         ${makeHeaderPhotoHtml(group)}
 
-        <div class="og-sku">${esc(group.sku_base)}</div>
+        <div class="og-sku">${escapeHtml(group.sku_base)}</div>
 
         <div class="og-name">
-          <b>${esc(group.name || '')}</b>
+          <b>${escapeHtml(group.name || '')}</b>
           <span>${desc}</span>
         </div>
 
         <div class="og-total">
           <div class="n">${group.rows.length}</div>
-          <div class="t">uitscans</div>
+          <div class="t">unieke uitscans</div>
         </div>
 
         <div class="og-arrow">⌄</div>
@@ -832,25 +763,17 @@ function makeGroupHtml(group, idx){
               <tr>
                 <th>Uitscan tijd</th>
                 <th>Unieke SKU</th>
-                <th>Actie</th>
                 <th>Ordernummer</th>
-                <th>Bestemming</th>
                 <th>Locatie</th>
-                <th>Uitgevoerd door</th>
-                <th>Opmerking</th>
               </tr>
             </thead>
             <tbody>
               ${group.rows.map(row => `
                 <tr>
                   <td>${nlTime(row.created_at)}</td>
-                  <td><b>${esc(row.sku_unique)}</b></td>
-                  <td><span class="action-badge ${actionBadgeClass(row.action_type)}">${esc(actionLabel(row.action_type))}</span></td>
-                  <td><span class="order-badge">${esc(row.order_no || '-')}</span></td>
-                  <td>${esc(row.destination || '-')}</td>
-                  <td>${esc(row.location || '')}</td>
-                  <td>${esc(row.handled_by_email || '-')}</td>
-                  <td>${esc(row.note || '-')}</td>
+                  <td><b>${escapeHtml(row.sku_unique)}</b></td>
+                  <td><span class="order-badge">${escapeHtml(row.order_no || '-')}</span></td>
+                  <td>${escapeHtml(row.location || '')}</td>
                 </tr>
               `).join('')}
             </tbody>
@@ -866,31 +789,15 @@ function makeGroupHtml(group, idx){
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Unieke SKU</div>
-                <div class="mobile-v"><b>${esc(row.sku_unique)}</b></div>
-              </div>
-              <div class="mobile-line">
-                <div class="mobile-k">Actie</div>
-                <div class="mobile-v"><span class="action-badge ${actionBadgeClass(row.action_type)}">${esc(actionLabel(row.action_type))}</span></div>
+                <div class="mobile-v"><b>${escapeHtml(row.sku_unique)}</b></div>
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Ordernummer</div>
-                <div class="mobile-v"><span class="order-badge">${esc(row.order_no || '-')}</span></div>
-              </div>
-              <div class="mobile-line">
-                <div class="mobile-k">Bestemming</div>
-                <div class="mobile-v">${esc(row.destination || '-')}</div>
+                <div class="mobile-v"><span class="order-badge">${escapeHtml(row.order_no || '-')}</span></div>
               </div>
               <div class="mobile-line">
                 <div class="mobile-k">Locatie</div>
-                <div class="mobile-v">${esc(row.location || '')}</div>
-              </div>
-              <div class="mobile-line">
-                <div class="mobile-k">Uitgevoerd door</div>
-                <div class="mobile-v">${esc(row.handled_by_email || '-')}</div>
-              </div>
-              <div class="mobile-line">
-                <div class="mobile-k">Opmerking</div>
-                <div class="mobile-v">${esc(row.note || '-')}</div>
+                <div class="mobile-v">${escapeHtml(row.location || '')}</div>
               </div>
             </div>
           `).join('')}
@@ -950,14 +857,10 @@ function exportGroupedToExcel(groups){
       SKU: group.sku_base,
       Omschrijving: group.name,
       'Overige vermelding': group.description || '',
-      'Totaal uitscans': group.rows.length,
+      'Unieke uitscans': group.rows.length,
       'Unieke SKU': '',
-      'Actie': '',
       'Ordernummer': '',
-      'Bestemming': '',
       'Locatie': '',
-      'Uitgevoerd door': '',
-      'Opmerking': '',
       'Uitscan tijd': ''
     });
 
@@ -966,14 +869,10 @@ function exportGroupedToExcel(groups){
         SKU: '',
         Omschrijving: '',
         'Overige vermelding': '',
-        'Totaal uitscans': '',
+        'Unieke uitscans': '',
         'Unieke SKU': row.sku_unique || '',
-        'Actie': actionLabel(row.action_type),
         'Ordernummer': row.order_no || '',
-        'Bestemming': row.destination || '',
         'Locatie': row.location || '',
-        'Uitgevoerd door': row.handled_by_email || '',
-        'Opmerking': row.note || '',
         'Uitscan tijd': nlTime(row.created_at)
       });
     });
@@ -988,12 +887,8 @@ function exportGroupedToExcel(groups){
     { wch: 24 },
     { wch: 16 },
     { wch: 24 },
-    { wch: 22 },
     { wch: 20 },
     { wch: 18 },
-    { wch: 18 },
-    { wch: 30 },
-    { wch: 24 },
     { wch: 22 }
   ];
 
@@ -1001,7 +896,7 @@ function exportGroupedToExcel(groups){
 
   const now = new Date();
   const pad = n => String(n).padStart(2,'0');
-  const filename = `uitscans_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.xlsx`;
+  const filename = `uitscans_uniek_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.xlsx`;
 
   XLSX.writeFile(wb, filename);
 }
@@ -1043,13 +938,6 @@ byId('orderFilter').addEventListener('keydown', e => {
   }
 });
 
-byId('userFilter').addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
-    load().catch(err => toast(err.message || String(err), 'err'));
-  }
-});
-
-byId('actionFilter').addEventListener('change', () => load().catch(e => toast(e.message || String(e), 'err')));
 byId('sort').addEventListener('change', () => load().catch(e => toast(e.message || String(e), 'err')));
 byId('btn_export').addEventListener('click', () => exportGroupedToExcel(currentGroups));
 
