@@ -17,23 +17,9 @@
   <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
 
   <style>
-    .page-stack{
-      display:grid;
-      gap:16px;
-    }
-
-    .build-header{
-      display:grid;
-      grid-template-columns:1fr;
-      gap:14px;
-    }
-
-    .pick-toolbar{
-      display:grid;
-      grid-template-columns:180px 1fr 120px auto;
-      gap:12px;
-      align-items:end;
-    }
+    .page-stack{display:grid;gap:16px}
+    .build-header{display:grid;grid-template-columns:1fr;gap:14px}
+    .pick-toolbar{display:grid;grid-template-columns:180px 1fr 120px auto;gap:12px;align-items:end}
 
     .product-search-results{
       margin-top:10px;
@@ -50,27 +36,19 @@
       cursor:pointer;
     }
 
-    .product-result:last-child{
-      border-bottom:none;
-    }
-
-    .product-result:hover{
-      background:#f8fafc;
-    }
-
+    .product-result:last-child{border-bottom:none}
+    .product-result:hover{background:#f8fafc}
     .product-result .sku{
       font-weight:900;
       color:var(--navy);
       display:block;
       margin-bottom:2px;
     }
-
     .product-result .name{
       font-size:14px;
       color:var(--text);
       margin-top:2px;
     }
-
     .product-result .stock{
       margin-top:6px;
       font-size:12px;
@@ -100,6 +78,7 @@
     .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
+    .status-NAVIGATION{color:#0f766e;background:#ecfeff;border-color:#a5f3fc}
 
     .build-summary{
       border:1px solid var(--border);
@@ -178,9 +157,7 @@
       border-bottom:1px solid #edf2f7;
     }
 
-    .order-line:last-child{
-      border-bottom:none;
-    }
+    .order-line:last-child{border-bottom:none}
 
     .detail-summary{
       border:1px solid var(--border);
@@ -224,22 +201,12 @@
       border-bottom:1px solid #edf2f7;
     }
 
-    .detail-group-line:last-child{
-      border-bottom:none;
-    }
+    .detail-group-line:last-child{border-bottom:none}
 
-    .line-ok{
-      background:#f0fdf4;
-    }
+    .line-ok{background:#f0fdf4}
+    .line-warn{background:#fff7ed}
 
-    .line-warn{
-      background:#fff7ed;
-    }
-
-    .saved-grid{
-      display:grid;
-      gap:12px;
-    }
+    .saved-grid{display:grid;gap:12px}
 
     .saved-row{
       border:1px solid var(--border);
@@ -257,9 +224,7 @@
       background:#fff;
     }
 
-    .saved-row-head:hover{
-      background:#fafbfc;
-    }
+    .saved-row-head:hover{background:#fafbfc}
 
     .saved-check{
       width:18px;
@@ -278,17 +243,13 @@
       line-height:1.35;
     }
 
-    .saved-meta{
-      text-align:right;
-    }
-
+    .saved-meta{text-align:right}
     .saved-meta .n{
       font-size:24px;
       font-weight:900;
       color:var(--navy);
       line-height:1;
     }
-
     .saved-meta .t{
       font-size:12px;
       color:var(--muted);
@@ -316,9 +277,7 @@
       z-index:1000;
     }
 
-    .modal-backdrop.show{
-      display:flex;
-    }
+    .modal-backdrop.show{display:flex}
 
     .modal-card{
       width:min(760px,100%);
@@ -342,40 +301,6 @@
       color:var(--muted);
       margin-bottom:16px;
       line-height:1.45;
-    }
-
-    .pick-item{
-      border:1px solid var(--border);
-      border-radius:12px;
-      padding:10px 12px;
-      margin-bottom:10px;
-      background:#fff;
-    }
-
-    .pick-item label{
-      display:flex;
-      gap:10px;
-      align-items:flex-start;
-      margin:0;
-      cursor:pointer;
-    }
-
-    .pick-item input[type="checkbox"]{
-      width:18px;
-      height:18px;
-      margin-top:2px;
-      flex:0 0 auto;
-    }
-
-    .pick-item-main{
-      flex:1;
-    }
-
-    .pick-item-main b{
-      display:block;
-      color:var(--navy);
-      margin-bottom:2px;
-      word-break:break-word;
     }
 
     .muted-line{
@@ -486,10 +411,7 @@
       padding-bottom:14px;
     }
 
-    .handwrite-block{
-      margin-top:8px;
-    }
-
+    .handwrite-block{margin-top:8px}
     .handwrite-line{
       display:flex;
       align-items:center;
@@ -498,28 +420,14 @@
       font-size:12px;
       color:#334155;
     }
-
-    .handwrite-no{
-      min-width:22px;
-      font-weight:700;
-    }
-
-    .handwrite-label{
-      min-width:110px;
-      font-weight:700;
-    }
-
+    .handwrite-no{min-width:22px;font-weight:700}
+    .handwrite-label{min-width:110px;font-weight:700}
     .handwrite-fill{
       flex:1;
       border-bottom:1px solid #111827;
       height:18px;
     }
-
-    .handwrite-check-label{
-      min-width:80px;
-      font-weight:700;
-    }
-
+    .handwrite-check-label{min-width:80px;font-weight:700}
     .handwrite-check{
       width:18px;
       height:18px;
@@ -540,16 +448,11 @@
       .detail-group-line{
         grid-template-columns:1fr;
       }
-
-      .saved-actions{
-        justify-content:flex-start;
-      }
+      .saved-actions{justify-content:flex-start}
     }
 
     @media(max-width:900px){
-      .pick-toolbar{
-        grid-template-columns:1fr;
-      }
+      .pick-toolbar{grid-template-columns:1fr}
     }
   </style>
 </head>
@@ -566,13 +469,13 @@
     </div>
 
     <nav class="nav">
-      <a href="/index.html">Dashboard</a>
-      <a href="/products.html">Artikelen + Stickers</a>
-      <a href="/scan.html">In-/Uitscan</a>
-      <a href="/stock.html">Huidige voorraad</a>
-      <a href="/outscans.html">Uitscans</a>
-      <a href="/picklists.html">Picklijsten</a>
-      <a href="/online-picklists.html">Online picklijsten</a>
+      <a href="/">Dashboard</a>
+      <a href="/products">Artikelen + Stickers</a>
+      <a href="/scan">In-/Uitscan</a>
+      <a href="/stock">Huidige voorraad</a>
+      <a href="/outscans">Uitscans</a>
+      <a href="/picklists" class="active">Picklijsten</a>
+      <a href="/online-picklists">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -656,7 +559,7 @@
     <div class="card">
       <h3>Huidig geselecteerde picklijst</h3>
       <div class="muted">
-        Locaties worden bewust getoond met de kleinste voorraadlocaties eerst, zodat restlocaties eerst leeg gepickt worden.
+        Voor navigatie-picklijsten zijn goederen al afgeboekt. Picken bevestigen verhoogt alleen de voortgang en boekt niets opnieuw af.
       </div>
       <div id="activePicklistDetail" style="margin-top:16px"></div>
     </div>
@@ -690,16 +593,27 @@
 
 <div id="pickModal" class="modal-backdrop">
   <div class="modal-card">
-    <h3 class="modal-title">Gepickt en afboeken</h3>
+    <h3 class="modal-title">Gepickt bevestigen</h3>
     <div class="modal-sub">
-      Selecteer de echte volgnummers die gepickt zijn. Alleen deze worden uitgeboekt.
+      Bevestig hoeveel colli daadwerkelijk gepickt zijn. Deze actie boekt niets meer af uit voorraad; hij werkt alleen de voortgang van de picklijst bij.
     </div>
 
     <div id="pickModalInfo" class="small-stock" style="margin-bottom:12px"></div>
-    <div id="pickModalItems"></div>
+
+    <div class="modal-grid">
+      <div>
+        <label for="confirmPickedQty">Aantal gepickt</label>
+        <input id="confirmPickedQty" type="number" min="1" value="1"/>
+      </div>
+
+      <div>
+        <label for="confirmPickedNote">Opmerking</label>
+        <textarea id="confirmPickedNote" placeholder="Optioneel, alleen ter bevestiging"></textarea>
+      </div>
+    </div>
 
     <div class="btnRow" style="margin-top:16px">
-      <button class="btn primary" id="btnConfirmPicked" type="button">Afboeken</button>
+      <button class="btn primary" id="btnConfirmPicked" type="button">Bevestigen</button>
       <button class="btn" id="btnCancelPicked" type="button">Annuleren</button>
     </div>
   </div>
@@ -738,6 +652,18 @@ function buildOnlinePickUrl(pick){
   url.searchParams.set('pick_no', pick.order_no);
   url.searchParams.set('login_email', PICKER_EMAIL);
   return url.toString();
+}
+
+function normalizeSkuBaseFromUnique(skuUnique){
+  const value = String(skuUnique || '').trim().toUpperCase();
+  const match = value.match(/^(.*)-(\d{4,5})$/);
+  if(match) return match[1].trim();
+  return value;
+}
+
+function isNavigationPicklist(pick){
+  const note = String(pick?.note || '').toLowerCase();
+  return note.includes('alleen als navigatie') || note.includes('automatisch aangemaakt vanuit voorraadverzoek');
 }
 
 function getLocationCountsForSku(skuBase){
@@ -1399,44 +1325,49 @@ function renderSavedPicklists(){
     return;
   }
 
-  el.innerHTML = savedPicklists.map(row => `
-    <div class="saved-row">
-      <div class="saved-row-head">
-        <div>
-          <input class="saved-picklist-check saved-check" type="checkbox" data-id="${escapeHtml(row.id)}">
-        </div>
+  el.innerHTML = savedPicklists.map(row => {
+    const nav = isNavigationPicklist(row);
 
-        <div class="saved-title">${escapeHtml(row.order_no)}</div>
+    return `
+      <div class="saved-row">
+        <div class="saved-row-head">
+          <div>
+            <input class="saved-picklist-check saved-check" type="checkbox" data-id="${escapeHtml(row.id)}">
+          </div>
 
-        <div class="saved-note">
-          <b>${escapeHtml(row.customer_name || '')}</b><br>
-          <span class="small">${escapeHtml(row.note || '-')}</span>
-        </div>
+          <div class="saved-title">${escapeHtml(row.order_no)}</div>
 
-        <div>
-          <span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">
-            ${escapeHtml(row.status || 'CONCEPT')}
-          </span>
-        </div>
+          <div class="saved-note">
+            <b>${escapeHtml(row.customer_name || '')}</b><br>
+            <span class="small">${escapeHtml(row.note || '-')}</span><br>
+            ${nav ? `<span class="status-badge status-NAVIGATION" style="margin-top:6px">Navigatie-picklijst</span>` : ''}
+          </div>
 
-        <div class="saved-meta">
-          <div class="n">${row.line_count}</div>
-          <div class="t">regels</div>
-        </div>
+          <div>
+            <span class="status-badge status-${escapeHtml(row.status || 'CONCEPT')}">
+              ${escapeHtml(row.status || 'CONCEPT')}
+            </span>
+          </div>
 
-        <div class="saved-meta">
-          <div class="n">${row.total_qty}</div>
-          <div class="t">colli</div>
-        </div>
+          <div class="saved-meta">
+            <div class="n">${row.line_count}</div>
+            <div class="t">regels</div>
+          </div>
 
-        <div class="saved-actions">
-          <button class="btn primary" type="button" onclick="openPicklist('${row.id}')">Openen</button>
-          <button class="btn" type="button" onclick="releasePicklist('${row.id}')">Released</button>
-          <button class="btn accent" type="button" onclick="printSingleSavedPicklist('${row.id}')">PDF + QR</button>
+          <div class="saved-meta">
+            <div class="n">${row.total_qty}</div>
+            <div class="t">colli</div>
+          </div>
+
+          <div class="saved-actions">
+            <button class="btn primary" type="button" onclick="openPicklist('${row.id}')">Openen</button>
+            <button class="btn" type="button" onclick="releasePicklist('${row.id}')">Released</button>
+            <button class="btn accent" type="button" onclick="printSingleSavedPicklist('${row.id}')">PDF + QR</button>
+          </div>
         </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  }).join('');
 }
 
 function getSelectedSavedPicklistIds(){
@@ -1445,21 +1376,72 @@ function getSelectedSavedPicklistIds(){
     .filter(Boolean);
 }
 
+async function getMovementLocationSummaryForPicklist(pickNo){
+  const { data, error } = await client
+    .from('movements')
+    .select('sku_unique, location, note, type')
+    .eq('type', 'OUT')
+    .ilike('note', `%Picklijst: ${pickNo}%`);
+
+  if(error) throw error;
+
+  const skuMap = new Map();
+
+  (data || []).forEach(row => {
+    const skuBase = normalizeSkuBaseFromUnique(row.sku_unique || '');
+    if(!skuBase) return;
+
+    if(!skuMap.has(skuBase)){
+      skuMap.set(skuBase, new Map());
+    }
+
+    const loc = String(row.location || '').trim() || '-';
+    const locMap = skuMap.get(skuBase);
+    locMap.set(loc, (locMap.get(loc) || 0) + 1);
+  });
+
+  const summary = new Map();
+
+  skuMap.forEach((locMap, skuBase) => {
+    const text = Array.from(locMap.entries())
+      .sort((a,b) => {
+        if(a[1] !== b[1]) return a[1] - b[1];
+        return String(a[0]).localeCompare(String(b[0]), 'nl');
+      })
+      .map(([loc, qty]) => `${loc} (${qty})`)
+      .join(', ');
+
+    summary.set(skuBase, text || '-');
+  });
+
+  return summary;
+}
+
 async function buildSavedPicklistPrintGroups(ids){
   const selected = savedPicklists.filter(p => ids.includes(p.id));
   if(!selected.length) return [];
 
-  return selected.map(pick => {
+  const groups = [];
+
+  for(const pick of selected){
+    let navLocationMap = new Map();
+
+    if(isNavigationPicklist(pick)){
+      navLocationMap = await getMovementLocationSummaryForPicklist(pick.order_no);
+    }
+
     const rows = pick.lines.map(line => ({
       ...line,
-      location_summary: getLocationSummaryForSku(line.sku_base)
+      location_summary: navLocationMap.get(line.sku_base) || getLocationSummaryForSku(line.sku_base)
     }));
 
-    return {
+    groups.push({
       blockTitle: `Picklijst ${pick.order_no}`,
       rows
-    };
-  });
+    });
+  }
+
+  return groups;
 }
 
 async function printSingleSavedPicklist(id){
@@ -1576,11 +1558,23 @@ async function openPicklist(id){
 
   if(lErr) return toast(lErr.message || String(lErr), 'err');
 
+  let navigationLocationMap = new Map();
+  if(isNavigationPicklist(order)){
+    try{
+      navigationLocationMap = await getMovementLocationSummaryForPicklist(order.order_no);
+    }catch(e){
+      console.warn('Locaties uit movements ophalen mislukt:', e);
+    }
+  }
+
   activePicklist = order;
   activePicklistLines = (lines || []).map(line => {
     const stockNow = getStockCountForSku(line.sku_base);
-    const locationSummary = getLocationSummaryForSku(line.sku_base);
+    const fallbackLoc = getLocationSummaryForSku(line.sku_base);
+    const navLoc = navigationLocationMap.get(line.sku_base) || '';
+    const locationSummary = navLoc || fallbackLoc;
     const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+
     return {
       ...line,
       stock_now: stockNow,
@@ -1609,6 +1603,7 @@ function renderActivePicklist(){
 
   const totalNeeded = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
   const totalPicked = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+  const nav = isNavigationPicklist(activePicklist);
 
   el.innerHTML = `
     <div class="detail-summary">
@@ -1616,14 +1611,15 @@ function renderActivePicklist(){
         <div>
           <b>Picklijst:</b> ${escapeHtml(activePicklist.order_no || '')}<br>
           <span class="small">${escapeHtml(activePicklist.note || '-')}</span><br>
-          <span class="small">Online QR: ${escapeHtml(buildOnlinePickUrl(activePicklist))}</span>
+          <span class="small">Online QR: ${escapeHtml(buildOnlinePickUrl(activePicklist))}</span><br>
+          ${nav ? `<span class="status-badge status-NAVIGATION" style="margin-top:8px">Navigatie-picklijst · al afgeboekt</span>` : ''}
         </div>
         <div>
           <b>Status:</b>
           <span class="status-badge status-${escapeHtml(activePicklist.status || 'CONCEPT')}">
             ${escapeHtml(activePicklist.status || 'CONCEPT')}
           </span><br>
-          <span class="small">Gepickt: ${totalPicked} / ${totalNeeded}</span>
+          <span class="small">Bevestigd: ${totalPicked} / ${totalNeeded}</span>
         </div>
       </div>
 
@@ -1640,13 +1636,13 @@ function renderActivePicklist(){
           <div>SKU</div>
           <div>Product</div>
           <div>Nodig</div>
-          <div>Gepickt</div>
+          <div>Bevestigd</div>
           <div>Locaties</div>
           <div>Actie</div>
         </div>
 
         ${rows.map(line => `
-          <div class="detail-group-line ${line.qty_remaining === 0 ? 'line-ok' : (line.stock_now < line.qty_remaining ? 'line-warn' : '')}">
+          <div class="detail-group-line ${line.qty_remaining === 0 ? 'line-ok' : (line.stock_now < line.qty_remaining && !nav ? 'line-warn' : '')}">
             <div><b>${escapeHtml(orderNo)}</b></div>
             <div><b>${escapeHtml(line.sku_base)}</b></div>
             <div>${escapeHtml(line.product_name)}</div>
@@ -1656,10 +1652,10 @@ function renderActivePicklist(){
             <div>
               ${line.qty_remaining > 0 ? `
                 <button class="btn primary" type="button" onclick="openPickModal('${line.id}')">
-                  GEPICKT EN AFBOEKEN
+                  GEPICKT BEVESTIGEN
                 </button>
               ` : `
-                <span class="status-badge status-DONE">AFGEBOEKT</span>
+                <span class="status-badge status-DONE">BEVESTIGD</span>
               `}
             </div>
           </div>
@@ -1675,63 +1671,22 @@ async function openPickModal(lineId){
 
   currentPickModalLine = line;
 
-  const qtyToPick = line.qty_remaining;
-  const available = (stockItems || [])
-    .filter(it => it.sku_base === line.sku_base)
-    .map(it => {
-      const locCounts = getLocationCountsForSku(line.sku_base);
-      const locQty = Number(locCounts.get((it.location || '').trim() || '-') || 0);
-      return {
-        ...it,
-        loc_qty: locQty
-      };
-    })
-    .sort((a,b) => {
-      if(a.loc_qty !== b.loc_qty) return a.loc_qty - b.loc_qty;
-      const l = String(a.location || '').localeCompare(String(b.location || ''), 'nl');
-      if(l !== 0) return l;
-      return new Date(a.in_at || a.created_at) - new Date(b.in_at || b.created_at);
-    });
+  const qtyToPick = Number(line.qty_remaining || 0);
+  if(qtyToPick < 1){
+    return toast('Er staat niets meer open op deze regel.', 'err');
+  }
 
   byId('pickModalInfo').innerHTML = `
     <b>Order:</b> ${escapeHtml(line.source_order_no || '')}<br>
     <b>SKU:</b> ${escapeHtml(line.sku_base || '')}<br>
     <b>Omschrijving:</b> ${escapeHtml(line.product_name || '')}<br>
-    <b>Nog nodig:</b> ${qtyToPick}
+    <b>Nog te bevestigen:</b> ${qtyToPick}<br>
+    <b>Locaties:</b> ${escapeHtml(line.location_summary || '-')}
   `;
 
-  const box = byId('pickModalItems');
-
-  if(!available.length){
-    box.innerHTML = `<div class="muted">Geen voorraad beschikbaar voor deze SKU.</div>`;
-    byId('pickModal').classList.add('show');
-    return;
-  }
-
-  box.innerHTML = available.map(it => `
-    <div class="pick-item">
-      <label>
-        <input class="pick-item-check" type="checkbox" value="${escapeHtml(it.id)}" data-sku="${escapeHtml(it.sku_unique)}">
-        <div class="pick-item-main">
-          <b>${escapeHtml(it.sku_unique)}</b>
-          <div class="muted-line">Locatie: ${escapeHtml(it.location || '-')}</div>
-          <div class="muted-line">Locatievoorraad: ${it.loc_qty}</div>
-          <div class="muted-line">Inslag: ${escapeHtml(nlTime(it.in_at || it.created_at))}</div>
-        </div>
-      </label>
-    </div>
-  `).join('');
-
-  const checks = box.querySelectorAll('.pick-item-check');
-  checks.forEach(ch => {
-    ch.addEventListener('change', () => {
-      const checked = Array.from(checks).filter(c => c.checked);
-      if(checked.length > qtyToPick){
-        ch.checked = false;
-        toast(`Je mag hier maximaal ${qtyToPick} collo selecteren.`, 'err');
-      }
-    });
-  });
+  byId('confirmPickedQty').value = String(qtyToPick);
+  byId('confirmPickedQty').max = String(qtyToPick);
+  byId('confirmPickedNote').value = '';
 
   byId('pickModal').classList.add('show');
 }
@@ -1739,57 +1694,20 @@ async function openPickModal(lineId){
 function closePickModal(){
   currentPickModalLine = null;
   byId('pickModal').classList.remove('show');
-  byId('pickModalItems').innerHTML = '';
+  byId('confirmPickedQty').value = '1';
+  byId('confirmPickedNote').value = '';
 }
 
-async function confirmPickedAndBookOut(){
+async function confirmPickedOnly(){
   if(!currentPickModalLine) return;
 
-  const checks = Array.from(document.querySelectorAll('.pick-item-check:checked'));
-  const qtySelected = checks.length;
+  const qtySelected = Number(byId('confirmPickedQty').value || 0);
   const qtyNeeded = Number(currentPickModalLine.qty_remaining || 0);
 
-  if(qtySelected < 1) return toast('Selecteer minimaal 1 collo.', 'err');
-  if(qtySelected > qtyNeeded) return toast('Te veel colli geselecteerd.', 'err');
+  if(qtySelected < 1) return toast('Vul minimaal 1 in.', 'err');
+  if(qtySelected > qtyNeeded) return toast('Te veel colli ingevuld.', 'err');
 
   try{
-    for(const ch of checks){
-      const itemId = ch.value;
-      const skuUnique = ch.getAttribute('data-sku');
-
-      const { data:item, error:itemErr } = await client
-        .from('items')
-        .select('id, product_id, sku_unique, status, location')
-        .eq('id', itemId)
-        .maybeSingle();
-
-      if(itemErr) throw itemErr;
-      if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
-      if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
-
-      const { error:updateErr } = await client
-        .from('items')
-        .update({
-          status:'OUT',
-          out_at:new Date().toISOString()
-        })
-        .eq('id', item.id);
-
-      if(updateErr) throw updateErr;
-
-      const { error:moveErr } = await client
-        .from('movements')
-        .insert([{
-          type:'OUT',
-          product_id:item.product_id,
-          sku_unique:item.sku_unique,
-          location:item.location || null,
-          order_no: currentPickModalLine.source_order_no || activePicklist.order_no
-        }]);
-
-      if(moveErr) throw moveErr;
-    }
-
     const newPicked = Number(currentPickModalLine.qty_picked || 0) + qtySelected;
 
     const { error:lineErr } = await client
@@ -1822,7 +1740,7 @@ async function confirmPickedAndBookOut(){
         .eq('id', activePicklist.id);
     }
 
-    toast('Geselecteerde colli zijn afgeboekt.', 'ok');
+    toast('Picken bevestigd. Er is niets opnieuw afgeboekt.', 'ok');
 
     await loadBaseData();
     await loadSavedPicklists();
@@ -1908,8 +1826,15 @@ byId('btnDeleteSelectedPicklists').addEventListener('click', () =>
 
 byId('btnCancelPicked').addEventListener('click', closePickModal);
 byId('btnConfirmPicked').addEventListener('click', () =>
-  confirmPickedAndBookOut().catch(e => toast(e.message || String(e), 'err'))
+  confirmPickedOnly().catch(e => toast(e.message || String(e), 'err'))
 );
+
+byId('confirmPickedQty').addEventListener('keydown', e => {
+  if(e.key === 'Enter'){
+    e.preventDefault();
+    byId('btnConfirmPicked').click();
+  }
+});
 
 byId('pickModal').addEventListener('click', e => {
   if(e.target === byId('pickModal')) closePickModal();
