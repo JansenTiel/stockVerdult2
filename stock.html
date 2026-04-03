@@ -8,12 +8,8 @@
   <link rel="stylesheet" href="/css/theme.css"/>
 
   <style>
-    html.auth-pending body{
-      visibility:hidden;
-    }
-    html.auth-ready body{
-      visibility:visible;
-    }
+    html.auth-pending body{visibility:hidden}
+    html.auth-ready body{visibility:visible}
 
     .page-url{
       margin:12px 0 0;
@@ -25,7 +21,6 @@
       flex-wrap:wrap;
       gap:8px;
     }
-
     .page-url strong{
       display:inline-flex;
       align-items:center;
@@ -45,7 +40,6 @@
       background:#f8fafc;
       padding:14px;
     }
-
     .bulk-panel-top{
       display:flex;
       justify-content:space-between;
@@ -54,12 +48,10 @@
       align-items:center;
       margin-bottom:10px;
     }
-
     .bulk-summary{
       font-weight:800;
       color:var(--navy);
     }
-
     .bulk-note{
       font-size:12px;
       color:var(--muted);
@@ -74,7 +66,6 @@
       overflow:hidden;
       margin-bottom:12px;
     }
-
     .stock-group-head{
       width:100%;
       border:none;
@@ -87,10 +78,7 @@
       gap:14px;
       align-items:center;
     }
-
-    .stock-group-head:hover{
-      background:#fafbfc;
-    }
+    .stock-group-head:hover{background:#fafbfc}
 
     .sg-photo{
       width:58px;
@@ -101,17 +89,14 @@
       justify-self:center;
       flex:0 0 auto;
     }
-
     .sg-photo.has-image{
       border:1px solid var(--border);
       cursor:pointer;
     }
-
     .sg-photo.sg-photo-empty{
       background:transparent;
       cursor:default;
     }
-
     .sg-photo img{
       width:100%;
       height:100%;
@@ -126,11 +111,7 @@
       word-break:break-word;
       line-height:1.15;
     }
-
-    .sg-name{
-      min-width:0;
-    }
-
+    .sg-name{min-width:0}
     .sg-name b{
       display:block;
       font-size:16px;
@@ -138,7 +119,6 @@
       color:var(--text);
       margin-bottom:4px;
     }
-
     .sg-name span{
       display:block;
       font-size:13px;
@@ -146,17 +126,13 @@
       line-height:1.3;
     }
 
-    .sg-total{
-      text-align:right;
-    }
-
+    .sg-total{text-align:right}
     .sg-total .n{
       font-size:28px;
       font-weight:900;
       color:var(--navy);
       line-height:1;
     }
-
     .sg-total .t{
       font-size:12px;
       color:var(--muted);
@@ -180,10 +156,7 @@
       background:#fff;
       transition:transform .18s ease;
     }
-
-    .stock-group.open .sg-arrow{
-      transform:rotate(180deg);
-    }
+    .stock-group.open .sg-arrow{transform:rotate(180deg)}
 
     .stock-group-body{
       display:none;
@@ -191,10 +164,7 @@
       border-top:1px solid var(--border);
       background:#fcfcfd;
     }
-
-    .stock-group.open .stock-group-body{
-      display:block;
-    }
+    .stock-group.open .stock-group-body{display:block}
 
     .stock-body-top{
       display:grid;
@@ -214,7 +184,6 @@
       background:#fff;
       cursor:pointer;
     }
-
     .stock-body-photo img{
       width:100%;
       height:100%;
@@ -222,11 +191,7 @@
       display:block;
     }
 
-    .stock-body-meta{
-      display:grid;
-      gap:10px;
-    }
-
+    .stock-body-meta{display:grid;gap:10px}
     .stock-meta-card{
       border:1px solid var(--border);
       border-radius:12px;
@@ -234,10 +199,7 @@
       padding:12px 14px;
       line-height:1.45;
     }
-
-    .stock-meta-card b{
-      color:var(--navy);
-    }
+    .stock-meta-card b{color:var(--navy)}
 
     .sku-bulk-bar{
       border:1px dashed var(--border);
@@ -251,14 +213,12 @@
       align-items:center;
       flex-wrap:wrap;
     }
-
     .sku-bulk-left{
       display:flex;
       align-items:center;
       gap:14px;
       flex-wrap:wrap;
     }
-
     .sku-bulk-check{
       display:flex;
       align-items:center;
@@ -280,25 +240,19 @@
       gap:10px;
       margin-top:12px;
     }
-
     .mobile-card{
       border:1px solid var(--border);
       border-radius:12px;
       background:#fff;
       padding:12px;
     }
-
     .mobile-line{
       display:flex;
       justify-content:space-between;
       gap:10px;
       margin-bottom:6px;
     }
-
-    .mobile-line:last-child{
-      margin-bottom:0;
-    }
-
+    .mobile-line:last-child{margin-bottom:0}
     .mobile-k{
       font-size:12px;
       font-weight:800;
@@ -307,7 +261,6 @@
       letter-spacing:.04em;
       min-width:95px;
     }
-
     .mobile-v{
       text-align:right;
       font-size:14px;
@@ -320,13 +273,11 @@
       gap:8px;
       flex-wrap:wrap;
     }
-
     .btn.small-btn{
       padding:8px 12px;
       font-size:13px;
       min-height:auto;
     }
-
     .row-check{
       width:18px;
       height:18px;
@@ -343,10 +294,7 @@
       padding:18px;
       z-index:1000;
     }
-
-    .modal-backdrop.show{
-      display:flex;
-    }
+    .modal-backdrop.show{display:flex}
 
     .modal-card{
       width:min(560px,100%);
@@ -356,25 +304,18 @@
       box-shadow:0 20px 50px rgba(0,0,0,.18);
       padding:22px;
     }
-
     .modal-title{
       font-size:22px;
       font-weight:900;
       color:var(--navy);
       margin:0 0 6px 0;
     }
-
     .modal-sub{
       color:var(--muted);
       margin-bottom:16px;
       line-height:1.45;
     }
-
-    .modal-grid{
-      display:grid;
-      gap:12px;
-    }
-
+    .modal-grid{display:grid;gap:12px}
     .modal-info{
       border:1px solid var(--border);
       border-radius:12px;
@@ -383,10 +324,7 @@
       font-size:14px;
       line-height:1.5;
     }
-
-    .modal-info b{
-      color:var(--navy);
-    }
+    .modal-info b{color:var(--navy)}
 
     .image-lightbox{
       position:fixed;
@@ -398,11 +336,7 @@
       padding:18px;
       z-index:2000;
     }
-
-    .image-lightbox.show{
-      display:flex;
-    }
-
+    .image-lightbox.show{display:flex}
     .image-lightbox-inner{
       position:relative;
       max-width:min(1300px,96vw);
@@ -411,7 +345,6 @@
       align-items:center;
       justify-content:center;
     }
-
     .image-lightbox img{
       max-width:100%;
       max-height:92vh;
@@ -420,7 +353,6 @@
       box-shadow:0 20px 60px rgba(0,0,0,.45);
       display:block;
     }
-
     .image-lightbox-close{
       position:absolute;
       top:-12px;
@@ -436,7 +368,6 @@
       cursor:pointer;
       box-shadow:0 8px 24px rgba(0,0,0,.25);
     }
-
     .image-lightbox-caption{
       position:absolute;
       left:12px;
@@ -450,15 +381,10 @@
       line-height:1.35;
     }
 
-    .hidden{
-      display:none !important;
-    }
+    .hidden{display:none !important}
 
     @media(max-width:1100px){
-      .stock-toolbar{
-        grid-template-columns:1fr 1fr;
-      }
-
+      .stock-toolbar{grid-template-columns:1fr 1fr}
       .stock-group-head{
         grid-template-columns:72px 190px minmax(180px,1fr) 100px 36px;
         gap:10px;
@@ -473,7 +399,6 @@
           "photo name arrow";
         gap:8px 12px;
       }
-
       .sg-photo{grid-area:photo}
       .sg-sku{grid-area:sku}
       .sg-name{grid-area:name}
@@ -482,31 +407,19 @@
     }
 
     @media(max-width:760px){
-      .desktop-detail-table{
-        display:none;
-      }
-
-      .mobile-cards{
-        display:flex;
-      }
+      .desktop-detail-table{display:none}
+      .mobile-cards{display:flex}
     }
 
     @media(max-width:700px){
-      .stock-toolbar{
-        grid-template-columns:1fr;
-      }
-
-      .stock-body-top{
-        grid-template-columns:1fr;
-      }
-
+      .stock-toolbar{grid-template-columns:1fr}
+      .stock-body-top{grid-template-columns:1fr}
       .stock-body-photo{
         width:100%;
         max-width:240px;
         height:auto;
         aspect-ratio:1/1;
       }
-
       .sku-bulk-bar,
       .bulk-panel-top{
         flex-direction:column;
@@ -540,12 +453,12 @@
     </div>
 
     <nav class="nav">
-      <a href="/index.html">Dashboard</a>
-      <a href="/products.html">Artikelen + Stickers</a>
-      <a href="/scan.html">In-/Uitscan</a>
-      <a href="/stock.html" class="active">Huidige voorraad</a>
-      <a href="/outscans.html">Uitscans</a>
-      <a href="/picklists.html">Picklijsten</a>
+      <a href="/">Dashboard</a>
+      <a href="/products">Artikelen + Stickers</a>
+      <a href="/scan">In-/Uitscan</a>
+      <a class="active" href="/stock">Huidige voorraad</a>
+      <a href="/outscans">Uitscans</a>
+      <a href="/picklists">Picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -569,7 +482,7 @@
     <h2>Huidige voorraad</h2>
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
-      Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
+      Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen. Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt.
     </div>
 
     <p class="page-url">
@@ -618,7 +531,7 @@
       </div>
 
       <div class="bulk-note">
-        Alleen zichtbaar voor geautoriseerde accounts. Bij elke actie wordt het uitvoerende e-mailadres opgeslagen.
+        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken ook in de 2-uurs mailqueue gezet.
       </div>
     </div>
 
@@ -695,14 +608,11 @@ setActiveNav();
 
 const client = sb();
 const STORAGE_BUCKET = 'product-images';
+
 const SPECIAL_ACTION_USERS = [
   'sales@ronaldverdultdesign.nl',
   'cmjinhuur@gmail.com'
 ];
-
-// Optioneel: zet hier je Supabase Edge Function naam.
-// Laat leeg als je mailfunctie nog niet bestaat.
-const STOCK_ACTION_EMAIL_FUNCTION = 'send-stock-action-email';
 
 let currentGroups = [];
 let currentUserEmail = '';
@@ -910,7 +820,7 @@ function makeSkuBulkBar(group){
 }
 
 function makeActionButtons(item){
-  const base = `
+  const outBtn = `
     <button
       class="btn small-btn"
       type="button"
@@ -921,10 +831,10 @@ function makeActionButtons(item){
     </button>
   `;
 
-  if(!canUseSpecialActions) return base;
+  if(!canUseSpecialActions) return outBtn;
 
   return `
-    ${base}
+    ${outBtn}
     <button
       class="btn primary small-btn"
       type="button"
@@ -1109,6 +1019,140 @@ function getItemsBySku(skuBase){
   return group ? group.items : [];
 }
 
+function buildAutoPickNo(actionType, orderNo=''){
+  const now = new Date();
+  const pad = n => String(n).padStart(2,'0');
+  const stamp = `${now.getFullYear()}${pad(now.getMonth()+1)}${pad(now.getDate())}-${pad(now.getHours())}${pad(now.getMinutes())}${pad(now.getSeconds())}`;
+
+  if(actionType === 'SEND_TO_HULST'){
+    return `HULST-${stamp}`;
+  }
+
+  const cleanOrder = String(orderNo || '')
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9_-]/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-|-$/g, '');
+
+  return `RVD-${cleanOrder || 'ORDER'}-${stamp}`;
+}
+
+function buildMovementNote(userNote='', pickNo=''){
+  const parts = [];
+  if(String(userNote || '').trim()) parts.push(String(userNote || '').trim());
+  if(String(pickNo || '').trim()) parts.push(`Picklijst: ${pickNo}`);
+  return parts.join(' | ') || null;
+}
+
+function groupItemsForPicklist(items){
+  const map = new Map();
+
+  (items || []).forEach(it => {
+    const key = `${it.sku_base || ''}||${it.name || ''}`;
+    if(!map.has(key)){
+      map.set(key, {
+        sku_base: String(it.sku_base || '').trim(),
+        product_name: String(it.name || '').trim(),
+        qty: 1
+      });
+    }else{
+      map.get(key).qty += 1;
+    }
+  });
+
+  return Array.from(map.values());
+}
+
+async function createNavigationPicklist(actionType, visibleItems, options = {}){
+  const orderNo = String(options.orderNo || '').trim();
+  const destination = String(options.destination || '').trim();
+  const note = String(options.note || '').trim();
+  const pickNo = buildAutoPickNo(actionType, orderNo);
+
+  const pickOrderNoteParts = [
+    `Automatisch aangemaakt vanuit voorraadverzoek door ${currentUserEmail || 'onbekend'}.`
+  ];
+
+  if(actionType === 'ALLOCATE_ORDER'){
+    pickOrderNoteParts.push(`Order: ${orderNo || '-'}.`);
+  }
+  if(actionType === 'SEND_TO_HULST'){
+    pickOrderNoteParts.push(`Bestemming: ${destination || 'Hulst'}.`);
+  }
+  if(note){
+    pickOrderNoteParts.push(`Opmerking: ${note}`);
+  }
+  pickOrderNoteParts.push('Goederen zijn al automatisch afgeboekt; deze picklijst dient alleen als navigatie voor het picken.');
+
+  const pickOrderPayload = {
+    order_no: pickNo,
+    note: pickOrderNoteParts.join(' '),
+    status: 'RELEASED'
+  };
+
+  const { data: pickOrder, error: pickOrderErr } = await client
+    .from('pick_orders')
+    .insert([pickOrderPayload])
+    .select()
+    .single();
+
+  if(pickOrderErr) throw pickOrderErr;
+
+  const grouped = groupItemsForPicklist(visibleItems);
+
+  const lineRows = grouped.map(row => ({
+    pick_order_id: pickOrder.id,
+    source_order_no: actionType === 'SEND_TO_HULST' ? 'HULST' : (orderNo || 'ZONDER ORDER'),
+    sku_base: row.sku_base,
+    product_name: row.product_name || '',
+    qty_needed: row.qty,
+    qty_picked: 0
+  }));
+
+  if(lineRows.length){
+    const { error: lineErr } = await client
+      .from('pick_order_lines')
+      .insert(lineRows);
+
+    if(lineErr) throw lineErr;
+  }
+
+  return pickNo;
+}
+
+async function queueSalesBatchMail(actionType, visibleItems, options = {}){
+  if(String(currentUserEmail || '').toLowerCase() !== 'sales@ronaldverdultdesign.nl') return;
+  if(!Array.isArray(visibleItems) || !visibleItems.length) return;
+  if(!(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST')) return;
+
+  const orderNo = String(options.orderNo || '').trim();
+  const destination = String(options.destination || '').trim();
+  const note = String(options.note || '').trim();
+  const pickNo = String(options.pickNo || '').trim();
+
+  const grouped = groupItemsForPicklist(visibleItems);
+
+  const queueRows = grouped.map(row => ({
+    requested_by_email: currentUserEmail,
+    action_type: actionType,
+    order_no: orderNo || null,
+    destination: destination || null,
+    note: buildMovementNote(note, pickNo),
+    sku_base: row.sku_base,
+    product_name: row.product_name || null,
+    qty: row.qty
+  }));
+
+  if(queueRows.length){
+    const { error } = await client
+      .from('stock_mail_queue')
+      .insert(queueRows);
+
+    if(error) throw error;
+  }
+}
+
 function openActionModal(actionType, itemIds){
   if(!itemIds || !itemIds.length){
     showToast('Geen artikelen geselecteerd.', 'err');
@@ -1128,8 +1172,8 @@ function openActionModal(actionType, itemIds){
 
   const subs = {
     OUT: 'Vul het ordernummer in. De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en toegevoegd aan de uitscans.',
-    ALLOCATE_ORDER: 'Vul het ordernummer in. De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en krijgen in de uitscans de vermelding dat ze aan een order zijn toegewezen.',
-    SEND_TO_HULST: 'De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en krijgen in de uitscans de vermelding dat ze naar Hulst zijn gestuurd.'
+    ALLOCATE_ORDER: 'Vul het ordernummer in. De geselecteerde artikelen worden direct afgeboekt. Daarnaast wordt automatisch een navigatie-picklijst aangemaakt.',
+    SEND_TO_HULST: 'De geselecteerde artikelen worden direct afgeboekt voor Hulst. Daarnaast wordt automatisch een navigatie-picklijst aangemaakt.'
   };
 
   byId('actionModalTitle').textContent = titles[actionType] || 'Actie uitvoeren';
@@ -1175,18 +1219,6 @@ async function countOrderUsesLocal(orderNo){
   return count || 0;
 }
 
-async function sendActionEmailIfConfigured(payload){
-  if(!STOCK_ACTION_EMAIL_FUNCTION) return;
-
-  try{
-    await client.functions.invoke(STOCK_ACTION_EMAIL_FUNCTION, {
-      body: payload
-    });
-  }catch(e){
-    console.warn('Mailfunctie niet uitgevoerd:', e);
-  }
-}
-
 async function performStockAction(actionType, itemIds, options = {}){
   if(!itemIds?.length){
     showToast('Geen artikelen geselecteerd.', 'err');
@@ -1216,6 +1248,12 @@ async function performStockAction(actionType, itemIds, options = {}){
       }
     }
 
+    const visibleItems = getCurrentVisibleItems().filter(x => itemIds.includes(x.id));
+
+    if(!visibleItems.length){
+      throw new Error('Geen zichtbare items gevonden voor deze actie.');
+    }
+
     const { data: items, error: itemsErr } = await client
       .from('items')
       .select('id, product_id, sku_unique, status, location')
@@ -1229,6 +1267,17 @@ async function performStockAction(actionType, itemIds, options = {}){
       throw new Error(`Er zijn ${invalid.length} items die niet meer op voorraad staan.`);
     }
 
+    let pickNo = '';
+
+    if(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST'){
+      pickNo = await createNavigationPicklist(actionType, visibleItems, {
+        orderNo,
+        destination,
+        note
+      });
+    }
+
+    const movementNote = buildMovementNote(note, pickNo);
     const nowIso = new Date().toISOString();
 
     const { error:updateErr } = await client
@@ -1241,17 +1290,22 @@ async function performStockAction(actionType, itemIds, options = {}){
 
     if(updateErr) throw updateErr;
 
-    const movements = items.map(it => ({
-      type: 'OUT',
-      action_type: actionType,
-      product_id: it.product_id,
-      sku_unique: it.sku_unique,
-      location: it.location || null,
-      order_no: orderNo || null,
-      destination: destination || null,
-      note: note || null,
-      handled_by_email: currentUserEmail || null
-    }));
+    const itemMap = new Map(visibleItems.map(v => [String(v.id), v]));
+
+    const movements = items.map(it => {
+      const extra = itemMap.get(String(it.id));
+      return {
+        type: 'OUT',
+        action_type: actionType,
+        product_id: it.product_id,
+        sku_unique: it.sku_unique,
+        location: it.location || null,
+        order_no: orderNo || null,
+        destination: destination || null,
+        note: movementNote,
+        handled_by_email: currentUserEmail || null
+      };
+    });
 
     const { error:moveErr } = await client
       .from('movements')
@@ -1259,20 +1313,12 @@ async function performStockAction(actionType, itemIds, options = {}){
 
     if(moveErr) throw moveErr;
 
-    if(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST'){
-      await sendActionEmailIfConfigured({
-        action_type: actionType,
-        handled_by_email: currentUserEmail || '',
-        order_no: orderNo || '',
-        destination: destination || '',
-        note: note || '',
-        item_count: items.length,
-        items: items.map(it => ({
-          sku_unique: it.sku_unique,
-          location: it.location || ''
-        }))
-      });
-    }
+    await queueSalesBatchMail(actionType, visibleItems, {
+      orderNo,
+      destination,
+      note,
+      pickNo
+    });
 
     clearSelection();
     closeActionModal();
@@ -1283,7 +1329,9 @@ async function performStockAction(actionType, itemIds, options = {}){
       SEND_TO_HULST: `naar ${destination || 'Hulst'} gestuurd`
     };
 
-    showToast(`${items.length} artikel(en) ${labels[actionType] || 'verwerkt'}.`, 'ok');
+    const pickMsg = pickNo ? ` Navigatie-picklijst aangemaakt: ${pickNo}.` : '';
+    showToast(`${items.length} artikel(en) ${labels[actionType] || 'verwerkt'}.${pickMsg}`, 'ok');
+
     await load();
 
   }catch(e){
