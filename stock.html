@@ -490,9 +490,9 @@
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
       Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
-      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
+      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt, met standaard <b>customer_name = Ronald Verdult Design</b>, en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
       <br><br>
-      <b>Let op:</b> als er iets fout gaat bij opslaan, wordt de foutmelding nu direct weergegeven.
+      <b>Eventuele foutmeldingen worden direct weergegeven.</b>
     </div>
 
     <p class="page-url">
@@ -620,6 +620,7 @@ setActiveNav();
 const client = sb();
 const STORAGE_BUCKET = 'product-images';
 const ONLINE_PICK_PATH = '/online-picklists.html';
+const DEFAULT_CUSTOMER_NAME = 'Ronald Verdult Design';
 
 const SPECIAL_ACTION_USERS = [
   'sales@ronaldverdultdesign.nl',
@@ -647,6 +648,17 @@ function byIdLocal(id){
 
 function showToast(msg, type='ok'){
   console.log('showToast:', type, msg);
+
+  const toastEl = document.getElementById('toast');
+  if(toastEl){
+    toastEl.textContent = msg;
+    toastEl.className = `notice ${type}`;
+    toastEl.style.display = 'block';
+    clearTimeout(window._toastTimer);
+    window._toastTimer = setTimeout(()=>{ toastEl.style.display='none'; }, 8000);
+    return;
+  }
+
   if(typeof toast === 'function'){
     toast(msg, type);
   }else{
@@ -1087,6 +1099,7 @@ async function createNavigationPicklist(actionType, visibleItems, options = {}){
 
   const pickOrderPayload = {
     order_no: pickNo,
+    customer_name: DEFAULT_CUSTOMER_NAME,
     note: pickOrderNoteParts.join(' '),
     status: 'RELEASED'
   };
