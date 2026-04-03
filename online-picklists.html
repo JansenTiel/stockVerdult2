@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="nl">
+<html lang="nl" class="auth-pending">
 <head>
   <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
@@ -7,16 +7,14 @@
 
   <link rel="stylesheet" href="/css/theme.css"/>
 
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="/js/supabase.js"></script>
-  <script src="/js/app.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
-
   <style>
-    .hidden{ display:none !important; }
+    html.auth-pending body{visibility:hidden}
+    html.auth-ready body{visibility:visible}
+
+    .hidden{display:none !important}
 
     .page-shell{
-      max-width:920px;
+      max-width:1200px;
       margin:0 auto;
       display:grid;
       gap:16px;
@@ -45,49 +43,6 @@
       letter-spacing:.01em;
     }
 
-    .auth-shell{
-      max-width:540px;
-      margin:0 auto;
-    }
-
-    .auth-card{
-      background:#fff;
-      padding:24px;
-      border:1px solid var(--border);
-      border-radius:24px;
-      box-shadow:var(--shadow);
-    }
-
-    .auth-head{
-      display:flex;
-      align-items:center;
-      gap:12px;
-      margin-bottom:16px;
-    }
-
-    .auth-head .logo{
-      width:48px;
-      height:48px;
-      font-size:30px;
-      border-radius:14px;
-      flex:0 0 auto;
-    }
-
-    .auth-title{
-      font-size:24px;
-      font-weight:900;
-      color:var(--navy);
-      line-height:1.1;
-      margin:0;
-    }
-
-    .auth-sub{
-      margin-top:4px;
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.4;
-    }
-
     .section-card{
       background:#fff;
       border:1px solid var(--border);
@@ -113,7 +68,7 @@
     .section-sub{
       color:var(--muted);
       font-size:14px;
-      line-height:1.4;
+      line-height:1.45;
       margin-top:4px;
     }
 
@@ -134,6 +89,7 @@
     .status-badge{
       display:inline-flex;
       align-items:center;
+      justify-content:center;
       padding:6px 10px;
       border-radius:999px;
       font-size:12px;
@@ -147,10 +103,11 @@
     .status-RELEASED{color:#1d4ed8;background:#eff6ff;border-color:#bfdbfe}
     .status-PICKING{color:#7c3aed;background:#f5f3ff;border-color:#ddd6fe}
     .status-DONE{color:#027a48;background:#ecfdf3;border-color:#abefc6}
+    .status-NAVIGATION{color:#0f766e;background:#ecfeff;border-color:#a5f3fc}
 
     .kpi-grid{
       display:grid;
-      grid-template-columns:repeat(4,1fr);
+      grid-template-columns:repeat(5,1fr);
       gap:12px;
     }
 
@@ -177,14 +134,86 @@
       line-height:1.05;
     }
 
-    .active-pick-top{
+    .tool-grid{
       display:grid;
-      grid-template-columns:1.2fr .8fr;
+      grid-template-columns:1.1fr .9fr;
       gap:14px;
     }
 
+    .tool-panel{
+      border:1px solid var(--border);
+      border-radius:18px;
+      background:#f8fafc;
+      padding:14px;
+      display:grid;
+      gap:12px;
+    }
+
+    .scan-main{
+      display:grid;
+      grid-template-columns:1fr auto auto;
+      gap:10px;
+      align-items:end;
+    }
+
+    .scan-input{
+      font-size:20px;
+      font-weight:900;
+      padding:14px 16px;
+      border-radius:16px;
+    }
+
+    .scan-feedback{
+      margin-top:12px;
+      border-radius:16px;
+      padding:14px;
+      border:1px solid var(--border);
+      background:#fff;
+      min-height:56px;
+      display:flex;
+      align-items:center;
+      font-weight:800;
+      line-height:1.35;
+    }
+
+    .scan-feedback.ok{
+      background:#ecfdf3;
+      color:#027a48;
+      border-color:#abefc6;
+    }
+
+    .scan-feedback.err{
+      background:#fef3f2;
+      color:#b42318;
+      border-color:#fecdca;
+    }
+
+    .camera-box{
+      margin-top:12px;
+      border:1px dashed var(--border);
+      border-radius:16px;
+      padding:12px;
+      background:#fff;
+    }
+
+    .camera-top{
+      display:flex;
+      justify-content:space-between;
+      gap:12px;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-bottom:10px;
+    }
+
+    .active-pick-top{
+      display:grid;
+      grid-template-columns:1.15fr .85fr;
+      gap:14px;
+      align-items:start;
+    }
+
     .pick-title{
-      font-size:24px;
+      font-size:28px;
       font-weight:900;
       color:var(--navy);
       line-height:1.1;
@@ -195,6 +224,24 @@
       margin-top:8px;
       color:var(--muted);
       line-height:1.4;
+    }
+
+    .pick-meta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .pill-lite{
+      display:inline-flex;
+      align-items:center;
+      padding:8px 12px;
+      border-radius:999px;
+      background:#f8fafc;
+      border:1px solid var(--border);
+      font-size:12px;
+      font-weight:900;
     }
 
     .pick-stat-box{
@@ -278,7 +325,7 @@
       display:flex;
       justify-content:space-between;
       gap:12px;
-      align-items:center;
+      align-items:flex-start;
       flex-wrap:wrap;
     }
 
@@ -300,7 +347,7 @@
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:76px;
+      min-width:78px;
       padding:10px 14px;
       border-radius:999px;
       background:var(--navy);
@@ -359,19 +406,20 @@
       color:var(--muted);
       font-size:13px;
       font-weight:800;
+      line-height:1.35;
     }
 
     .open-badge{
       display:inline-flex;
       align-items:center;
       justify-content:center;
-      min-width:56px;
+      min-width:64px;
       padding:8px 12px;
       border-radius:999px;
       background:var(--navy);
       color:#fff;
       font-weight:900;
-      font-size:16px;
+      font-size:15px;
     }
 
     .open-badge.done{
@@ -384,29 +432,34 @@
       gap:10px;
     }
 
-    .pick-row{
-      display:flex;
-      justify-content:space-between;
+    .detail-grid{
+      display:grid;
+      grid-template-columns:repeat(4,1fr);
       gap:10px;
-      align-items:flex-start;
     }
 
-    .pick-row .k{
-      min-width:90px;
-      font-size:12px;
-      font-weight:900;
+    .detail-mini{
+      border:1px solid var(--border);
+      border-radius:14px;
+      background:#fff;
+      padding:12px;
+    }
+
+    .detail-mini .k{
+      font-size:11px;
       color:var(--muted);
+      font-weight:900;
       text-transform:uppercase;
       letter-spacing:.04em;
     }
 
-    .pick-row .v{
-      text-align:right;
-      font-size:15px;
+    .detail-mini .v{
+      margin-top:4px;
+      font-size:18px;
       color:var(--text);
-      line-height:1.35;
+      font-weight:900;
+      line-height:1.2;
       word-break:break-word;
-      flex:1;
     }
 
     .location-box{
@@ -427,86 +480,14 @@
     }
 
     .location-value{
-      font-size:17px;
+      font-size:16px;
       font-weight:900;
       color:var(--navy);
       line-height:1.3;
       word-break:break-word;
     }
 
-    .scan-section{
-      border:1px solid var(--border);
-      border-radius:18px;
-      background:#f8fafc;
-      padding:14px;
-    }
-
-    .scan-main{
-      display:grid;
-      grid-template-columns:1fr auto auto;
-      gap:10px;
-      align-items:end;
-    }
-
-    .scan-input{
-      font-size:20px;
-      font-weight:900;
-      padding:14px 16px;
-      border-radius:16px;
-    }
-
-    .scan-feedback{
-      margin-top:12px;
-      border-radius:16px;
-      padding:14px;
-      border:1px solid var(--border);
-      background:#fff;
-      min-height:56px;
-      display:flex;
-      align-items:center;
-      font-weight:800;
-      line-height:1.35;
-    }
-
-    .scan-feedback.ok{
-      background:#ecfdf3;
-      color:#027a48;
-      border-color:#abefc6;
-    }
-
-    .scan-feedback.err{
-      background:#fef3f2;
-      color:#b42318;
-      border-color:#fecdca;
-    }
-
-    .camera-box{
-      margin-top:12px;
-      border:1px dashed var(--border);
-      border-radius:16px;
-      padding:12px;
-      background:#fff;
-    }
-
-    .camera-top{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-
-    .available-toggle{
-      display:flex;
-      justify-content:space-between;
-      gap:12px;
-      align-items:center;
-      flex-wrap:wrap;
-    }
-
     .available-list{
-      margin-top:14px;
       display:grid;
       gap:10px;
     }
@@ -577,40 +558,41 @@
       border-color:#fecdca;
     }
 
-    @media(max-width:900px){
-      .kpi-grid{
-        grid-template-columns:1fr 1fr;
-      }
+    @media(max-width:1100px){
+      .kpi-grid{grid-template-columns:repeat(3,1fr)}
+      .tool-grid,
+      .active-pick-top{grid-template-columns:1fr}
+    }
 
-      .active-pick-top,
+    @media(max-width:900px){
       .scan-main,
-      .available-item{
-        grid-template-columns:1fr;
-      }
+      .available-item,
+      .detail-grid{grid-template-columns:1fr}
     }
 
     @media(max-width:640px){
-      .kpi-grid{
-        grid-template-columns:1fr;
-      }
+      .kpi-grid{grid-template-columns:1fr 1fr}
+      .section-card{padding:16px}
+      .pick-title{font-size:22px}
+      .order-group-title{font-size:20px}
+      .scan-input{font-size:18px}
+    }
 
-      .section-card{
-        padding:16px;
-      }
-
-      .pick-title{
-        font-size:21px;
-      }
-
-      .order-group-title{
-        font-size:20px;
-      }
-
-      .scan-input{
-        font-size:18px;
-      }
+    @media(max-width:440px){
+      .kpi-grid{grid-template-columns:1fr}
     }
   </style>
+
+  <script>
+    document.documentElement.classList.add("auth-pending");
+    document.documentElement.classList.remove("auth-ready");
+  </script>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
 </head>
 <body data-page="picklists">
 
@@ -625,12 +607,13 @@
     </div>
 
     <nav class="nav">
-      <a href="/index.html">Dashboard</a>
-      <a href="/products.html">Artikelen + Stickers</a>
-      <a href="/scan.html">In-/Uitscan</a>
-      <a href="/stock.html">Huidige voorraad</a>
-      <a href="/outscans.html">Uitscans</a>
-      <a href="/picklists.html" class="active">Picklijsten</a>
+      <a href="/">Dashboard</a>
+      <a href="/products">Artikelen + Stickers</a>
+      <a href="/scan">In-/Uitscan</a>
+      <a href="/stock">Huidige voorraad</a>
+      <a href="/outscans">Uitscans</a>
+      <a href="/picklists">Picklijsten</a>
+      <a href="/online-picklists" class="active">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -642,7 +625,7 @@
         <span id="userEmail"></span>
       </span>
 
-      <button class="btn hidden" id="btnLogout" type="button">Uitloggen</button>
+      <button class="btn" id="btnLogout" type="button">Uitloggen</button>
     </div>
   </div>
 </div>
@@ -651,93 +634,53 @@
   <div id="toast" class="notice"></div>
 
   <div class="page-shell">
-    <div id="loginGate" class="auth-shell">
-      <div class="auth-card">
-        <div class="auth-head">
-          <div class="logo">o</div>
-          <div>
-            <h1 class="auth-title">Inloggen</h1>
-            <div class="auth-sub">Log in om direct naar de picklijst te gaan.</div>
-          </div>
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h2>Overzicht</h2>
+          <div class="section-sub">Één picklijst kan meerdere orders bevatten. Je ziet hieronder per order alle artikelen, ordernummers, open aantallen en locaties.</div>
+          <p class="page-url">
+            Actieve omgeving:
+            <strong>www.rv-voorraad.nl</strong>
+          </p>
         </div>
+        <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
+      </div>
 
-        <label for="loginEmail">E-mailadres</label>
-        <input id="loginEmail" type="email" autocomplete="username"/>
-
-        <label for="loginPassword" style="margin-top:12px">Wachtwoord</label>
-        <input id="loginPassword" type="password" autocomplete="current-password"/>
-
-        <div class="btnRow" style="margin-top:16px">
-          <button class="btn primary" id="btnLoginInline" type="button">Inloggen</button>
+      <div class="kpi-grid">
+        <div class="kpi-mini">
+          <div class="k">Vrijgegeven</div>
+          <div class="v" id="kpiReleased">0</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="k">Actieve picklijst</div>
+          <div class="v" id="kpiActivePick">-</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="k">Orders actief</div>
+          <div class="v" id="kpiOrdersInActive">0</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="k">Nog te picken</div>
+          <div class="v" id="kpiRemaining">0</div>
+        </div>
+        <div class="kpi-mini">
+          <div class="k">Gescand sessie</div>
+          <div class="v" id="kpiScannedSession">0</div>
         </div>
       </div>
     </div>
 
-    <div id="appSection" class="hidden">
-      <div class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Overzicht</h2>
-            <div class="section-sub">Één picklijst kan meerdere orders bevatten. Die zie je hieronder apart gegroepeerd.</div>
-            <p class="page-url">
-              Actieve omgeving:
-              <strong>www.rv-voorraad.nl</strong>
-            </p>
-          </div>
-          <span class="status-chip">Status: <b id="liveStatusTxt">Klaar</b></span>
-        </div>
-
-        <div class="kpi-grid">
-          <div class="kpi-mini">
-            <div class="k">Vrijgegeven</div>
-            <div class="v" id="kpiReleased">0</div>
-          </div>
-          <div class="kpi-mini">
-            <div class="k">Actieve picklijst</div>
-            <div class="v" id="kpiActivePick">-</div>
-          </div>
-          <div class="kpi-mini">
-            <div class="k">Nog te picken</div>
-            <div class="v" id="kpiRemaining">0</div>
-          </div>
-          <div class="kpi-mini">
-            <div class="k">Gescand sessie</div>
-            <div class="v" id="kpiScannedSession">0</div>
-          </div>
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h2>Scannen en zoeken</h2>
+          <div class="section-sub">Scan met handscanner of camera. Zoek daarnaast binnen de actieve picklijst op ordernummer, SKU of omschrijving.</div>
         </div>
       </div>
 
-      <div class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Actieve picklijst</h2>
-            <div class="section-sub">Compact overzicht van de gekozen picklijst.</div>
-          </div>
-        </div>
-
-        <div id="activePickHeader"></div>
-      </div>
-
-      <div class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Open pickregels per order</h2>
-            <div class="section-sub">Hier zie je eerst de orders en daaronder pas de SKU’s die erbij horen.</div>
-          </div>
-        </div>
-
-        <div id="openPickOrderGroups" class="order-groups"></div>
-      </div>
-
-      <div class="section-card">
-        <div class="section-head">
-          <div>
-            <h2>Scannen</h2>
-            <div class="section-sub">Gebruik dit pas nadat je de juiste order en regel in beeld hebt.</div>
-          </div>
-        </div>
-
-        <div class="scan-section">
+      <div class="tool-grid">
+        <div class="tool-panel">
           <div class="scan-main">
             <div>
               <label for="scanSkuInput">SKU / sticker</label>
@@ -761,59 +704,86 @@
             <div class="camera-top">
               <div>
                 <b>Camera scanner</b>
-                <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR's direct te scannen.</div>
+                <div class="small" style="margin-top:4px">Gebruik dit op telefoon om product-QR’s direct te scannen.</div>
               </div>
               <span class="pill">HTTPS nodig</span>
             </div>
             <div id="qr_reader" style="border-radius:14px;overflow:hidden"></div>
           </div>
         </div>
-      </div>
 
-      <div class="section-card">
-        <div class="available-toggle">
+        <div class="tool-panel">
           <div>
-            <h3 style="margin:0">Andere vrijgegeven picklijsten</h3>
-            <div class="section-sub">Hier kies je alleen een andere picklijst als dat nodig is.</div>
+            <label for="activePickSearch">Zoeken in actieve picklijst</label>
+            <input id="activePickSearch" placeholder="Zoek op ordernummer, SKU of product"/>
           </div>
+
+          <div>
+            <label for="picklistSearch">Zoeken in vrijgegeven picklijsten</label>
+            <input id="picklistSearch" placeholder="Zoek op picklijstnummer of opmerking"/>
+          </div>
+
           <div class="btnRow">
             <button class="btn" id="btnRefreshPicklists" type="button">Verversen</button>
           </div>
         </div>
+      </div>
+    </div>
 
-        <div style="margin-top:12px">
-          <label for="picklistSearch">Zoeken</label>
-          <input id="picklistSearch" placeholder="Zoek op picklijstnummer of opmerking"/>
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h2>Actieve picklijst</h2>
+          <div class="section-sub">Compact overzicht van de gekozen picklijst.</div>
         </div>
-
-        <div id="availablePicklists" class="available-list"></div>
       </div>
 
-      <div class="section-card">
-        <div class="section-head">
-          <div>
-            <h3>Laatste scans</h3>
-            <div class="section-sub">Controle van de meest recente verwerkingen.</div>
-          </div>
-        </div>
+      <div id="activePickHeader"></div>
+    </div>
 
-        <div id="scanLog" class="scan-log"></div>
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h2>Open pickregels per order</h2>
+          <div class="section-sub">Hier zie je eerst de orders en daaronder de artikelen die erbij horen.</div>
+        </div>
       </div>
+
+      <div id="openPickOrderGroups" class="order-groups"></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h3>Andere vrijgegeven picklijsten</h3>
+          <div class="section-sub">Kies hier een andere vrijgegeven picklijst.</div>
+        </div>
+      </div>
+
+      <div id="availablePicklists" class="available-list"></div>
+    </div>
+
+    <div class="section-card">
+      <div class="section-head">
+        <div>
+          <h3>Laatste scans</h3>
+          <div class="section-sub">Controle van de meest recente verwerkingen.</div>
+        </div>
+      </div>
+
+      <div id="scanLog" class="scan-log"></div>
     </div>
   </div>
 </div>
 
 <script>
+setActiveNav();
+
 const client = sb();
 
-const DEFAULT_PICKER_EMAIL = 'warehouse@oegemalogistics.com';
-const DEFAULT_PICKER_PASSWORD = 'Oeg1234!';
-
-const loginGate = byId('loginGate');
-const appSection = byId('appSection');
-const btnLogout = byId('btnLogout');
 const liveStatusTxt = byId('liveStatusTxt');
 const picklistSearch = byId('picklistSearch');
+const activePickSearch = byId('activePickSearch');
 const availablePicklists = byId('availablePicklists');
 const activePickHeader = byId('activePickHeader');
 const openPickOrderGroups = byId('openPickOrderGroups');
@@ -822,8 +792,6 @@ const btnProcessScan = byId('btnProcessScan');
 const btnToggleCamera = byId('btnToggleCamera');
 const scanLog = byId('scanLog');
 const scanFeedback = byId('scanFeedback');
-const loginEmail = byId('loginEmail');
-const loginPassword = byId('loginPassword');
 const cameraWrapper = byId('cameraWrapper');
 
 let releasedPicklists = [];
@@ -849,7 +817,7 @@ function addScanLog(message, type='ok'){
   item.innerHTML = `<b>${escapeHtml(nlTime(new Date().toISOString()))}</b><br>${escapeHtml(message)}`;
   scanLog.prepend(item);
 
-  while(scanLog.children.length > 15){
+  while(scanLog.children.length > 20){
     scanLog.removeChild(scanLog.lastChild);
   }
 }
@@ -863,6 +831,13 @@ function normalizeScanLocal(v){
     .toUpperCase();
 }
 
+function normalizeSkuBaseFromUnique(skuUnique){
+  const value = String(skuUnique || '').trim().toUpperCase();
+  const match = value.match(/^(.*)-(\d{4,5})$/);
+  if(match) return match[1].trim();
+  return value;
+}
+
 function isValidUniqueSkuFlexible(s){
   return /^(.*)-\d{4,5}$/.test(normalizeScanLocal(s));
 }
@@ -871,46 +846,13 @@ function getQueryParams(){
   const url = new URL(window.location.href);
   return {
     pickId: url.searchParams.get('pick_id') || '',
-    pickNo: url.searchParams.get('pick_no') || '',
-    loginEmailParam: url.searchParams.get('login_email') || ''
+    pickNo: url.searchParams.get('pick_no') || ''
   };
 }
 
-function prefillLoginFields(){
-  const { loginEmailParam } = getQueryParams();
-  loginEmail.value = loginEmailParam || DEFAULT_PICKER_EMAIL;
-  loginPassword.value = DEFAULT_PICKER_PASSWORD;
-}
-
-async function requireSessionInline(){
-  const { data, error } = await client.auth.getSession();
-  if(error) throw error;
-  return data.session || null;
-}
-
-async function signInInline(){
-  const email = (loginEmail.value || '').trim();
-  const password = loginPassword.value || '';
-
-  if(!email) return toast('Vul je e-mailadres in.', 'err');
-  if(!password) return toast('Vul je wachtwoord in.', 'err');
-
-  const { error } = await client.auth.signInWithPassword({ email, password });
-  if(error) throw error;
-}
-
-async function signOutInline(){
-  await client.auth.signOut();
-  location.reload();
-}
-
-async function loadUserHeader(){
-  const session = await requireSessionInline();
-  const emailEl = byId('userEmail');
-  if(emailEl){
-    emailEl.textContent = session?.user?.email || '';
-  }
-  btnLogout.classList.toggle('hidden', !session);
+function isNavigationPicklist(pick){
+  const note = String(pick?.note || '').toLowerCase();
+  return note.includes('alleen als navigatie') || note.includes('automatisch aangemaakt vanuit voorraadverzoek');
 }
 
 async function loadStockItems(){
@@ -947,16 +889,77 @@ function getLocationSummaryForSku(skuBase){
     .join(', ');
 }
 
+async function getMovementLocationSummaryForPicklist(pickNo){
+  const { data, error } = await client
+    .from('movements')
+    .select('sku_unique, location, note, type')
+    .eq('type', 'OUT')
+    .ilike('note', `%Picklijst: ${pickNo}%`);
+
+  if(error) throw error;
+
+  const skuMap = new Map();
+
+  (data || []).forEach(row => {
+    const skuBase = normalizeSkuBaseFromUnique(row.sku_unique || '');
+    if(!skuBase) return;
+
+    if(!skuMap.has(skuBase)){
+      skuMap.set(skuBase, new Map());
+    }
+
+    const loc = String(row.location || '').trim() || '-';
+    const locMap = skuMap.get(skuBase);
+    locMap.set(loc, (locMap.get(loc) || 0) + 1);
+  });
+
+  const summary = new Map();
+
+  skuMap.forEach((locMap, skuBase) => {
+    const text = Array.from(locMap.entries())
+      .sort((a,b) => {
+        if(a[1] !== b[1]) return a[1] - b[1];
+        return String(a[0]).localeCompare(String(b[0]), 'nl');
+      })
+      .map(([loc, qty]) => `${loc} (${qty})`)
+      .join(', ');
+
+    summary.set(skuBase, text || '-');
+  });
+
+  return summary;
+}
+
+function calcRemaining(line){
+  return Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+}
+
 function updateKpis(){
   byId('kpiReleased').textContent = String(releasedPicklists.length);
   byId('kpiActivePick').textContent = activePicklist ? activePicklist.order_no : '-';
 
-  const remaining = activePicklistLines.reduce((sum, l) => {
-    return sum + Math.max(0, Number(l.qty_needed || 0) - Number(l.qty_picked || 0));
-  }, 0);
+  const groups = groupLinesBySourceOrder(activePicklistLines);
+  byId('kpiOrdersInActive').textContent = String(groups.length);
 
+  const remaining = activePicklistLines.reduce((sum, l) => sum + calcRemaining(l), 0);
   byId('kpiRemaining').textContent = String(remaining);
   byId('kpiScannedSession').textContent = String(scannedSessionCount);
+}
+
+function groupLinesBySourceOrder(lines){
+  const map = new Map();
+
+  (lines || []).forEach(line => {
+    const orderNo = line.source_order_no || 'ZONDER ORDER';
+    if(!map.has(orderNo)){
+      map.set(orderNo, []);
+    }
+    map.get(orderNo).push(line);
+  });
+
+  return Array.from(map.entries())
+    .map(([orderNo, rows]) => ({ orderNo, rows }))
+    .sort((a,b) => String(a.orderNo).localeCompare(String(b.orderNo), 'nl'));
 }
 
 async function loadReleasedPicklists(){
@@ -986,6 +989,7 @@ async function loadReleasedPicklists(){
     const ls = grouped.get(order.id) || [];
     const totalQty = ls.reduce((sum, l) => sum + Number(l.qty_needed || 0), 0);
     const pickedQty = ls.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
+    const sourceOrders = new Set(ls.map(l => String(l.source_order_no || '').trim()).filter(Boolean));
 
     return {
       ...order,
@@ -993,7 +997,9 @@ async function loadReleasedPicklists(){
       line_count: ls.length,
       total_qty: totalQty,
       picked_qty: pickedQty,
-      remaining_qty: Math.max(0, totalQty - pickedQty)
+      remaining_qty: Math.max(0, totalQty - pickedQty),
+      source_order_count: sourceOrders.size,
+      is_navigation: isNavigationPicklist(order)
     };
   });
 
@@ -1022,8 +1028,10 @@ function renderReleasedPicklists(){
         <div class="available-sub">${escapeHtml(row.note || '-')}</div>
         <div class="available-meta">
           <span class="pill">${escapeHtml(row.status || 'RELEASED')}</span>
+          <span class="pill">${row.source_order_count} orders</span>
           <span class="pill">${row.line_count} regels</span>
           <span class="pill">${row.remaining_qty} open</span>
+          ${row.is_navigation ? `<span class="pill">Navigatie</span>` : ``}
         </div>
       </div>
       <div>
@@ -1046,43 +1054,42 @@ async function openOnlinePicklist(id){
     .from('pick_order_lines')
     .select('*')
     .eq('pick_order_id', id)
-    .order('source_order_no', { ascending:true });
+    .order('source_order_no', { ascending:true })
+    .order('sku_base', { ascending:true });
 
   if(lErr) return toast(lErr.message || String(lErr), 'err');
 
+  let navigationLocationMap = new Map();
+  if(isNavigationPicklist(order)){
+    try{
+      navigationLocationMap = await getMovementLocationSummaryForPicklist(order.order_no);
+    }catch(e){
+      console.warn('Locaties uit movements ophalen mislukt:', e);
+    }
+  }
+
   activePicklist = order;
   activePicklistLines = (lines || []).map(line => {
-    const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+    const fallbackLoc = getLocationSummaryForSku(line.sku_base);
+    const navLoc = navigationLocationMap.get(line.sku_base) || '';
+    const locationSummary = navLoc || fallbackLoc;
+    const remaining = calcRemaining(line);
+
     return {
       ...line,
       qty_remaining: remaining,
-      location_summary: getLocationSummaryForSku(line.sku_base)
+      location_summary: locationSummary
     };
   });
 
   const url = new URL(window.location.href);
   url.searchParams.set('pick_id', order.id);
-  url.searchParams.set('pick_no', order.order_no);
-  url.searchParams.set('login_email', loginEmail.value || DEFAULT_PICKER_EMAIL);
+  url.searchParams.set('pick_no', order.order_no || '');
   window.history.replaceState({}, '', url.toString());
 
   renderActivePicklist();
   updateKpis();
   scanSkuInput.focus();
-}
-
-function groupLinesBySourceOrder(lines){
-  const map = new Map();
-
-  (lines || []).forEach(line => {
-    const orderNo = line.source_order_no || 'ZONDER ORDER';
-    if(!map.has(orderNo)){
-      map.set(orderNo, []);
-    }
-    map.get(orderNo).push(line);
-  });
-
-  return Array.from(map.entries()).map(([orderNo, rows]) => ({ orderNo, rows }));
 }
 
 function renderActivePicklist(){
@@ -1096,12 +1103,21 @@ function renderActivePicklist(){
   const totalPicked = activePicklistLines.reduce((sum, l) => sum + Number(l.qty_picked || 0), 0);
   const totalOpen = Math.max(0, totalNeeded - totalPicked);
   const progressPct = totalNeeded > 0 ? Math.round((totalPicked / totalNeeded) * 100) : 0;
+  const grouped = groupLinesBySourceOrder(activePicklistLines);
+  const nav = isNavigationPicklist(activePicklist);
 
   activePickHeader.innerHTML = `
     <div class="active-pick-top">
       <div>
         <div class="pick-title">${escapeHtml(activePicklist.order_no || '')}</div>
         <div class="pick-note">${escapeHtml(activePicklist.note || '-')}</div>
+
+        <div class="pick-meta">
+          <span class="pill-lite">Orders: ${grouped.length}</span>
+          <span class="pill-lite">Regels: ${activePicklistLines.length}</span>
+          <span class="pill-lite">Open: ${totalOpen}</span>
+          ${nav ? `<span class="status-badge status-NAVIGATION">Navigatie-picklijst</span>` : ``}
+        </div>
 
         <div class="progress-wrap">
           <div class="progress-top">
@@ -1129,33 +1145,63 @@ function renderActivePicklist(){
           <div class="label">Regels</div>
           <div class="value">${activePicklistLines.length}</div>
         </div>
+        <div class="pick-stat-line">
+          <div class="label">Type</div>
+          <div class="value">${nav ? 'Navigatie' : 'Standaard'}</div>
+        </div>
       </div>
     </div>
   `;
 
-  const grouped = groupLinesBySourceOrder(activePicklistLines);
+  renderOrderGroups();
+}
 
-  if(!grouped.length){
-    openPickOrderGroups.innerHTML = `<div class="muted">Geen pickregels gevonden.</div>`;
+function renderOrderGroups(){
+  if(!activePicklist){
+    openPickOrderGroups.innerHTML = `<div class="muted">Nog geen actieve picklijst geselecteerd.</div>`;
     return;
   }
 
-  openPickOrderGroups.innerHTML = grouped.map(group => {
-    const orderOpen = group.rows.reduce((sum, row) => sum + Math.max(0, Number(row.qty_needed || 0) - Number(row.qty_picked || 0)), 0);
+  const q = (activePickSearch.value || '').trim().toLowerCase();
+  const grouped = groupLinesBySourceOrder(activePicklistLines);
+
+  const filteredGroups = grouped
+    .map(group => {
+      const rows = group.rows.filter(line => {
+        if(!q) return true;
+
+        return [
+          group.orderNo,
+          line.sku_base,
+          line.product_name
+        ].some(v => String(v || '').toLowerCase().includes(q));
+      });
+
+      return { ...group, rows };
+    })
+    .filter(group => group.rows.length > 0);
+
+  if(!filteredGroups.length){
+    openPickOrderGroups.innerHTML = `<div class="muted">Geen regels gevonden voor deze zoekterm.</div>`;
+    return;
+  }
+
+  openPickOrderGroups.innerHTML = filteredGroups.map(group => {
+    const orderOpen = group.rows.reduce((sum, row) => sum + calcRemaining(row), 0);
     const orderNeeded = group.rows.reduce((sum, row) => sum + Number(row.qty_needed || 0), 0);
     const orderPicked = group.rows.reduce((sum, row) => sum + Number(row.qty_picked || 0), 0);
 
     const rowsHtml = group.rows
       .slice()
       .sort((a,b) => {
-        const ar = Math.max(0, Number(a.qty_needed || 0) - Number(a.qty_picked || 0));
-        const br = Math.max(0, Number(b.qty_needed || 0) - Number(b.qty_picked || 0));
+        const ar = calcRemaining(a);
+        const br = calcRemaining(b);
         if(ar === 0 && br > 0) return 1;
         if(br === 0 && ar > 0) return -1;
         return String(a.sku_base || '').localeCompare(String(b.sku_base || ''), 'nl');
       })
       .map(line => {
-        const remaining = Math.max(0, Number(line.qty_needed || 0) - Number(line.qty_picked || 0));
+        const remaining = calcRemaining(line);
         const isDone = remaining === 0;
 
         return `
@@ -1164,31 +1210,36 @@ function renderActivePicklist(){
               <div class="pick-card-title-row">
                 <div>
                   <div class="pick-card-title">${escapeHtml(line.sku_base)}</div>
-                  <div class="pick-card-order">Order ${escapeHtml(group.orderNo)}</div>
+                  <div class="pick-card-order">
+                    Order ${escapeHtml(group.orderNo)}<br>
+                    ${escapeHtml(line.product_name || '-')}
+                  </div>
                 </div>
-                <div class="open-badge ${isDone ? 'done' : ''}">${isDone ? 'Klaar' : remaining}</div>
+                <div class="open-badge ${isDone ? 'done' : ''}">${isDone ? 'Klaar' : remaining + ' open'}</div>
               </div>
             </div>
 
             <div class="pick-card-body">
-              <div class="pick-row">
-                <div class="k">Product</div>
-                <div class="v">${escapeHtml(line.product_name || '-')}</div>
-              </div>
+              <div class="detail-grid">
+                <div class="detail-mini">
+                  <div class="k">Order</div>
+                  <div class="v">${escapeHtml(group.orderNo)}</div>
+                </div>
 
-              <div class="pick-row">
-                <div class="k">Nodig</div>
-                <div class="v">${line.qty_needed}</div>
-              </div>
+                <div class="detail-mini">
+                  <div class="k">Nodig</div>
+                  <div class="v">${line.qty_needed}</div>
+                </div>
 
-              <div class="pick-row">
-                <div class="k">Gepickt</div>
-                <div class="v">${line.qty_picked || 0}</div>
-              </div>
+                <div class="detail-mini">
+                  <div class="k">Gepickt</div>
+                  <div class="v">${line.qty_picked || 0}</div>
+                </div>
 
-              <div class="pick-row">
-                <div class="k">Open</div>
-                <div class="v"><b>${remaining}</b></div>
+                <div class="detail-mini">
+                  <div class="k">Open</div>
+                  <div class="v">${remaining}</div>
+                </div>
               </div>
 
               <div class="location-box">
@@ -1228,6 +1279,59 @@ async function findItemByExactSku(skuUnique){
   return data || null;
 }
 
+async function confirmPickedOnlyOnline(line, qtySelected){
+  const newPicked = Number(line.qty_picked || 0) + qtySelected;
+
+  const { error:lineErr } = await client
+    .from('pick_order_lines')
+    .update({ qty_picked: newPicked })
+    .eq('id', line.id);
+
+  if(lineErr) throw lineErr;
+}
+
+async function processStandardPick(line, item, qtySelected, skuUnique){
+  if(activePicklist.status === 'RELEASED'){
+    const { error: statusErr } = await client
+      .from('pick_orders')
+      .update({ status:'PICKING' })
+      .eq('id', activePicklist.id);
+
+    if(statusErr) throw statusErr;
+  }
+
+  const { error:updateErr } = await client
+    .from('items')
+    .update({
+      status:'OUT',
+      out_at:new Date().toISOString()
+    })
+    .eq('id', item.id);
+
+  if(updateErr) throw updateErr;
+
+  const { error:moveErr } = await client
+    .from('movements')
+    .insert([{
+      type:'OUT',
+      product_id:item.product_id,
+      sku_unique:item.sku_unique,
+      location:item.location || null,
+      order_no: line.source_order_no || activePicklist.order_no
+    }]);
+
+  if(moveErr) throw moveErr;
+
+  const newPicked = Number(line.qty_picked || 0) + qtySelected;
+
+  const { error:lineErr } = await client
+    .from('pick_order_lines')
+    .update({ qty_picked: newPicked })
+    .eq('id', line.id);
+
+  if(lineErr) throw lineErr;
+}
+
 async function processScannedSku(rawValue){
   if(!activePicklist){
     toast('Open eerst een picklijst.', 'err');
@@ -1237,9 +1341,7 @@ async function processScannedSku(rawValue){
   }
 
   const skuUnique = normalizeScanLocal(rawValue);
-  if(!skuUnique){
-    return;
-  }
+  if(!skuUnique) return;
 
   if(!isValidUniqueSkuFlexible(skuUnique)){
     toast('Stickerformaat ongeldig.', 'err');
@@ -1251,62 +1353,35 @@ async function processScannedSku(rawValue){
   try{
     setStatus('Controleren…');
 
-    const item = await findItemByExactSku(skuUnique);
-    if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
-    if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
+    const skuBase = normalizeSkuBaseFromUnique(skuUnique);
+    const nav = isNavigationPicklist(activePicklist);
 
     const line = activePicklistLines.find(l =>
-      l.sku_base === skuUnique.replace(/-\d{4,5}$/,'') &&
-      Number(l.qty_picked || 0) < Number(l.qty_needed || 0)
+      String(l.sku_base || '') === skuBase &&
+      calcRemaining(l) > 0
     );
 
     if(!line){
       throw new Error(`Dit artikel hoort niet bij een open regel van picklijst ${activePicklist.order_no}.`);
     }
 
-    if(activePicklist.status === 'RELEASED'){
-      const { error: statusErr } = await client
-        .from('pick_orders')
-        .update({ status:'PICKING' })
-        .eq('id', activePicklist.id);
+    if(nav){
+      await confirmPickedOnlyOnline(line, 1);
 
-      if(statusErr) throw statusErr;
+      scannedSessionCount += 1;
+      setFeedback(`Bevestigd op navigatie-picklijst: ${skuUnique}`, 'ok');
+      addScanLog(`Bevestigd op navigatie-picklijst: ${skuUnique} · order ${line.source_order_no || activePicklist.order_no}`, 'ok');
+    }else{
+      const item = await findItemByExactSku(skuUnique);
+      if(!item) throw new Error(`Item niet gevonden: ${skuUnique}`);
+      if(item.status !== 'IN_STOCK') throw new Error(`Item staat niet op voorraad: ${skuUnique}`);
+
+      await processStandardPick(line, item, 1, skuUnique);
+
+      scannedSessionCount += 1;
+      setFeedback(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
+      addScanLog(`Goed gescand en afgeboekt: ${skuUnique} · order ${line.source_order_no || activePicklist.order_no}`, 'ok');
     }
-
-    const { error:updateErr } = await client
-      .from('items')
-      .update({
-        status:'OUT',
-        out_at:new Date().toISOString()
-      })
-      .eq('id', item.id);
-
-    if(updateErr) throw updateErr;
-
-    const { error:moveErr } = await client
-      .from('movements')
-      .insert([{
-        type:'OUT',
-        product_id:item.product_id,
-        sku_unique:item.sku_unique,
-        location:item.location || null,
-        order_no: line.source_order_no || activePicklist.order_no
-      }]);
-
-    if(moveErr) throw moveErr;
-
-    const newPicked = Number(line.qty_picked || 0) + 1;
-
-    const { error:lineErr } = await client
-      .from('pick_order_lines')
-      .update({ qty_picked: newPicked })
-      .eq('id', line.id);
-
-    if(lineErr) throw lineErr;
-
-    scannedSessionCount += 1;
-    setFeedback(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
-    addScanLog(`Goed gescand en afgeboekt: ${skuUnique}`, 'ok');
 
     await loadStockItems();
     await loadReleasedPicklists();
@@ -1325,6 +1400,14 @@ async function processScannedSku(rawValue){
       await openOnlinePicklist(activePicklist.id);
       setFeedback(`Picklijst ${activePicklist.order_no} is volledig afgerond.`, 'ok');
       addScanLog(`Picklijst ${activePicklist.order_no} is volledig afgerond.`, 'ok');
+    } else if(activePicklist.status === 'RELEASED'){
+      await client
+        .from('pick_orders')
+        .update({ status:'PICKING' })
+        .eq('id', activePicklist.id);
+
+      await loadReleasedPicklists();
+      await openOnlinePicklist(activePicklist.id);
     }
 
     setStatus('Klaar');
@@ -1362,9 +1445,10 @@ async function toggleCamera(){
       qrRunning = true;
       await qr.start(
         preferred.id,
-        { fps: 10, qrbox: { width: 260, height: 260 } },
+        { fps:10, qrbox:{ width:260, height:260 } },
         async (decodedText) => {
           const fixed = normalizeScanLocal(decodedText);
+          if(!fixed) return;
           scanSkuInput.value = fixed;
           await processScannedSku(fixed);
         }
@@ -1412,51 +1496,26 @@ async function loadFromQueryIfPresent(){
   }
 }
 
-async function bootstrap(){
-  prefillLoginFields();
-
-  const session = await requireSessionInline();
-  await loadUserHeader();
-
-  if(!session){
-    loginGate.classList.remove('hidden');
-    appSection.classList.add('hidden');
-    return;
-  }
-
-  loginGate.classList.add('hidden');
-  appSection.classList.remove('hidden');
-
+async function bootstrapOnlinePicklists(){
   await loadStockItems();
   await loadReleasedPicklists();
   await loadFromQueryIfPresent();
 
   setStatus('Klaar');
   setFeedback('Nog geen scan verwerkt.');
+  updateKpis();
 }
 
-byId('btnLoginInline').addEventListener('click', async () => {
-  try{
-    await signInInline();
-    toast('Inloggen gelukt.', 'ok');
-    await bootstrap();
-  } catch(e){
-    toast(e.message || String(e), 'err');
-  }
+picklistSearch.addEventListener('input', () => {
+  loadReleasedPicklists().catch(err => toast(err.message || String(err), 'err'));
 });
 
-btnLogout.addEventListener('click', async () => {
-  await signOutInline();
+activePickSearch.addEventListener('input', () => {
+  renderOrderGroups();
 });
 
 byId('btnRefreshPicklists').addEventListener('click', () => {
   loadReleasedPicklists().catch(e => toast(e.message || String(e), 'err'));
-});
-
-picklistSearch.addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
-    loadReleasedPicklists().catch(err => toast(err.message || String(err), 'err'));
-  }
 });
 
 btnProcessScan.addEventListener('click', () => {
@@ -1478,7 +1537,15 @@ btnToggleCamera.addEventListener('click', () => {
   toggleCamera().catch(e => toast(e.message || String(e), 'err'));
 });
 
-bootstrap().catch(e => toast(e.message || String(e), 'err'));
+window.openOnlinePicklist = openOnlinePicklist;
+
+document.addEventListener('DOMContentLoaded', async () => {
+  try{
+    await bootstrapOnlinePicklists();
+  } catch(e){
+    toast(e.message || String(e), 'err');
+  }
+});
 </script>
 
 </body>
