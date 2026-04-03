@@ -21,9 +21,27 @@ function isProtectedPage(page){
     "stock",
     "outscans",
     "picklists",
-    "picklist_detail"
+    "picklist_detail",
+    "online-picklists"
   ];
   return protectedPages.includes(page);
+}
+
+function getLoginRedirectTarget(){
+  const path = location.pathname || "/";
+  const search = location.search || "";
+  return `/login.html?next=${encodeURIComponent(path + search)}`;
+}
+
+function getPostLoginRedirect(){
+  const params = new URLSearchParams(location.search);
+  const next = params.get("next");
+
+  if(next && next.startsWith("/")){
+    return next;
+  }
+
+  return "/";
 }
 
 async function requireAuth(){
@@ -33,14 +51,14 @@ async function requireAuth(){
 
     if(error){
       console.error("Auth error:", error);
-      location.replace("/login.html");
+      location.replace(getLoginRedirectTarget());
       return null;
     }
 
     const session = data?.session;
 
     if(!session){
-      location.replace("/login.html");
+      location.replace(getLoginRedirectTarget());
       return null;
     }
 
@@ -53,7 +71,7 @@ async function requireAuth(){
 
   }catch(err){
     console.error("requireAuth crash:", err);
-    location.replace("/login.html");
+    location.replace(getLoginRedirectTarget());
     return null;
   }
 }
@@ -109,7 +127,7 @@ function initLogin(){
 
       if(error) throw error;
 
-      location.replace("/index.html");
+      location.replace(getPostLoginRedirect());
 
     }catch(err){
       if(typeof toast === "function"){
@@ -192,10 +210,7 @@ function initUpdatePassword(){
       if(error) throw error;
 
       alert("Wachtwoord bijgewerkt.");
-
-      setTimeout(()=>{
-        location.replace("/login.html");
-      }, 1000);
+      location.replace("/login.html");
 
     }catch(err){
       alert(err.message || String(err));
