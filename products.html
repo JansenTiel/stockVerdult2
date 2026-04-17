@@ -8,12 +8,8 @@
   <link rel="stylesheet" href="/css/theme.css"/>
 
   <style>
-    html.auth-pending body{
-      visibility:hidden;
-    }
-    html.auth-ready body{
-      visibility:visible;
-    }
+    html.auth-pending body{visibility:hidden}
+    html.auth-ready body{visibility:visible}
 
     .products-stack{
       display:grid;
@@ -111,7 +107,7 @@
       background:#fff;
       padding:14px;
       display:grid;
-      grid-template-columns:120px 180px 1fr 120px auto;
+      grid-template-columns:120px 220px 1fr 120px auto;
       gap:12px;
       align-items:center;
     }
@@ -138,6 +134,15 @@
       color:var(--navy);
       word-break:break-word;
       font-size:16px;
+      line-height:1.35;
+    }
+
+    .manage-sku .sku-rv{
+      display:block;
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
     }
 
     .manage-info b{
@@ -207,7 +212,7 @@
     }
 
     .modal-card{
-      width:min(760px,100%);
+      width:min(820px,100%);
       background:#fff;
       border:1px solid var(--border);
       border-radius:20px;
@@ -260,6 +265,19 @@
       display:none !important;
     }
 
+    .pill-lite{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(15,47,79,.08);
+      border:1px solid var(--border);
+      color:var(--navy);
+      font-size:12px;
+      font-weight:800;
+      line-height:1.2;
+    }
+
     #qr_reader_product{
       margin-top:14px;
       border-radius:14px;
@@ -308,6 +326,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="/js/supabase.js"></script>
+  <script src="/js/app.js"></script>
   <script src="/js/auth.js"></script>
 
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
@@ -335,6 +354,7 @@
       <a href="/stock.html">Huidige voorraad</a>
       <a href="/outscans.html">Uitscans</a>
       <a href="/picklists.html">Picklijsten</a>
+      <a href="/online-picklists.html">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -374,6 +394,9 @@
 
         <label for="sku_base">SKU basis</label>
         <input id="sku_base" placeholder="RVD001"/>
+
+        <label for="sku_rv_design" style="margin-top:12px">SKU RV Design</label>
+        <input id="sku_rv_design" placeholder="Bijv. RV-CHAIR-001"/>
 
         <label for="name" style="margin-top:12px">Naam / omschrijving</label>
         <input id="name" placeholder="Ronald Verdult Stoel"/>
@@ -493,7 +516,7 @@
       <div class="row" style="margin-top:14px">
         <div>
           <label for="manage_q">Zoeken</label>
-          <input id="manage_q" placeholder="Zoek op SKU, omschrijving of extra info"/>
+          <input id="manage_q" placeholder="Zoek op SKU basis, SKU RV Design, omschrijving of extra info"/>
         </div>
         <div>
           <label>&nbsp;</label>
@@ -523,13 +546,16 @@
 <div id="editModal" class="modal-backdrop">
   <div class="modal-card">
     <h3 class="modal-title">Artikel bewerken</h3>
-    <div class="modal-sub">Pas hier SKU basis, omschrijving, extra info en productfoto aan.</div>
+    <div class="modal-sub">Pas hier SKU basis, SKU RV Design, omschrijving, extra info en productfoto aan.</div>
     <div class="modal-info" id="editModalInfo"></div>
 
     <div class="edit-grid">
       <div>
         <label for="edit_sku_base">SKU basis</label>
         <input id="edit_sku_base" placeholder="SKU basis"/>
+
+        <label for="edit_sku_rv_design" style="margin-top:12px">SKU RV Design</label>
+        <input id="edit_sku_rv_design" placeholder="SKU RV Design"/>
 
         <label for="edit_name" style="margin-top:12px">Naam / omschrijving</label>
         <input id="edit_name" placeholder="Naam / omschrijving"/>
@@ -582,6 +608,7 @@ const state = {
   lastProduct: null,
   currentDeleteProduct: null,
   currentEditProduct: null,
+  currentEditPhotoFile: null,
   newProductPhotoFile: null,
   scannedProduct: null,
   scannedProductPhotoFile: null
@@ -626,7 +653,7 @@ function toast(msg, type='ok'){
   toast._timer = setTimeout(() => {
     el.className = 'notice';
     el.textContent = '';
-  }, 3200);
+  }, 3500);
 }
 
 function setBusy(button, busy){
@@ -821,7 +848,7 @@ async function loadProducts(selectId = null){
 
   const { data, error } = await client
     .from('products')
-    .select('id, sku_base, name, description, image_path, created_at')
+    .select('id, sku_base, sku_rv_design, name, description, image_path, created_at')
     .order('created_at', { ascending: false });
 
   if(error) throw error;
@@ -842,7 +869,8 @@ async function loadProducts(selectId = null){
   state.products.forEach(p => {
     const opt = document.createElement('option');
     opt.value = p.id;
-    opt.textContent = `${p.sku_base} — ${p.name}`;
+    const rv = p.sku_rv_design ? ` · RV: ${p.sku_rv_design}` : '';
+    opt.textContent = `${p.sku_base} — ${p.name}${rv}`;
     elSelect.appendChild(opt);
   });
 
@@ -870,6 +898,7 @@ async function loadItemCounts(){
 
 async function createProduct(){
   const sku_base = cleanSku(byId('sku_base').value);
+  const sku_rv_design = cleanSku(byId('sku_rv_design').value);
   const name = safeText(byId('name').value);
   const description = safeText(byId('description').value);
 
@@ -883,7 +912,12 @@ async function createProduct(){
   try{
     const { data, error } = await client
       .from('products')
-      .insert([{ sku_base, name, description }])
+      .insert([{
+        sku_base,
+        sku_rv_design: sku_rv_design || null,
+        name,
+        description
+      }])
       .select()
       .single();
 
@@ -894,6 +928,7 @@ async function createProduct(){
     }
 
     byId('sku_base').value = '';
+    byId('sku_rv_design').value = '';
     byId('name').value = '';
     byId('description').value = '';
 
@@ -953,6 +988,7 @@ function renderSticker(product, item){
           <div class="st-customer">Klant: ${escapeHtml(CUSTOMER_NAME)}</div>
           <div class="st-prod">${escapeHtml(product.name)}</div>
           <div class="st-sku">${escapeHtml(item.sku_unique)}</div>
+          ${product.sku_rv_design ? `<div class="st-notes">SKU RV Design: ${escapeHtml(product.sku_rv_design)}</div>` : ''}
           <div class="st-notes">${escapeHtml(product.description || '')}</div>
         </div>
         <div class="st-badge">${escapeHtml(STICKER_PREFIX)}</div>
@@ -1095,6 +1131,96 @@ async function downloadSelectedPDF(){
   }
 }
 
+async function findProductByScannedValue(scannedValue){
+  const raw = cleanSku(scannedValue);
+  if(!raw) return null;
+
+  const possibleBase = raw.includes('-') ? raw.replace(/-\d+$/, '') : raw;
+
+  let { data, error } = await client
+    .from('products')
+    .select('id, sku_base, sku_rv_design, name, description, image_path')
+    .or(`sku_base.eq.${raw},sku_base.eq.${possibleBase},sku_rv_design.eq.${raw},sku_rv_design.eq.${possibleBase}`)
+    .limit(1);
+
+  if(error) throw error;
+
+  if(data && data.length) return data[0];
+
+  const all = state.products || [];
+  return all.find(p =>
+    cleanSku(p.sku_base) === raw ||
+    cleanSku(p.sku_base) === possibleBase ||
+    cleanSku(p.sku_rv_design) === raw ||
+    cleanSku(p.sku_rv_design) === possibleBase
+  ) || null;
+}
+
+async function handleFindProductByScan(){
+  const value = byId('scan_product_sku').value;
+  if(!safeText(value)){
+    toast('Scan of vul eerst een SKU in.', 'err');
+    return;
+  }
+
+  try{
+    const product = await findProductByScannedValue(value);
+    if(!product){
+      state.scannedProduct = null;
+      state.scannedProductPhotoFile = null;
+      byId('scanProductResult').style.display = 'none';
+      byId('btn_save_scan_product_photo').disabled = true;
+      toast('Geen bestaand artikel gevonden.', 'err');
+      return;
+    }
+
+    state.scannedProduct = product;
+    state.scannedProductPhotoFile = null;
+
+    byId('scanProductInfo').innerHTML = `
+      <div><b>SKU basis:</b> ${escapeHtml(product.sku_base || '')}</div>
+      <div><b>SKU RV Design:</b> ${product.sku_rv_design ? escapeHtml(product.sku_rv_design) : '-'}</div>
+      <div><b>Omschrijving:</b> ${escapeHtml(product.name || '')}</div>
+      ${product.description ? `<div><b>Overige vermelding:</b> ${escapeHtml(product.description)}</div>` : ''}
+    `;
+
+    setScannedProductPhotoPreview(null, product.image_path || '');
+    byId('scanProductResult').style.display = 'block';
+    byId('btn_save_scan_product_photo').disabled = true;
+
+    toast('Artikel gevonden.', 'ok');
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }
+}
+
+async function saveScannedProductPhoto(){
+  if(!state.scannedProduct) return toast('Geen product geselecteerd.', 'err');
+  if(!state.scannedProductPhotoFile) return toast('Kies eerst een foto.', 'err');
+
+  const btn = byId('btn_save_scan_product_photo');
+  setBusy(btn, true);
+
+  try{
+    const filePath = await uploadProductImage(state.scannedProduct.id, state.scannedProductPhotoFile);
+    state.scannedProduct.image_path = filePath;
+    state.scannedProductPhotoFile = null;
+
+    byId('scan_product_photo').value = '';
+    byId('scan_product_photo_camera').value = '';
+    setScannedProductPhotoPreview(null, filePath);
+
+    await loadProducts(byId('product_select').value || null);
+    await loadManageList();
+
+    toast('Foto opgeslagen op bestaande SKU.', 'ok');
+  }catch(e){
+    toast(e.message || String(e), 'err');
+  }finally{
+    setBusy(btn, false);
+  }
+}
+
 async function loadManageList(){
   await loadProducts(byId('product_select').value || null);
   await loadItemCounts();
@@ -1114,7 +1240,7 @@ async function loadManageList(){
 
   if(q){
     rows = rows.filter(r =>
-      [r.sku_base, r.name, r.description]
+      [r.sku_base, r.sku_rv_design, r.name, r.description]
         .map(v => String(v || '').toLowerCase())
         .some(v => v.includes(q))
     );
@@ -1128,97 +1254,52 @@ async function loadManageList(){
   listEl.innerHTML = rows.map(r => `
     <div class="manage-row">
       <div class="photo-thumb">${renderPhotoBox(r.image_path, 'Geen foto')}</div>
-      <div class="manage-sku">${escapeHtml(r.sku_base)}</div>
-      <div class="manage-info">
-        <b>${escapeHtml(r.name)}</b>
-        <div class="small">${escapeHtml(r.description || 'Geen overige vermelding')}</div>
+
+      <div class="manage-sku">
+        ${escapeHtml(r.sku_base || '')}
+        <span class="sku-rv">SKU RV Design: ${r.sku_rv_design ? escapeHtml(r.sku_rv_design) : '-'}</span>
       </div>
+
+      <div class="manage-info">
+        <b>${escapeHtml(r.name || '')}</b>
+        <div>${escapeHtml(r.description || '')}</div>
+      </div>
+
       <div class="manage-count">
-        <div class="n">${r.item_count}</div>
+        <div class="n">${Number(r.item_count || 0)}</div>
         <div class="t">items</div>
       </div>
-      <div class="manage-actions">
-        <button
-          class="btn"
-          type="button"
-          data-edit-id="${escapeHtml(r.id)}"
-          data-edit-sku="${escapeHtml(r.sku_base)}"
-          data-edit-name="${escapeHtml(r.name)}"
-          data-edit-description="${escapeHtml(r.description || '')}"
-          data-edit-image="${escapeHtml(r.image_path || '')}"
-          data-edit-count="${r.item_count}"
-        >Bewerken</button>
 
-        <button
-          class="btn danger"
-          type="button"
-          data-delete-id="${escapeHtml(r.id)}"
-          data-delete-sku="${escapeHtml(r.sku_base)}"
-          data-delete-name="${escapeHtml(r.name)}"
-          data-delete-description="${escapeHtml(r.description || '')}"
-          data-delete-image="${escapeHtml(r.image_path || '')}"
-          data-delete-count="${r.item_count}"
-        >Verwijderen</button>
+      <div class="manage-actions">
+        <button class="btn" type="button" data-edit-id="${escapeHtml(r.id)}">Bewerken</button>
+        <button class="btn danger" type="button" data-delete-id="${escapeHtml(r.id)}">Verwijderen</button>
       </div>
     </div>
   `).join('');
 
-  bindEditButtons();
-  bindDeleteButtons();
-}
-
-function bindEditButtons(){
   document.querySelectorAll('[data-edit-id]').forEach(btn => {
     btn.addEventListener('click', () => {
-      state.currentEditProduct = {
-        id: btn.getAttribute('data-edit-id'),
-        sku_base: btn.getAttribute('data-edit-sku'),
-        name: btn.getAttribute('data-edit-name'),
-        description: btn.getAttribute('data-edit-description'),
-        image_path: btn.getAttribute('data-edit-image'),
-        item_count: Number(btn.getAttribute('data-edit-count') || 0)
-      };
+      const product = state.products.find(p => p.id === btn.dataset.editId);
+      if(product) openEditModal(product);
+    });
+  });
 
-      byId('editModalInfo').innerHTML = `
-        <div><b>Huidige SKU basis:</b> ${escapeHtml(state.currentEditProduct.sku_base)}</div>
-        <div><b>Gekoppelde items:</b> ${state.currentEditProduct.item_count}</div>
-      `;
-
-      byId('edit_sku_base').value = state.currentEditProduct.sku_base || '';
-      byId('edit_name').value = state.currentEditProduct.name || '';
-      byId('edit_description').value = state.currentEditProduct.description || '';
-      byId('edit_product_photo').value = '';
-      byId('edit_product_photo_camera').value = '';
-      setEditPhotoPreview(state.currentEditProduct.image_path || '', null);
-      setEditPhotoStatus('');
-      byId('editModal').classList.add('show');
+  document.querySelectorAll('[data-delete-id]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const product = state.products.find(p => p.id === btn.dataset.deleteId);
+      if(product) openDeleteModal(product);
     });
   });
 }
 
-function bindDeleteButtons(){
-  document.querySelectorAll('[data-delete-id]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      state.currentDeleteProduct = {
-        id: btn.getAttribute('data-delete-id'),
-        sku_base: btn.getAttribute('data-delete-sku'),
-        name: btn.getAttribute('data-delete-name'),
-        description: btn.getAttribute('data-delete-description'),
-        image_path: btn.getAttribute('data-delete-image'),
-        item_count: Number(btn.getAttribute('data-delete-count') || 0)
-      };
-
-      byId('deleteModalInfo').innerHTML = `
-        <div><b>SKU basis:</b> ${escapeHtml(state.currentDeleteProduct.sku_base)}</div>
-        <div><b>Omschrijving:</b> ${escapeHtml(state.currentDeleteProduct.name)}</div>
-        <div><b>Overige vermelding:</b> ${escapeHtml(state.currentDeleteProduct.description || '-')}</div>
-        <div><b>Foto aanwezig:</b> ${state.currentDeleteProduct.image_path ? 'Ja' : 'Nee'}</div>
-        <div><b>Gekoppelde items:</b> ${state.currentDeleteProduct.item_count}</div>
-      `;
-
-      byId('deleteModal').classList.add('show');
-    });
-  });
+function openDeleteModal(product){
+  state.currentDeleteProduct = product;
+  byId('deleteModalInfo').innerHTML = `
+    <div><b>SKU basis:</b> ${escapeHtml(product.sku_base || '')}</div>
+    <div><b>SKU RV Design:</b> ${product.sku_rv_design ? escapeHtml(product.sku_rv_design) : '-'}</div>
+    <div><b>Omschrijving:</b> ${escapeHtml(product.name || '')}</div>
+  `;
+  byId('deleteModal').classList.add('show');
 }
 
 function closeDeleteModal(){
@@ -1226,82 +1307,33 @@ function closeDeleteModal(){
   byId('deleteModal').classList.remove('show');
 }
 
-function closeEditModal(){
-  state.currentEditProduct = null;
-  byId('editModal').classList.remove('show');
-}
-
-async function saveProductEdit(){
-  if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
-  if(!client) return toast('Supabase client ontbreekt.', 'err');
-
-  const sku_base = cleanSku(byId('edit_sku_base').value);
-  const name = safeText(byId('edit_name').value);
-  const description = safeText(byId('edit_description').value);
-
-  if(!sku_base) return toast('Vul een SKU basis in.', 'err');
-  if(!name) return toast('Vul een naam / omschrijving in.', 'err');
-
-  const btn = byId('btnConfirmEdit');
-  setBusy(btn, true);
-
-  try{
-    const { error } = await client
-      .from('products')
-      .update({ sku_base, name, description })
-      .eq('id', state.currentEditProduct.id);
-
-    if(error) throw error;
-
-    const editedId = state.currentEditProduct.id;
-
-    closeEditModal();
-    clearPreview();
-    await loadManageList();
-    await loadProducts(editedId);
-
-    toast(`Artikel ${sku_base} is bijgewerkt.`, 'ok');
-  }catch(e){
-    toast(e.message || String(e), 'err');
-  }finally{
-    setBusy(btn, false);
-  }
-}
-
-async function deleteProductDefinitive(){
-  if(!state.currentDeleteProduct) return toast('Geen SKU geselecteerd.', 'err');
-  if(!client) return toast('Supabase client ontbreekt.', 'err');
+async function confirmDelete(){
+  const product = state.currentDeleteProduct;
+  if(!product) return;
 
   const btn = byId('btnConfirmDelete');
   setBusy(btn, true);
 
   try{
-    const currentDeleteProduct = { ...state.currentDeleteProduct };
-
-    if(currentDeleteProduct.item_count > 0){
-      const ok = confirm(
-        `SKU ${currentDeleteProduct.sku_base} heeft nog ${currentDeleteProduct.item_count} gekoppelde items. Door verwijderen worden ook gekoppelde stickers/items verwijderd. Doorgaan?`
-      );
-      if(!ok) return;
-    }
-
-    if(currentDeleteProduct.image_path){
-      await client.storage.from(STORAGE_BUCKET).remove([currentDeleteProduct.image_path]);
+    if(product.image_path){
+      try{
+        await deleteProductImage(product.id, product.image_path);
+      }catch(e){
+        console.warn('Foto verwijderen mislukte:', e);
+      }
     }
 
     const { error } = await client
       .from('products')
       .delete()
-      .eq('id', currentDeleteProduct.id);
+      .eq('id', product.id);
 
     if(error) throw error;
 
     closeDeleteModal();
-    clearPreview();
-    await loadManageList();
     await loadProducts();
-
-    toast(`SKU ${currentDeleteProduct.sku_base} is verwijderd.`, 'ok');
+    await loadManageList();
+    toast('Artikel verwijderd.', 'ok');
   }catch(e){
     toast(e.message || String(e), 'err');
   }finally{
@@ -1309,252 +1341,141 @@ async function deleteProductDefinitive(){
   }
 }
 
-function normalizeScannedToSkuBase(raw){
-  const value = safeText(raw).toUpperCase();
-  if(!value) return '';
+function openEditModal(product){
+  state.currentEditProduct = product;
+  state.currentEditPhotoFile = null;
 
-  if(value.includes('_')){
-    return value.split('_')[0].trim();
-  }
+  byId('edit_sku_base').value = product.sku_base || '';
+  byId('edit_sku_rv_design').value = product.sku_rv_design || '';
+  byId('edit_name').value = product.name || '';
+  byId('edit_description').value = product.description || '';
 
-  if(value.includes('-')){
-    const parts = value.split('-');
-    if(parts.length > 1 && /^\d+$/.test(parts[parts.length - 1])){
-      parts.pop();
-      return parts.join('-').trim();
-    }
-  }
+  byId('editModalInfo').innerHTML = `
+    <div><b>Huidige SKU basis:</b> ${escapeHtml(product.sku_base || '')}</div>
+    <div><b>Huidige SKU RV Design:</b> ${product.sku_rv_design ? escapeHtml(product.sku_rv_design) : '-'}</div>
+  `;
 
-  return value.trim();
+  setEditPhotoPreview(product.image_path || '', null);
+  setEditPhotoStatus('');
+  byId('edit_product_photo').value = '';
+  byId('edit_product_photo_camera').value = '';
+
+  byId('editModal').classList.add('show');
 }
 
-async function findProductByScannedSku(){
-  const raw = safeText(byId('scan_product_sku').value);
-  if(!raw) return toast('Scan of vul eerst een SKU in.', 'err');
-  if(!client) return toast('Supabase client ontbreekt.', 'err');
+function closeEditModal(){
+  state.currentEditProduct = null;
+  state.currentEditPhotoFile = null;
+  byId('editModal').classList.remove('show');
+}
 
-  const skuBase = normalizeScannedToSkuBase(raw);
+async function confirmEdit(){
+  const product = state.currentEditProduct;
+  if(!product) return;
+
+  const btn = byId('btnConfirmEdit');
+  setBusy(btn, true);
 
   try{
-    const { data, error } = await client
+    const sku_base = cleanSku(byId('edit_sku_base').value);
+    const sku_rv_design = cleanSku(byId('edit_sku_rv_design').value);
+    const name = safeText(byId('edit_name').value);
+    const description = safeText(byId('edit_description').value);
+
+    if(!sku_base) throw new Error('Vul een SKU basis in.');
+    if(!name) throw new Error('Vul een naam / omschrijving in.');
+
+    const { error } = await client
       .from('products')
-      .select('id, sku_base, name, description, image_path, created_at')
-      .eq('sku_base', skuBase)
-      .maybeSingle();
+      .update({
+        sku_base,
+        sku_rv_design: sku_rv_design || null,
+        name,
+        description
+      })
+      .eq('id', product.id);
 
     if(error) throw error;
 
-    if(!data){
-      state.scannedProduct = null;
-      state.scannedProductPhotoFile = null;
-      byId('scanProductResult').style.display = 'none';
-      toast(`Geen product gevonden voor ${skuBase}.`, 'err');
-      return;
+    if(state.currentEditPhotoFile){
+      await uploadProductImage(product.id, state.currentEditPhotoFile);
     }
 
-    state.scannedProduct = data;
-    state.scannedProductPhotoFile = null;
+    closeEditModal();
+    await loadProducts(product.id);
+    await loadManageList();
 
-    byId('scanProductInfo').innerHTML = `
-      <div><b>SKU basis:</b> ${escapeHtml(data.sku_base)}</div>
-      <div><b>Omschrijving:</b> ${escapeHtml(data.name || '-')}</div>
-      <div><b>Overige vermelding:</b> ${escapeHtml(data.description || '-')}</div>
-      <div><b>Bestaande foto:</b> ${data.image_path ? 'Ja' : 'Nee'}</div>
-    `;
-
-    setScannedProductPhotoPreview(null, data.image_path || '');
-    byId('scanProductResult').style.display = 'block';
-    byId('btn_save_scan_product_photo').disabled = true;
-
-    toast(`SKU ${data.sku_base} gevonden.`, 'ok');
+    toast('Artikel bijgewerkt.', 'ok');
   }catch(e){
     toast(e.message || String(e), 'err');
+  }finally{
+    setBusy(btn, false);
   }
 }
 
-function handleScannedProductPhotoInput(file){
-  if(!file) return;
-  state.scannedProductPhotoFile = file;
-  setScannedProductPhotoPreview(file, '');
-  byId('btn_save_scan_product_photo').disabled = false;
-}
-
-async function saveScannedProductPhoto(){
-  if(!state.scannedProduct) return toast('Er is nog geen SKU gevonden.', 'err');
-  if(!state.scannedProductPhotoFile) return toast('Maak of kies eerst een foto.', 'err');
+async function deleteEditPhoto(){
+  const product = state.currentEditProduct;
+  if(!product) return toast('Geen product geselecteerd.', 'err');
 
   try{
-    const path = await uploadProductImage(state.scannedProduct.id, state.scannedProductPhotoFile);
-    state.scannedProduct.image_path = path;
-
-    setScannedProductPhotoPreview(null, path);
-    byId('btn_save_scan_product_photo').disabled = true;
-
+    await deleteProductImage(product.id, product.image_path || null);
+    product.image_path = null;
+    state.currentEditPhotoFile = null;
+    setEditPhotoPreview('', null);
+    setEditPhotoStatus('Foto verwijderd.');
+    await loadProducts(product.id);
     await loadManageList();
-    await loadProducts(state.scannedProduct.id);
-
-    toast(`Foto opgeslagen op SKU ${state.scannedProduct.sku_base}.`, 'ok');
   }catch(e){
     toast(e.message || String(e), 'err');
   }
 }
 
-async function toggleProductQR(){
-  if(typeof Html5Qrcode !== 'function'){
-    return toast('QR library ontbreekt.', 'err');
+async function initProductScanner(){
+  if(qrProductRunning){
+    await stopProductScanner();
+    return;
   }
 
-  if(!qrProduct){
-    qrProduct = new Html5Qrcode('qr_reader_product');
-  }
+  qrReaderProduct.classList.remove('hidden');
 
-  if(!qrProductRunning){
-    qrReaderProduct.classList.remove('hidden');
+  qrProduct = new Html5Qrcode('qr_reader_product');
+  const config = { fps: 10, qrbox: 220 };
+
+  try{
+    await qrProduct.start(
+      { facingMode: 'environment' },
+      config,
+      async decodedText => {
+        byId('scan_product_sku').value = decodedText;
+        await stopProductScanner();
+        await handleFindProductByScan();
+      }
+    );
+    qrProductRunning = true;
     byId('btn_start_product_scan').textContent = 'Stop QR';
-
-    try{
-      const cams = await Html5Qrcode.getCameras();
-      if(!cams || !cams.length) throw new Error('Geen camera gevonden');
-
-      const preferred = cams.find(c => /back|rear|environment/i.test(c.label)) || cams[0];
-
-      qrProductRunning = true;
-
-      await qrProduct.start(
-        preferred.id,
-        { fps: 10, qrbox: { width: 260, height: 260 } },
-        async (decodedText) => {
-          const fixed = cleanSku(normalizeScannedToSkuBase(decodedText));
-          byId('scan_product_sku').value = fixed;
-
-          await stopProductQR().catch(() => {});
-          await findProductByScannedSku();
-
-          toast('QR / barcode gelezen.', 'ok');
-        }
-      );
-    }catch(e){
-      qrProductRunning = false;
-      qrReaderProduct.classList.add('hidden');
-      byId('btn_start_product_scan').textContent = 'Start QR';
-      toast('Camera start niet. Gebruik https en sta camera toe.', 'err');
-    }
-  } else {
-    await stopProductQR();
+  }catch(e){
+    qrReaderProduct.classList.add('hidden');
+    toast('QR scanner kon niet starten.', 'err');
   }
 }
 
-async function stopProductQR(){
+async function stopProductScanner(){
   try{
     if(qrProduct && qrProductRunning){
       await qrProduct.stop();
+      await qrProduct.clear();
     }
-  } catch(_) {}
-
-  qrProductRunning = false;
-  qrReaderProduct.classList.add('hidden');
-  byId('btn_start_product_scan').textContent = 'Start QR';
-}
-
-async function handleEditPhotoUpload(file){
-  if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
-  if(!file) return;
-
-  const panel = byId('editPhotoPanel');
-  panel.classList.add('uploading');
-  setEditPhotoStatus('Foto wordt gecomprimeerd en geüpload...');
-
-  try{
-    const path = await uploadProductImage(state.currentEditProduct.id, file);
-    state.currentEditProduct.image_path = path;
-    setEditPhotoPreview(path, null);
-    setEditPhotoStatus('Foto opgeslagen.');
-
-    await loadManageList();
-    await loadProducts(state.currentEditProduct.id);
-
-    toast('Productfoto bijgewerkt.', 'ok');
   }catch(e){
-    setEditPhotoStatus('');
-    toast(e.message || String(e), 'err');
+    console.warn(e);
   }finally{
-    panel.classList.remove('uploading');
-    byId('edit_product_photo').value = '';
-    byId('edit_product_photo_camera').value = '';
+    qrProductRunning = false;
+    qrProduct = null;
+    qrReaderProduct.classList.add('hidden');
+    byId('btn_start_product_scan').textContent = 'Start QR';
   }
 }
 
-async function handleDeleteEditPhoto(){
-  if(!state.currentEditProduct) return toast('Geen artikel geselecteerd.', 'err');
-  if(!state.currentEditProduct.image_path) return toast('Er is geen foto om te verwijderen.', 'err');
-
-  const ok = confirm('Weet je zeker dat je de productfoto wilt verwijderen?');
-  if(!ok) return;
-
-  const panel = byId('editPhotoPanel');
-  panel.classList.add('uploading');
-  setEditPhotoStatus('Foto wordt verwijderd...');
-
-  try{
-    await deleteProductImage(state.currentEditProduct.id, state.currentEditProduct.image_path);
-    state.currentEditProduct.image_path = '';
-    setEditPhotoPreview('', null);
-    setEditPhotoStatus('Foto verwijderd.');
-
-    await loadManageList();
-    await loadProducts(state.currentEditProduct.id);
-
-    toast('Productfoto verwijderd.', 'ok');
-  }catch(e){
-    setEditPhotoStatus('');
-    toast(e.message || String(e), 'err');
-  }finally{
-    panel.classList.remove('uploading');
-  }
-}
-
-function bindBasicEvents(){
-  byId('btn_create').addEventListener('click', createProduct);
-
-  byId('btn_reload').addEventListener('click', async () => {
-    try{
-      await loadProducts();
-      await loadManageList();
-    }catch(e){
-      toast(e.message || String(e), 'err');
-    }
-  });
-
-  byId('btn_generate').addEventListener('click', generateStickers);
-  byId('btn_select_all').addEventListener('click', () => setAllChecks(true));
-  byId('btn_select_none').addEventListener('click', () => setAllChecks(false));
-  byId('btn_clear').addEventListener('click', clearPreview);
-  byId('btn_pdf').addEventListener('click', downloadSelectedPDF);
-
-  byId('btn_manage_refresh').addEventListener('click', () => {
-    loadManageList().catch(e => toast(e.message || String(e), 'err'));
-  });
-
-  byId('manage_q').addEventListener('keydown', e => {
-    if(e.key === 'Enter'){
-      loadManageList().catch(err => toast(err.message || String(err), 'err'));
-    }
-  });
-
-  byId('btnCancelDelete').addEventListener('click', closeDeleteModal);
-  byId('btnConfirmDelete').addEventListener('click', deleteProductDefinitive);
-  byId('btnCancelEdit').addEventListener('click', closeEditModal);
-  byId('btnConfirmEdit').addEventListener('click', saveProductEdit);
-  byId('btnDeletePhoto').addEventListener('click', handleDeleteEditPhoto);
-
-  byId('deleteModal').addEventListener('click', e => {
-    if(e.target === byId('deleteModal')) closeDeleteModal();
-  });
-
-  byId('editModal').addEventListener('click', e => {
-    if(e.target === byId('editModal')) closeEditModal();
-  });
-
+function bindFileInputs(){
   byId('new_product_photo').addEventListener('change', e => {
     const file = e.target.files?.[0] || null;
     state.newProductPhotoFile = file;
@@ -1575,67 +1496,103 @@ function bindBasicEvents(){
   });
 
   byId('edit_product_photo').addEventListener('change', e => {
-    handleEditPhotoUpload(e.target.files?.[0] || null);
+    const file = e.target.files?.[0] || null;
+    state.currentEditPhotoFile = file;
+    setEditPhotoPreview('', file);
+    setEditPhotoStatus(file ? 'Nieuwe foto geselecteerd.' : '');
   });
 
   byId('edit_product_photo_camera').addEventListener('change', e => {
-    handleEditPhotoUpload(e.target.files?.[0] || null);
-  });
-
-  byId('btn_start_product_scan').addEventListener('click', () => {
-    toggleProductQR().catch(e => toast(e.message || String(e), 'err'));
-  });
-
-  byId('btn_find_product_by_scan').addEventListener('click', () => {
-    findProductByScannedSku().catch(e => toast(e.message || String(e), 'err'));
-  });
-
-  byId('scan_product_sku').addEventListener('keydown', e => {
-    if(e.key === 'Enter'){
-      findProductByScannedSku().catch(err => toast(err.message || String(err), 'err'));
-    }
-  });
-
-  byId('scan_product_photo_camera').addEventListener('change', e => {
-    handleScannedProductPhotoInput(e.target.files?.[0] || null);
+    const file = e.target.files?.[0] || null;
+    state.currentEditPhotoFile = file;
+    setEditPhotoPreview('', file);
+    setEditPhotoStatus(file ? 'Nieuwe foto geselecteerd.' : '');
   });
 
   byId('scan_product_photo').addEventListener('change', e => {
-    handleScannedProductPhotoInput(e.target.files?.[0] || null);
+    const file = e.target.files?.[0] || null;
+    state.scannedProductPhotoFile = file;
+    setScannedProductPhotoPreview(file, state.scannedProduct?.image_path || '');
+    byId('btn_save_scan_product_photo').disabled = !file;
+  });
+
+  byId('scan_product_photo_camera').addEventListener('change', e => {
+    const file = e.target.files?.[0] || null;
+    state.scannedProductPhotoFile = file;
+    setScannedProductPhotoPreview(file, state.scannedProduct?.image_path || '');
+    byId('btn_save_scan_product_photo').disabled = !file;
   });
 
   byId('btn_clear_scan_product_photo').addEventListener('click', () => {
     state.scannedProductPhotoFile = null;
-    byId('scan_product_photo_camera').value = '';
     byId('scan_product_photo').value = '';
+    byId('scan_product_photo_camera').value = '';
     setScannedProductPhotoPreview(null, state.scannedProduct?.image_path || '');
     byId('btn_save_scan_product_photo').disabled = true;
   });
-
-  byId('btn_save_scan_product_photo').addEventListener('click', () => {
-    saveScannedProductPhoto().catch(e => toast(e.message || String(e), 'err'));
-  });
 }
 
-async function init(){
-  if(!client){
-    toast('Supabase client ontbreekt. Controleer /js/supabase.js', 'err');
-    return;
-  }
+function bindButtons(){
+  byId('btn_create').addEventListener('click', createProduct);
+  byId('btn_reload').addEventListener('click', async () => {
+    await loadProducts(byId('product_select').value || null);
+    await loadManageList();
+    toast('Lijst ververst.', 'ok');
+  });
 
-  bindBasicEvents();
+  byId('btn_generate').addEventListener('click', generateStickers);
+  byId('btn_select_all').addEventListener('click', () => setAllChecks(true));
+  byId('btn_select_none').addEventListener('click', () => setAllChecks(false));
+  byId('btn_clear').addEventListener('click', clearPreview);
+  byId('btn_pdf').addEventListener('click', downloadSelectedPDF);
 
+  byId('btn_start_product_scan').addEventListener('click', initProductScanner);
+  byId('btn_find_product_by_scan').addEventListener('click', handleFindProductByScan);
+  byId('btn_save_scan_product_photo').addEventListener('click', saveScannedProductPhoto);
+
+  byId('btn_manage_refresh').addEventListener('click', loadManageList);
+  byId('manage_q').addEventListener('input', loadManageList);
+
+  byId('btnConfirmDelete').addEventListener('click', confirmDelete);
+  byId('btnCancelDelete').addEventListener('click', closeDeleteModal);
+
+  byId('btnConfirmEdit').addEventListener('click', confirmEdit);
+  byId('btnCancelEdit').addEventListener('click', closeEditModal);
+  byId('btnDeletePhoto').addEventListener('click', deleteEditPhoto);
+}
+
+(async function init(){
   try{
+    if(typeof requireAuth === 'function'){
+      await requireAuth();
+    }
+
+    if(typeof setActiveNav === 'function'){
+      setActiveNav();
+    }
+
+    if(client?.auth?.getUser){
+      const { data } = await client.auth.getUser();
+      if(byId('userEmail')){
+        byId('userEmail').textContent = data?.user?.email || '';
+      }
+    }
+
+    bindFileInputs();
+    bindButtons();
+
     await loadProducts();
     await loadManageList();
-    updateButtons();
+
+    document.documentElement.classList.remove('auth-pending');
+    document.documentElement.classList.add('auth-ready');
   }catch(e){
+    console.error(e);
     toast(e.message || String(e), 'err');
+    document.documentElement.classList.remove('auth-pending');
+    document.documentElement.classList.add('auth-ready');
   }
-}
-
-init();
+})();
 </script>
-
 </body>
 </html>
