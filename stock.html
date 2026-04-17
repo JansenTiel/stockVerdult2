@@ -74,7 +74,7 @@
       padding:14px 16px;
       text-align:left;
       display:grid;
-      grid-template-columns:72px 230px minmax(260px,1fr) 120px 36px;
+      grid-template-columns:72px 220px minmax(260px,1fr) 130px 36px;
       gap:14px;
       align-items:center;
     }
@@ -105,12 +105,24 @@
     }
 
     .sg-sku{
+      min-width:0;
+    }
+    .sg-sku .sku-main{
       font-size:18px;
       font-weight:900;
       color:var(--navy);
       word-break:break-word;
       line-height:1.15;
     }
+    .sg-sku .sku-rv{
+      margin-top:4px;
+      font-size:12px;
+      color:var(--muted);
+      font-weight:800;
+      line-height:1.25;
+      word-break:break-word;
+    }
+
     .sg-name{min-width:0}
     .sg-name b{
       display:block;
@@ -259,7 +271,7 @@
       color:var(--muted);
       text-transform:uppercase;
       letter-spacing:.04em;
-      min-width:95px;
+      min-width:110px;
     }
     .mobile-v{
       text-align:right;
@@ -282,6 +294,19 @@
       width:18px;
       height:18px;
       accent-color:var(--navy);
+    }
+
+    .pill-sku-rv{
+      display:inline-flex;
+      align-items:center;
+      padding:4px 10px;
+      border-radius:999px;
+      background:rgba(15,47,79,.08);
+      color:var(--navy);
+      border:1px solid var(--border);
+      font-size:12px;
+      font-weight:800;
+      line-height:1.2;
     }
 
     .modal-backdrop{
@@ -459,13 +484,13 @@
     </div>
 
     <nav class="nav">
-      <a href="/">Dashboard</a>
-      <a href="/products">Artikelen + Stickers</a>
-      <a href="/scan">In-/Uitscan</a>
-      <a class="active" href="/stock">Huidige voorraad</a>
-      <a href="/outscans">Uitscans</a>
-      <a href="/picklists">Picklijsten</a>
-      <a href="/online-picklists">Online picklijsten</a>
+      <a href="/index.html">Dashboard</a>
+      <a href="/products.html">Artikelen + Stickers</a>
+      <a href="/scan.html">In-/Uitscan</a>
+      <a class="active" href="/stock.html">Huidige voorraad</a>
+      <a href="/outscans.html">Uitscans</a>
+      <a href="/picklists.html">Picklijsten</a>
+      <a href="/online-picklists.html">Online picklijsten</a>
     </nav>
 
     <div class="rightbar">
@@ -490,9 +515,10 @@
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
       Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
-      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt, met standaard <b>customer_name = Ronald Verdult Design</b>, en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
+      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt, met standaard <b>customer_name = Ronald Verdult Design</b>,
+      en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
       <br><br>
-      <b>Eventuele foutmeldingen worden direct weergegeven.</b>
+      In deze versie is ook de extra kolom <b>SKU RV Design</b> zichtbaar in overzicht, detail en export.
     </div>
 
     <p class="page-url">
@@ -503,7 +529,7 @@
     <div class="stock-toolbar" style="margin-top:14px">
       <div>
         <label for="q">Zoeken</label>
-        <input id="q" placeholder="SKU / omschrijving / locatie / unieke SKU"/>
+        <input id="q" placeholder="SKU basis / SKU RV Design / omschrijving / locatie / unieke SKU"/>
       </div>
 
       <div>
@@ -541,7 +567,8 @@
       </div>
 
       <div class="bulk-note">
-        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken in de 2-uurs mailqueue gezet, inclusief picklijstnummer en online picklijstlink.
+        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken in de 2-uurs mailqueue gezet,
+        inclusief picklijstnummer en online picklijstlink.
       </div>
     </div>
 
@@ -647,8 +674,6 @@ function byIdLocal(id){
 }
 
 function showToast(msg, type='ok'){
-  console.log('showToast:', type, msg);
-
   const toastEl = document.getElementById('toast');
   if(toastEl){
     toastEl.textContent = msg;
@@ -678,6 +703,14 @@ function buildOnlinePickUrlFromNo(pickNo){
   return url.toString();
 }
 
+function safeText(v){
+  return String(v ?? '').trim();
+}
+
+function normalizeText(v){
+  return safeText(v).toLowerCase();
+}
+
 function groupItems(items){
   const map = new Map();
 
@@ -687,6 +720,7 @@ function groupItems(items){
     if(!map.has(key)){
       map.set(key, {
         sku_base: it.sku_base || '',
+        sku_rv_design: it.sku_rv_design || '',
         name: it.name || '',
         description: it.description || '',
         image_path: it.image_path || '',
@@ -813,6 +847,7 @@ function makeBodyPhotoHtml(group){
       <div class="stock-body-meta">
         <div class="stock-meta-card">
           <div><b>SKU basis:</b> ${esc(group.sku_base)}</div>
+          <div><b>SKU RV Design:</b> ${group.sku_rv_design ? esc(group.sku_rv_design) : '-'}</div>
           <div><b>Omschrijving:</b> ${esc(group.name || '')}</div>
           ${group.description ? `<div><b>Overige vermelding:</b> ${esc(group.description)}</div>` : ''}
           <div><b>Op voorraad:</b> ${group.items.length}</div>
@@ -891,13 +926,19 @@ function makeGroupHtml(group, idx){
   const desc = group.description ? esc(group.description) : 'Geen extra vermelding';
   const bodyId = `group_${idx}`;
   const hasPhoto = !!getProductImageUrl(group.image_path);
+  const skuRvChip = group.sku_rv_design
+    ? `<div class="sku-rv">RV Design: ${esc(group.sku_rv_design)}</div>`
+    : `<div class="sku-rv">RV Design: -</div>`;
 
   return `
     <div class="stock-group">
       <button class="stock-group-head" type="button" data-target="${bodyId}" aria-expanded="false">
         ${makeHeaderPhotoHtml(group)}
 
-        <div class="sg-sku">${esc(group.sku_base)}</div>
+        <div class="sg-sku">
+          <div class="sku-main">${esc(group.sku_base)}</div>
+          ${skuRvChip}
+        </div>
 
         <div class="sg-name">
           <b>${esc(group.name)}</b>
@@ -913,7 +954,17 @@ function makeGroupHtml(group, idx){
       </button>
 
       <div class="stock-group-body" id="${bodyId}">
-        ${hasPhoto ? makeBodyPhotoHtml(group) : ''}
+        ${hasPhoto ? makeBodyPhotoHtml(group) : `
+          <div class="stock-body-meta" style="margin-top:14px;margin-bottom:12px">
+            <div class="stock-meta-card">
+              <div><b>SKU basis:</b> ${esc(group.sku_base)}</div>
+              <div><b>SKU RV Design:</b> ${group.sku_rv_design ? esc(group.sku_rv_design) : '-'}</div>
+              <div><b>Omschrijving:</b> ${esc(group.name || '')}</div>
+              ${group.description ? `<div><b>Overige vermelding:</b> ${esc(group.description)}</div>` : ''}
+              <div><b>Op voorraad:</b> ${group.items.length}</div>
+            </div>
+          </div>
+        `}
         ${makeSkuBulkBar(group)}
 
         <div class="table-wrap desktop-detail-table" style="margin-top:12px">
@@ -925,6 +976,7 @@ function makeGroupHtml(group, idx){
                 <th>Unieke SKU</th>
                 <th>Locatie</th>
                 <th>Status</th>
+                <th>SKU RV Design</th>
                 <th>Actie</th>
               </tr>
             </thead>
@@ -936,6 +988,7 @@ function makeGroupHtml(group, idx){
                   <td><b>${esc(it.sku_unique)}</b></td>
                   <td>${esc(it.location || '')}</td>
                   <td>${esc(it.status || '')}</td>
+                  <td>${it.sku_rv_design ? `<span class="pill-sku-rv">${esc(it.sku_rv_design)}</span>` : '-'}</td>
                   <td>
                     <div class="detail-actions">
                       ${makeActionButtons(it)}
@@ -966,6 +1019,10 @@ function makeGroupHtml(group, idx){
               <div class="mobile-line">
                 <div class="mobile-k">Status</div>
                 <div class="mobile-v">${esc(it.status || '')}</div>
+              </div>
+              <div class="mobile-line">
+                <div class="mobile-k">SKU RV Design</div>
+                <div class="mobile-v">${it.sku_rv_design ? esc(it.sku_rv_design) : '-'}</div>
               </div>
               <div class="mobile-line" style="margin-top:10px">
                 <div class="detail-actions">
@@ -1105,265 +1162,278 @@ async function createNavigationPicklist(actionType, visibleItems, options = {}){
   };
 
   const { data: pickOrder, error: pickOrderErr } = await client
-    .from('pick_orders')
+    .from('orders')
     .insert([pickOrderPayload])
-    .select()
+    .select('id, order_no')
     .single();
 
   if(pickOrderErr) throw pickOrderErr;
 
   const grouped = groupItemsForPicklist(visibleItems);
+  if(grouped.length){
+    const lineRows = grouped.map(row => ({
+      order_id: pickOrder.id,
+      sku_base: row.sku_base,
+      product_name: row.product_name,
+      qty: row.qty
+    }));
 
-  const lineRows = grouped.map(row => ({
-    pick_order_id: pickOrder.id,
-    source_order_no: actionType === 'SEND_TO_HULST' ? 'HULST' : (orderNo || 'ZONDER ORDER'),
-    sku_base: row.sku_base,
-    product_name: row.product_name || '',
-    qty_needed: row.qty,
-    qty_picked: 0
-  }));
-
-  if(lineRows.length){
     const { error: lineErr } = await client
-      .from('pick_order_lines')
+      .from('order_lines')
       .insert(lineRows);
 
     if(lineErr) throw lineErr;
   }
 
-  return {
-    pickNo,
-    pickId: pickOrder.id,
-    pickUrl: buildOnlinePickUrlFromNo(pickNo)
-  };
-}
+  const onlineUrl = buildOnlinePickUrlFromNo(pickNo);
 
-async function queueSalesBatchMail(actionType, visibleItems, options = {}){
-  if(String(currentUserEmail || '').toLowerCase() !== 'sales@ronaldverdultdesign.nl') return;
-  if(!Array.isArray(visibleItems) || !visibleItems.length) return;
-  if(!(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST')) return;
-
-  const orderNo = String(options.orderNo || '').trim();
-  const destination = String(options.destination || '').trim();
-  const note = String(options.note || '').trim();
-  const pickNo = String(options.pickNo || '').trim();
-  const pickUrl = String(options.pickUrl || '').trim() || null;
-
-  const grouped = groupItemsForPicklist(visibleItems);
-
-  const queueRows = grouped.map(row => ({
-    requested_by_email: currentUserEmail,
-    action_type: actionType,
+  const queuePayload = {
+    type: actionType,
+    pick_no: pickNo,
+    customer_name: DEFAULT_CUSTOMER_NAME,
     order_no: orderNo || null,
     destination: destination || null,
-    note: buildMovementNote(note, pickNo),
-    sku_base: row.sku_base,
-    product_name: row.product_name || null,
-    qty: row.qty,
-    pick_no: pickNo || null,
-    pick_url: pickUrl
-  }));
+    note: note || null,
+    online_pick_url: onlineUrl,
+    created_by: currentUserEmail || null
+  };
 
-  if(queueRows.length){
-    const { error } = await client
-      .from('stock_mail_queue')
-      .insert(queueRows);
+  const { error: queueErr } = await client
+    .from('mail_queue')
+    .insert([queuePayload]);
 
-    if(error) throw error;
+  if(queueErr){
+    console.warn('mail_queue insert failed', queueErr);
   }
+
+  return { pickNo, onlineUrl };
 }
 
-function openActionModal(actionType, itemIds){
-  if(!itemIds || !itemIds.length){
-    showToast('Geen artikelen geselecteerd.', 'err');
-    return;
+function openActionModal(context){
+  currentActionContext = context || null;
+  if(!currentActionContext) return;
+
+  const titleMap = {
+    OUT: 'Artikel uitboeken',
+    ALLOCATE_ORDER: 'Toewijzen aan order',
+    SEND_TO_HULST: 'Naar Hulst sturen'
+  };
+
+  const subMap = {
+    OUT: 'Dit artikel wordt direct uitgeboekt.',
+    ALLOCATE_ORDER: 'De geselecteerde artikelen worden afgeboekt en gekoppeld aan een orderverzoek.',
+    SEND_TO_HULST: 'De geselecteerde artikelen worden afgeboekt en als Hulst-verzoek verwerkt.'
+  };
+
+  byIdLocal('actionModalTitle').textContent = titleMap[currentActionContext.type] || 'Actie uitvoeren';
+  byIdLocal('actionModalSub').textContent = subMap[currentActionContext.type] || 'Voer de gegevens in voor deze actie.';
+
+  const items = currentActionContext.items || [];
+  const infoLines = [];
+
+  if(currentActionContext.scope === 'row' && items[0]){
+    infoLines.push(`<div><b>SKU basis:</b> ${esc(items[0].sku_base || '')}</div>`);
+    infoLines.push(`<div><b>SKU RV Design:</b> ${items[0].sku_rv_design ? esc(items[0].sku_rv_design) : '-'}</div>`);
+    infoLines.push(`<div><b>Unieke SKU:</b> ${esc(items[0].sku_unique || '')}</div>`);
+    infoLines.push(`<div><b>Locatie:</b> ${esc(items[0].location || '')}</div>`);
+  }else{
+    infoLines.push(`<div><b>Aantal geselecteerd:</b> ${items.length}</div>`);
+    const uniqueSkus = [...new Set(items.map(x => x.sku_base).filter(Boolean))];
+    if(uniqueSkus.length){
+      infoLines.push(`<div><b>SKU's:</b> ${esc(uniqueSkus.join(', '))}</div>`);
+    }
   }
 
-  currentActionContext = { actionType, itemIds: [...itemIds] };
+  byIdLocal('actionModalInfo').innerHTML = infoLines.join('');
 
-  const items = itemIds.map(findItemById).filter(Boolean);
-  const skuBases = [...new Set(items.map(it => it.sku_base))];
+  const orderWrap = byIdLocal('actionOrderWrap');
+  const destWrap = byIdLocal('actionDestinationWrap');
 
-  const titles = {
-    OUT: 'Artikelen uitboeken',
-    ALLOCATE_ORDER: 'Artikelen toewijzen aan order',
-    SEND_TO_HULST: 'Artikelen naar Hulst sturen'
-  };
+  orderWrap.classList.toggle('hidden', currentActionContext.type !== 'ALLOCATE_ORDER');
+  destWrap.classList.toggle('hidden', currentActionContext.type !== 'SEND_TO_HULST');
 
-  const subs = {
-    OUT: 'Vul het ordernummer in. De geselecteerde artikelen worden direct uit de huidige voorraad gehaald en toegevoegd aan de uitscans.',
-    ALLOCATE_ORDER: 'Vul het ordernummer in. De geselecteerde artikelen worden direct afgeboekt. Daarnaast wordt automatisch een navigatie-picklijst aangemaakt.',
-    SEND_TO_HULST: 'De geselecteerde artikelen worden direct afgeboekt voor Hulst. Daarnaast wordt automatisch een navigatie-picklijst aangemaakt.'
-  };
-
-  byIdLocal('actionModalTitle').textContent = titles[actionType] || 'Actie uitvoeren';
-  byIdLocal('actionModalSub').textContent = subs[actionType] || '';
-
-  byIdLocal('actionModalInfo').innerHTML = `
-    <div><b>Aantal artikelen:</b> ${itemIds.length}</div>
-    <div><b>SKU's:</b> ${esc(skuBases.join(', '))}</div>
-    <div><b>Uitgevoerd door:</b> ${esc(currentUserEmail || '-')}</div>
-  `;
-
-  byIdLocal('modalOrderNo').value = '';
+  byIdLocal('modalOrderNo').value = currentActionContext.prefillOrderNo || '';
+  byIdLocal('modalDestination').value = currentActionContext.prefillDestination || 'Hulst';
   byIdLocal('modalNote').value = '';
-  byIdLocal('modalDestination').value = 'Hulst';
-
-  byIdLocal('actionOrderWrap').classList.toggle('hidden', actionType === 'SEND_TO_HULST');
-  byIdLocal('actionDestinationWrap').classList.toggle('hidden', actionType !== 'SEND_TO_HULST');
 
   byIdLocal('actionModal').classList.add('show');
-
-  if(actionType === 'SEND_TO_HULST'){
-    byIdLocal('modalNote').focus();
-  }else{
-    byIdLocal('modalOrderNo').focus();
-  }
 }
 
 function closeActionModal(){
   currentActionContext = null;
   byIdLocal('actionModal').classList.remove('show');
-  byIdLocal('modalOrderNo').value = '';
-  byIdLocal('modalNote').value = '';
-  byIdLocal('modalDestination').value = 'Hulst';
 }
 
-async function countOrderUsesLocal(orderNo){
-  const { count, error } = await client
-    .from('movements')
-    .select('*', { count:'exact', head:true })
-    .eq('order_no', orderNo);
+async function executeRowOut(item, note=''){
+  const { error } = await client
+    .from('items')
+    .update({
+      status: 'OUT',
+      out_at: new Date().toISOString()
+    })
+    .eq('id', item.id);
 
   if(error) throw error;
-  return count || 0;
+
+  const movementPayload = {
+    product_id: item.product_id || null,
+    sku_unique: item.sku_unique || null,
+    type: 'OUT',
+    location: item.location || null,
+    order_no: null,
+    note: note || null
+  };
+
+  const { error: movementErr } = await client
+    .from('movements')
+    .insert([movementPayload]);
+
+  if(movementErr){
+    console.warn('movement insert failed', movementErr);
+  }
 }
 
-async function performStockAction(actionType, itemIds, options = {}){
-  if(!itemIds?.length){
-    showToast('Geen artikelen geselecteerd.', 'err');
-    return;
+async function executeBulkOutWithContext(items, contextType, opts = {}){
+  if(!items.length) return null;
+
+  const nowIso = new Date().toISOString();
+  const ids = items.map(x => x.id);
+
+  const { error: updateErr } = await client
+    .from('items')
+    .update({
+      status: 'OUT',
+      out_at: nowIso
+    })
+    .in('id', ids);
+
+  if(updateErr) throw updateErr;
+
+  let pickInfo = null;
+
+  if(contextType === 'ALLOCATE_ORDER' || contextType === 'SEND_TO_HULST'){
+    pickInfo = await createNavigationPicklist(contextType, items, opts);
   }
 
-  const orderNo = String(options.orderNo || '').trim();
-  const note = String(options.note || '').trim();
-  const destination = String(options.destination || '').trim();
+  const movementNote = buildMovementNote(opts.note || '', pickInfo?.pickNo || '');
+  const movementOrderNo = contextType === 'ALLOCATE_ORDER'
+    ? (opts.orderNo || null)
+    : null;
 
-  if((actionType === 'OUT' || actionType === 'ALLOCATE_ORDER') && !orderNo){
-    showToast('Vul een ordernummer in.', 'err');
-    return;
+  const movementRows = items.map(item => ({
+    product_id: item.product_id || null,
+    sku_unique: item.sku_unique || null,
+    type: 'OUT',
+    location: item.location || null,
+    order_no: movementOrderNo,
+    note: movementNote
+  }));
+
+  const { error: moveErr } = await client
+    .from('movements')
+    .insert(movementRows);
+
+  if(moveErr){
+    console.warn('movement insert failed', moveErr);
   }
 
-  if(actionType === 'SEND_TO_HULST' && !destination){
-    showToast('Vul een bestemming in.', 'err');
-    return;
-  }
+  return pickInfo;
+}
+
+async function confirmActionModal(){
+  if(!currentActionContext) return;
+
+  const btn = byIdLocal('btnConfirmAction');
+  btn.disabled = true;
 
   try{
-    console.log('performStockAction start', { actionType, itemIds, orderNo, destination, note });
+    const ctx = currentActionContext;
+    const items = ctx.items || [];
+    if(!items.length){
+      throw new Error('Geen artikelen geselecteerd.');
+    }
 
-    if((actionType === 'OUT' || actionType === 'ALLOCATE_ORDER') && orderNo){
-      const used = await countOrderUsesLocal(orderNo).catch(() => 0);
-      if(used > 0){
-        const ok = confirm(`Ordernummer ${orderNo} is al ${used}x gebruikt. Doorgaan?`);
-        if(!ok) return;
+    const orderNo = safeText(byIdLocal('modalOrderNo').value);
+    const destination = safeText(byIdLocal('modalDestination').value) || 'Hulst';
+    const note = safeText(byIdLocal('modalNote').value);
+
+    if(ctx.type === 'ALLOCATE_ORDER' && !orderNo){
+      throw new Error('Vul een ordernummer in.');
+    }
+
+    let pickInfo = null;
+
+    if(ctx.type === 'OUT'){
+      if(ctx.scope === 'row'){
+        await executeRowOut(items[0], note || null);
+      }else{
+        await executeBulkOutWithContext(items, 'OUT', { note });
       }
+      showToast('Artikel(en) uitgeboekt.', 'ok');
     }
 
-    const visibleItems = getCurrentVisibleItems().filter(x => itemIds.includes(x.id));
-    if(!visibleItems.length){
-      throw new Error('Geen zichtbare items gevonden voor deze actie.');
-    }
-
-    const { data: items, error: itemsErr } = await client
-      .from('items')
-      .select('id, product_id, sku_unique, status, location')
-      .in('id', itemIds);
-
-    if(itemsErr) throw itemsErr;
-    if(!items?.length) throw new Error('Geen items gevonden.');
-
-    const invalid = items.filter(it => it.status !== 'IN_STOCK');
-    if(invalid.length){
-      throw new Error(`Er zijn ${invalid.length} items die niet meer op voorraad staan.`);
-    }
-
-    let pickNo = '';
-    let pickUrl = '';
-
-    if(actionType === 'ALLOCATE_ORDER' || actionType === 'SEND_TO_HULST'){
-      const navigation = await createNavigationPicklist(actionType, visibleItems, {
+    if(ctx.type === 'ALLOCATE_ORDER'){
+      pickInfo = await executeBulkOutWithContext(items, 'ALLOCATE_ORDER', {
         orderNo,
+        note
+      });
+      showToast(`Artikel(en) toegewezen. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
+    }
+
+    if(ctx.type === 'SEND_TO_HULST'){
+      pickInfo = await executeBulkOutWithContext(items, 'SEND_TO_HULST', {
         destination,
         note
       });
-
-      console.log('createNavigationPicklist resultaat', navigation);
-
-      pickNo = navigation.pickNo;
-      pickUrl = navigation.pickUrl;
+      showToast(`Artikel(en) naar Hulst verwerkt. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
     }
 
-    const movementNote = buildMovementNote(note, pickNo);
-    const nowIso = new Date().toISOString();
-
-    const { error:updateErr } = await client
-      .from('items')
-      .update({
-        status: 'OUT',
-        out_at: nowIso
-      })
-      .in('id', itemIds);
-
-    if(updateErr) throw updateErr;
-
-    const movements = items.map(it => ({
-      type: 'OUT',
-      action_type: actionType,
-      product_id: it.product_id,
-      sku_unique: it.sku_unique,
-      location: it.location || null,
-      order_no: orderNo || null,
-      destination: destination || null,
-      note: movementNote,
-      handled_by_email: currentUserEmail || null
-    }));
-
-    const { error:moveErr } = await client
-      .from('movements')
-      .insert(movements);
-
-    if(moveErr) throw moveErr;
-
-    await queueSalesBatchMail(actionType, visibleItems, {
-      orderNo,
-      destination,
-      note,
-      pickNo,
-      pickUrl
-    });
-
-    clearSelection();
     closeActionModal();
-
-    const labels = {
-      OUT: `uitgeboekt op order ${orderNo}`,
-      ALLOCATE_ORDER: `toegewezen aan order ${orderNo}`,
-      SEND_TO_HULST: `naar ${destination || 'Hulst'} gestuurd`
-    };
-
-    const pickMsg = pickNo ? ` Navigatie-picklijst aangemaakt: ${pickNo}.` : '';
-    showToast(`${items.length} artikel(en) ${labels[actionType] || 'verwerkt'}.${pickMsg}`, 'ok');
-
-    await load();
+    clearSelection();
+    await loadStock();
   }catch(e){
-    console.error('performStockAction fout:', e);
     showToast(e.message || String(e), 'err');
-    throw e;
+  }finally{
+    btn.disabled = false;
   }
 }
 
-function bindSelectionControls(){
+function bindRowActions(){
+  document.querySelectorAll('[data-action-row]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+
+      const type = btn.getAttribute('data-action-row');
+      const itemId = btn.getAttribute('data-item-id');
+      const item = findItemById(itemId);
+      if(!item) return;
+
+      openActionModal({
+        type,
+        scope: 'row',
+        items: [item]
+      });
+    });
+  });
+
+  document.querySelectorAll('[data-action-sku]').forEach(btn => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
+
+      const type = btn.getAttribute('data-action-sku');
+      const skuBase = btn.getAttribute('data-sku-base');
+      const items = getItemsBySku(skuBase);
+
+      if(!items.length) return;
+
+      openActionModal({
+        type,
+        scope: 'sku',
+        items
+      });
+    });
+  });
+
   document.querySelectorAll('[data-select-item-id]').forEach(cb => {
     cb.addEventListener('change', () => {
       toggleItemSelection(cb.getAttribute('data-select-item-id'), cb.checked);
@@ -1372,242 +1442,258 @@ function bindSelectionControls(){
 
   document.querySelectorAll('[data-select-sku]').forEach(cb => {
     cb.addEventListener('change', () => {
-      const sku = cb.getAttribute('data-select-sku');
+      const skuBase = cb.getAttribute('data-select-sku');
       if(cb.checked){
-        selectAllSkuItems(sku);
+        selectAllSkuItems(skuBase);
       }else{
-        clearAllSkuItems(sku);
+        clearAllSkuItems(skuBase);
       }
     });
   });
 
   document.querySelectorAll('[data-clear-sku]').forEach(btn => {
-    btn.addEventListener('click', () => {
+    btn.addEventListener('click', e => {
+      e.stopPropagation();
       clearAllSkuItems(btn.getAttribute('data-clear-sku'));
     });
   });
 }
 
-function bindActionButtons(){
-  document.querySelectorAll('[data-action-row]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      openActionModal(btn.getAttribute('data-action-row'), [btn.getAttribute('data-item-id')]);
-    });
-  });
-
-  document.querySelectorAll('[data-action-sku]').forEach(btn => {
-    btn.addEventListener('click', () => {
-      const sku = btn.getAttribute('data-sku-base');
-      const ids = getItemsBySku(sku).map(it => it.id);
-      openActionModal(btn.getAttribute('data-action-sku'), ids);
-    });
-  });
+function updateStats(groups, allItemsCount){
+  byIdLocal('stockSkuCount').textContent = String(groups.length);
+  byIdLocal('stockItemCount').textContent = String(allItemsCount);
+  byIdLocal('stockFilteredCount').textContent = String(groups.reduce((sum,g) => sum + g.items.length, 0));
 }
 
-function exportGroupedToExcel(groups){
-  const rows = [];
-
-  groups.forEach(group => {
-    rows.push({
-      SKU: group.sku_base,
-      Omschrijving: group.name,
-      'Overige vermelding': group.description || '',
-      'Totaal op voorraad': group.items.length,
-      'Unieke SKU': '',
-      'Locatie': '',
-      'Inslag tijd': '',
-      'Status': ''
-    });
-
-    group.items.forEach(it => {
-      rows.push({
-        SKU: '',
-        Omschrijving: '',
-        'Overige vermelding': '',
-        'Totaal op voorraad': '',
-        'Unieke SKU': it.sku_unique || '',
-        'Locatie': it.location || '',
-        'Inslag tijd': nlTime(it.in_at || it.created_at),
-        'Status': it.status || ''
-      });
-    });
-  });
-
-  const wb = XLSX.utils.book_new();
-  const ws = XLSX.utils.json_to_sheet(rows);
-
-  ws["!cols"] = [
-    { wch: 16 },
-    { wch: 30 },
-    { wch: 24 },
-    { wch: 16 },
-    { wch: 24 },
-    { wch: 18 },
-    { wch: 22 },
-    { wch: 14 }
-  ];
-
-  XLSX.utils.book_append_sheet(wb, ws, 'Voorraad');
-
-  const now = new Date();
-  const pad = n => String(n).padStart(2,'0');
-  const filename = `huidige_voorraad_${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}_${pad(now.getHours())}-${pad(now.getMinutes())}.xlsx`;
-
-  XLSX.writeFile(wb, filename);
-}
-
-async function resolveCurrentUser(){
-  try{
-    const { data, error } = await client.auth.getUser();
-    if(error) throw error;
-
-    currentUserEmail = String(data?.user?.email || '').toLowerCase().trim();
-    canUseSpecialActions = SPECIAL_ACTION_USERS.includes(currentUserEmail);
-
-    byIdLocal('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
-    updateBulkSummary();
-  }catch(e){
-    console.warn('Gebruiker ophalen mislukt:', e);
-    currentUserEmail = '';
-    canUseSpecialActions = false;
-    byIdLocal('specialActionsPanel').classList.add('hidden');
-  }
-}
-
-async function load(){
-  const q = (byIdLocal('q').value || '').trim();
+function filterGroups(groups){
+  const q = normalizeText(byIdLocal('q').value);
   const sort = byIdLocal('sort').value;
 
-  let query = client
-    .from('v_stock_items')
-    .select('*')
-    .limit(5000);
+  let rows = groups.map(group => {
+    const items = (group.items || []).filter(item => {
+      if(!q) return true;
 
-  if(q){
-    query = query.or(`sku_unique.ilike.%${q}%,sku_base.ilike.%${q}%,name.ilike.%${q}%,location.ilike.%${q}%`);
-  }
+      const hay = [
+        group.sku_base,
+        group.sku_rv_design,
+        group.name,
+        group.description,
+        item.sku_unique,
+        item.location,
+        item.status,
+        item.sku_rv_design
+      ].map(normalizeText).join(' | ');
 
-  const { data, error } = await query;
-  if(error) throw error;
+      return hay.includes(q);
+    });
 
-  const items = data || [];
-  const groups = sortGroups(groupItems(items), sort);
-  currentGroups = groups;
+    return { ...group, items };
+  }).filter(group => group.items.length > 0);
 
-  const visibleIds = new Set(items.map(it => String(it.id)));
-  [...selectedItemIds].forEach(id => {
-    if(!visibleIds.has(String(id))){
-      selectedItemIds.delete(id);
-    }
-  });
+  rows = sortGroups(rows, sort);
+  return rows;
+}
 
-  byIdLocal('stockSkuCount').textContent = `${groups.length}`;
-  byIdLocal('stockItemCount').textContent = `${items.length}`;
-  byIdLocal('stockFilteredCount').textContent = `${items.length}`;
-
-  const el = byIdLocal('list');
+function renderList(groups, totalItems){
+  const list = byIdLocal('list');
 
   if(!groups.length){
-    el.innerHTML = `<div class="card" style="box-shadow:none;border:none">Geen voorraad gevonden.</div>`;
-    updateBulkSummary();
+    list.innerHTML = `
+      <div class="card" style="box-shadow:none;border:none;padding:0">
+        Geen voorraad gevonden voor deze zoekopdracht.
+      </div>
+    `;
+    updateStats([], totalItems);
     return;
   }
 
-  el.innerHTML = groups.map((g, i) => makeGroupHtml(g, i)).join('');
+  currentGroups = groups;
+  list.innerHTML = groups.map((group, idx) => makeGroupHtml(group, idx)).join('');
+
+  updateStats(groups, totalItems);
   bindExpanders();
   bindImageZoom();
-  bindSelectionControls();
-  bindActionButtons();
+  bindRowActions();
   syncSelectionUI();
 }
 
-byIdLocal('btn_refresh').addEventListener('click', () => load().catch(e => showToast(e.message || String(e), 'err')));
+async function fetchStockRows(){
+  const { data, error } = await client
+    .from('items')
+    .select(`
+      id,
+      product_id,
+      sku_unique,
+      location,
+      status,
+      in_at,
+      out_at,
+      created_at,
+      products (
+        id,
+        sku_base,
+        sku_rv_design,
+        name,
+        description,
+        image_path
+      )
+    `)
+    .eq('status', 'IN_STOCK')
+    .order('created_at', { ascending: false });
 
-byIdLocal('q').addEventListener('keydown', e => {
-  if(e.key === 'Enter'){
-    load().catch(err => showToast(err.message || String(err), 'err'));
+  if(error) throw error;
+
+  return (data || []).map(row => ({
+    id: row.id,
+    product_id: row.product_id,
+    sku_unique: row.sku_unique || '',
+    location: row.location || '',
+    status: row.status || '',
+    in_at: row.in_at || null,
+    out_at: row.out_at || null,
+    created_at: row.created_at || null,
+    sku_base: row.products?.sku_base || '',
+    sku_rv_design: row.products?.sku_rv_design || '',
+    name: row.products?.name || '',
+    description: row.products?.description || '',
+    image_path: row.products?.image_path || ''
+  }));
+}
+
+async function loadCurrentUser(){
+  const { data, error } = await client.auth.getUser();
+  if(error) throw error;
+
+  currentUserEmail = data?.user?.email || '';
+  canUseSpecialActions = SPECIAL_ACTION_USERS.includes(currentUserEmail.toLowerCase());
+
+  if(byIdLocal('userEmail')){
+    byIdLocal('userEmail').textContent = currentUserEmail || '';
   }
-});
 
-byIdLocal('sort').addEventListener('change', () => load().catch(e => showToast(e.message || String(e), 'err')));
-byIdLocal('btn_export').addEventListener('click', () => exportGroupedToExcel(currentGroups));
+  byIdLocal('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
+}
 
-byIdLocal('btnSelectAllVisible').addEventListener('click', selectAllVisibleItems);
-byIdLocal('btnSelectNone').addEventListener('click', clearSelection);
-byIdLocal('btnBulkAllocate').addEventListener('click', () => openActionModal('ALLOCATE_ORDER', [...selectedItemIds]));
-byIdLocal('btnBulkHulst').addEventListener('click', () => openActionModal('SEND_TO_HULST', [...selectedItemIds]));
+async function loadStock(){
+  try{
+    const rows = await fetchStockRows();
+    const grouped = groupItems(rows);
+    const filtered = filterGroups(grouped);
+    renderList(filtered, rows.length);
+  }catch(e){
+    currentGroups = [];
+    byIdLocal('list').innerHTML = `
+      <div class="card" style="box-shadow:none;border:none;padding:0;color:var(--err)">
+        ${esc(e.message || String(e))}
+      </div>
+    `;
+    byIdLocal('stockSkuCount').textContent = '0';
+    byIdLocal('stockItemCount').textContent = '0';
+    byIdLocal('stockFilteredCount').textContent = '0';
+  }
+}
 
-byIdLocal('btnCancelAction').addEventListener('click', closeActionModal);
+function exportVisibleToExcel(){
+  const rows = currentGroups.flatMap(group =>
+    group.items.map(item => ({
+      'SKU basis': group.sku_base || '',
+      'SKU RV Design': group.sku_rv_design || '',
+      'Omschrijving': group.name || '',
+      'Overige vermelding': group.description || '',
+      'Unieke SKU': item.sku_unique || '',
+      'Locatie': item.location || '',
+      'Status': item.status || '',
+      'Inslag tijd': nlTime(item.in_at || item.created_at)
+    }))
+  );
 
-byIdLocal('btnConfirmAction').addEventListener('click', async () => {
-  if(!currentActionContext){
-    showToast('Actiecontext ontbreekt. Open de popup opnieuw.', 'err');
+  if(!rows.length){
+    showToast('Geen gegevens om te exporteren.', 'err');
     return;
   }
 
-  const btn = byIdLocal('btnConfirmAction');
-  const oldText = btn.textContent;
+  const ws = XLSX.utils.json_to_sheet(rows);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, 'Voorraad');
+  XLSX.writeFile(wb, 'voorraad-overzicht.xlsx');
+}
 
-  try{
-    btn.disabled = true;
-    btn.textContent = 'Bezig...';
+function openBulkAction(type){
+  const items = getCurrentVisibleItems().filter(it => selectedItemIds.has(it.id));
 
-    await performStockAction(currentActionContext.actionType, currentActionContext.itemIds, {
-      orderNo: byIdLocal('modalOrderNo').value,
-      destination: byIdLocal('modalDestination').value,
-      note: byIdLocal('modalNote').value
-    });
-  }catch(e){
-    console.error('Fout bij opslaan:', e);
-    showToast(e.message || String(e), 'err');
-  }finally{
-    btn.disabled = false;
-    btn.textContent = oldText;
+  if(!items.length){
+    showToast('Selecteer eerst één of meer artikelen.', 'err');
+    return;
   }
-});
 
-byIdLocal('modalOrderNo').addEventListener('keydown', e => {
-  if(e.key === 'Enter' && !byIdLocal('actionOrderWrap').classList.contains('hidden')){
-    e.preventDefault();
-    byIdLocal('btnConfirmAction').click();
-  }
-});
+  openActionModal({
+    type,
+    scope: 'bulk',
+    items
+  });
+}
 
-byIdLocal('actionModal').addEventListener('click', e => {
-  if(e.target === byIdLocal('actionModal')){
-    closeActionModal();
-  }
-});
+function bindTopActions(){
+  byIdLocal('btn_refresh').addEventListener('click', async () => {
+    await loadStock();
+  });
 
-byIdLocal('btnCloseImage').addEventListener('click', closeImageLightbox);
+  byIdLocal('btn_export').addEventListener('click', exportVisibleToExcel);
 
-byIdLocal('imageLightbox').addEventListener('click', e => {
-  if(e.target === byIdLocal('imageLightbox')){
-    closeImageLightbox();
-  }
-});
+  byIdLocal('q').addEventListener('input', async () => {
+    await loadStock();
+  });
 
-document.addEventListener('keydown', e => {
-  if(e.key === 'Escape'){
-    if(byIdLocal('imageLightbox').classList.contains('show')){
+  byIdLocal('sort').addEventListener('change', async () => {
+    await loadStock();
+  });
+
+  byIdLocal('btnSelectAllVisible').addEventListener('click', () => {
+    selectAllVisibleItems();
+  });
+
+  byIdLocal('btnSelectNone').addEventListener('click', () => {
+    clearSelection();
+  });
+
+  byIdLocal('btnBulkAllocate').addEventListener('click', () => {
+    openBulkAction('ALLOCATE_ORDER');
+  });
+
+  byIdLocal('btnBulkHulst').addEventListener('click', () => {
+    openBulkAction('SEND_TO_HULST');
+  });
+
+  byIdLocal('btnConfirmAction').addEventListener('click', confirmActionModal);
+  byIdLocal('btnCancelAction').addEventListener('click', closeActionModal);
+
+  byIdLocal('btnCloseImage').addEventListener('click', closeImageLightbox);
+  byIdLocal('imageLightbox').addEventListener('click', e => {
+    if(e.target === byIdLocal('imageLightbox')){
       closeImageLightbox();
     }
-    if(byIdLocal('actionModal').classList.contains('show')){
-      closeActionModal();
-    }
-  }
-});
+  });
+}
 
 (async function init(){
   try{
-    await resolveCurrentUser();
-    await load();
+    if(typeof requireAuth === 'function'){
+      await requireAuth();
+    }
+
+    await loadCurrentUser();
+    bindTopActions();
+    await loadStock();
+
+    document.documentElement.classList.remove('auth-pending');
+    document.documentElement.classList.add('auth-ready');
   }catch(e){
-    console.error('Init fout:', e);
+    console.error(e);
     showToast(e.message || String(e), 'err');
+    document.documentElement.classList.remove('auth-pending');
+    document.documentElement.classList.add('auth-ready');
   }
 })();
 </script>
-
 </body>
 </html>
