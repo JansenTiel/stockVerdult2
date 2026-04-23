@@ -515,10 +515,9 @@
     <div class="muted">
       Overzicht per <b>SKU</b> met totaal aantal op voorraad. Klik op een regel om alle geregistreerde items van die SKU te tonen.
       Bevoegde gebruikers kunnen per regel of in bulk uitboeken, aan een order toewijzen of naar Hulst sturen.
-      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt, met standaard <b>customer_name = Ronald Verdult Design</b>,
-      en wordt ook de <b>online picklijstlink</b> in de mailqueue opgeslagen.
+      Bij toewijzen aan order of Hulst wordt automatisch een <b>navigatie-picklijst</b> aangemaakt.
       <br><br>
-      In deze versie is ook de extra kolom <b>SKU RV Design</b> zichtbaar in overzicht, detail en export.
+      In deze versie worden artikelen na <b>Opslaan</b> ook echt afgeboekt uit <b>items</b>.
     </div>
 
     <p class="page-url">
@@ -567,8 +566,7 @@
       </div>
 
       <div class="bulk-note">
-        Alleen zichtbaar voor geautoriseerde accounts. Bij Sales worden Hulst- en orderverzoeken in de 2-uurs mailqueue gezet,
-        inclusief picklijstnummer en online picklijstlink.
+        Alleen zichtbaar voor geautoriseerde accounts.
       </div>
     </div>
 
@@ -674,13 +672,15 @@ function byIdLocal(id){
 }
 
 function showToast(msg, type='ok'){
-  const toastEl = document.getElementById('toast');
+  const toastEl = byIdLocal('toast');
   if(toastEl){
     toastEl.textContent = msg;
     toastEl.className = `notice ${type}`;
     toastEl.style.display = 'block';
     clearTimeout(window._toastTimer);
-    window._toastTimer = setTimeout(()=>{ toastEl.style.display='none'; }, 8000);
+    window._toastTimer = setTimeout(() => {
+      toastEl.style.display = 'none';
+    }, 7000);
     return;
   }
 
@@ -689,6 +689,14 @@ function showToast(msg, type='ok'){
   }else{
     alert(msg);
   }
+}
+
+function safeText(v){
+  return String(v ?? '').trim();
+}
+
+function normalizeText(v){
+  return safeText(v).toLowerCase();
 }
 
 function getProductImageUrl(imagePath){
@@ -701,14 +709,6 @@ function buildOnlinePickUrlFromNo(pickNo){
   const url = new URL(location.origin + ONLINE_PICK_PATH);
   url.searchParams.set('pick_no', pickNo);
   return url.toString();
-}
-
-function safeText(v){
-  return String(v ?? '').trim();
-}
-
-function normalizeText(v){
-  return safeText(v).toLowerCase();
 }
 
 function groupItems(items){
@@ -756,7 +756,8 @@ function getCurrentVisibleItems(){
 }
 
 function updateBulkSummary(){
-  byIdLocal('bulkSummary').textContent = `Geselecteerd: ${selectedItemIds.size} artikelen`;
+  const el = byIdLocal('bulkSummary');
+  if(el) el.textContent = `Geselecteerd: ${selectedItemIds.size} artikelen`;
 }
 
 function clearSelection(){
@@ -1123,14 +1124,24 @@ function groupItemsForPicklist(items){
       map.set(key, {
         sku_base: String(it.sku_base || '').trim(),
         product_name: String(it.name || '').trim(),
-        qty: 1
+        qty_needed: 1
       });
     }else{
-      map.get(key).qty += 1;
+      map.get(key).qty_needed += 1;
     }
   });
 
   return Array.from(map.values());
+}
+
+function getSourceOrderNoForAction(actionType, options = {}){
+  if(actionType === 'ALLOCATE_ORDER'){
+    return String(options.orderNo || '').trim();
+  }
+  if(actionType === 'SEND_TO_HULST'){
+    return String(options.destination || 'Hulst').trim() || 'Hulst';
+  }
+  return null;
 }
 
 async function createNavigationPicklist(actionType, visibleItems, options = {}){
@@ -1139,74 +1150,62 @@ async function createNavigationPicklist(actionType, visibleItems, options = {}){
   const note = String(options.note || '').trim();
   const pickNo = buildAutoPickNo(actionType, orderNo);
 
-  const pickOrderNoteParts = [
+  const noteParts = [
     `Automatisch aangemaakt vanuit voorraadverzoek door ${currentUserEmail || 'onbekend'}.`
   ];
 
   if(actionType === 'ALLOCATE_ORDER'){
-    pickOrderNoteParts.push(`Order: ${orderNo || '-'}.`);
+    noteParts.push(`Order: ${orderNo || '-'}.`);
   }
-  if(actionType === 'SEND_TO_HULST'){
-    pickOrderNoteParts.push(`Bestemming: ${destination || 'Hulst'}.`);
-  }
-  if(note){
-    pickOrderNoteParts.push(`Opmerking: ${note}`);
-  }
-  pickOrderNoteParts.push('Goederen zijn al automatisch afgeboekt; deze picklijst dient alleen als navigatie voor het picken.');
 
-  const pickOrderPayload = {
-    order_no: pickNo,
-    customer_name: DEFAULT_CUSTOMER_NAME,
-    note: pickOrderNoteParts.join(' '),
-    status: 'RELEASED'
-  };
+  if(actionType === 'SEND_TO_HULST'){
+    noteParts.push(`Bestemming: ${destination || 'Hulst'}.`);
+  }
+
+  if(note){
+    noteParts.push(`Opmerking: ${note}`);
+  }
+
+  noteParts.push('Navigatie-picklijst vanuit huidige voorraad.');
 
   const { data: pickOrder, error: pickOrderErr } = await client
-    .from('orders')
-    .insert([pickOrderPayload])
-    .select('id, order_no')
+    .from('pick_orders')
+    .insert([{
+      order_no: pickNo,
+      customer_name: DEFAULT_CUSTOMER_NAME,
+      note: noteParts.join(' '),
+      status: 'RELEASED'
+    }])
+    .select()
     .single();
 
   if(pickOrderErr) throw pickOrderErr;
 
   const grouped = groupItemsForPicklist(visibleItems);
   if(grouped.length){
+    const sourceOrderNo = getSourceOrderNoForAction(actionType, options);
+
     const lineRows = grouped.map(row => ({
-      order_id: pickOrder.id,
+      pick_order_id: pickOrder.id,
+      source_order_no: sourceOrderNo,
       sku_base: row.sku_base,
       product_name: row.product_name,
-      qty: row.qty
+      qty_needed: row.qty_needed,
+      qty_picked: 0
     }));
 
     const { error: lineErr } = await client
-      .from('order_lines')
+      .from('pick_order_lines')
       .insert(lineRows);
 
     if(lineErr) throw lineErr;
   }
 
-  const onlineUrl = buildOnlinePickUrlFromNo(pickNo);
-
-  const queuePayload = {
-    type: actionType,
-    pick_no: pickNo,
-    customer_name: DEFAULT_CUSTOMER_NAME,
-    order_no: orderNo || null,
-    destination: destination || null,
-    note: note || null,
-    online_pick_url: onlineUrl,
-    created_by: currentUserEmail || null
+  return {
+    id: pickOrder.id,
+    pickNo,
+    onlineUrl: buildOnlinePickUrlFromNo(pickNo)
   };
-
-  const { error: queueErr } = await client
-    .from('mail_queue')
-    .insert([queuePayload]);
-
-  if(queueErr){
-    console.warn('mail_queue insert failed', queueErr);
-  }
-
-  return { pickNo, onlineUrl };
 }
 
 function openActionModal(context){
@@ -1221,7 +1220,7 @@ function openActionModal(context){
 
   const subMap = {
     OUT: 'Dit artikel wordt direct uitgeboekt.',
-    ALLOCATE_ORDER: 'De geselecteerde artikelen worden afgeboekt en gekoppeld aan een orderverzoek.',
+    ALLOCATE_ORDER: 'De geselecteerde artikelen worden afgeboekt en gekoppeld aan een navigatie-picklijst.',
     SEND_TO_HULST: 'De geselecteerde artikelen worden afgeboekt en als Hulst-verzoek verwerkt.'
   };
 
@@ -1246,11 +1245,8 @@ function openActionModal(context){
 
   byIdLocal('actionModalInfo').innerHTML = infoLines.join('');
 
-  const orderWrap = byIdLocal('actionOrderWrap');
-  const destWrap = byIdLocal('actionDestinationWrap');
-
-  orderWrap.classList.toggle('hidden', currentActionContext.type !== 'ALLOCATE_ORDER');
-  destWrap.classList.toggle('hidden', currentActionContext.type !== 'SEND_TO_HULST');
+  byIdLocal('actionOrderWrap').classList.toggle('hidden', currentActionContext.type !== 'ALLOCATE_ORDER');
+  byIdLocal('actionDestinationWrap').classList.toggle('hidden', currentActionContext.type !== 'SEND_TO_HULST');
 
   byIdLocal('modalOrderNo').value = currentActionContext.prefillOrderNo || '';
   byIdLocal('modalDestination').value = currentActionContext.prefillDestination || 'Hulst';
@@ -1264,42 +1260,13 @@ function closeActionModal(){
   byIdLocal('actionModal').classList.remove('show');
 }
 
-async function executeRowOut(item, note=''){
-  const { error } = await client
-    .from('items')
-    .update({
-      status: 'OUT',
-      out_at: new Date().toISOString()
-    })
-    .eq('id', item.id);
+async function updateItemsToOut(items){
+  if(!items.length) return;
 
-  if(error) throw error;
-
-  const movementPayload = {
-    product_id: item.product_id || null,
-    sku_unique: item.sku_unique || null,
-    type: 'OUT',
-    location: item.location || null,
-    order_no: null,
-    note: note || null
-  };
-
-  const { error: movementErr } = await client
-    .from('movements')
-    .insert([movementPayload]);
-
-  if(movementErr){
-    console.warn('movement insert failed', movementErr);
-  }
-}
-
-async function executeBulkOutWithContext(items, contextType, opts = {}){
-  if(!items.length) return null;
-
-  const nowIso = new Date().toISOString();
   const ids = items.map(x => x.id);
+  const nowIso = new Date().toISOString();
 
-  const { error: updateErr } = await client
+  const { error } = await client
     .from('items')
     .update({
       status: 'OUT',
@@ -1307,20 +1274,20 @@ async function executeBulkOutWithContext(items, contextType, opts = {}){
     })
     .in('id', ids);
 
-  if(updateErr) throw updateErr;
+  if(error) throw error;
+}
 
-  let pickInfo = null;
-
-  if(contextType === 'ALLOCATE_ORDER' || contextType === 'SEND_TO_HULST'){
-    pickInfo = await createNavigationPicklist(contextType, items, opts);
-  }
+async function insertMovementRows(items, contextType, opts = {}, pickInfo = null){
+  if(!items.length) return;
 
   const movementNote = buildMovementNote(opts.note || '', pickInfo?.pickNo || '');
   const movementOrderNo = contextType === 'ALLOCATE_ORDER'
     ? (opts.orderNo || null)
-    : null;
+    : contextType === 'SEND_TO_HULST'
+      ? (opts.destination || 'Hulst')
+      : null;
 
-  const movementRows = items.map(item => ({
+  const rows = items.map(item => ({
     product_id: item.product_id || null,
     sku_unique: item.sku_unique || null,
     type: 'OUT',
@@ -1329,13 +1296,29 @@ async function executeBulkOutWithContext(items, contextType, opts = {}){
     note: movementNote
   }));
 
-  const { error: moveErr } = await client
+  const { error } = await client
     .from('movements')
-    .insert(movementRows);
+    .insert(rows);
 
-  if(moveErr){
-    console.warn('movement insert failed', moveErr);
+  if(error) throw error;
+}
+
+async function executeRowOut(item, note=''){
+  await updateItemsToOut([item]);
+  await insertMovementRows([item], 'OUT', { note }, null);
+}
+
+async function executeBulkOutWithContext(items, contextType, opts = {}){
+  if(!items.length) return null;
+
+  let pickInfo = null;
+
+  if(contextType === 'ALLOCATE_ORDER' || contextType === 'SEND_TO_HULST'){
+    pickInfo = await createNavigationPicklist(contextType, items, opts);
   }
+
+  await updateItemsToOut(items);
+  await insertMovementRows(items, contextType, opts, pickInfo);
 
   return pickInfo;
 }
@@ -1349,6 +1332,7 @@ async function confirmActionModal(){
   try{
     const ctx = currentActionContext;
     const items = ctx.items || [];
+
     if(!items.length){
       throw new Error('Geen artikelen geselecteerd.');
     }
@@ -1365,7 +1349,7 @@ async function confirmActionModal(){
 
     if(ctx.type === 'OUT'){
       if(ctx.scope === 'row'){
-        await executeRowOut(items[0], note || null);
+        await executeRowOut(items[0], note);
       }else{
         await executeBulkOutWithContext(items, 'OUT', { note });
       }
@@ -1377,7 +1361,7 @@ async function confirmActionModal(){
         orderNo,
         note
       });
-      showToast(`Artikel(en) toegewezen. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
+      showToast(`Artikel(en) afgeboekt en toegewezen. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
     }
 
     if(ctx.type === 'SEND_TO_HULST'){
@@ -1385,13 +1369,15 @@ async function confirmActionModal(){
         destination,
         note
       });
-      showToast(`Artikel(en) naar Hulst verwerkt. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
+      showToast(`Artikel(en) afgeboekt voor Hulst. Picklijst: ${pickInfo?.pickNo || '-'}`, 'ok');
     }
 
     closeActionModal();
     clearSelection();
     await loadStock();
+
   }catch(e){
+    console.error(e);
     showToast(e.message || String(e), 'err');
   }finally{
     btn.disabled = false;
@@ -1498,12 +1484,14 @@ function renderList(groups, totalItems){
   const list = byIdLocal('list');
 
   if(!groups.length){
+    currentGroups = [];
     list.innerHTML = `
       <div class="card" style="box-shadow:none;border:none;padding:0">
         Geen voorraad gevonden voor deze zoekopdracht.
       </div>
     `;
     updateStats([], totalItems);
+    updateBulkSummary();
     return;
   }
 
@@ -1571,7 +1559,10 @@ async function loadCurrentUser(){
     byIdLocal('userEmail').textContent = currentUserEmail || '';
   }
 
-  byIdLocal('specialActionsPanel').classList.toggle('hidden', !canUseSpecialActions);
+  const panel = byIdLocal('specialActionsPanel');
+  if(panel){
+    panel.classList.toggle('hidden', !canUseSpecialActions);
+  }
 }
 
 async function loadStock(){
@@ -1581,6 +1572,7 @@ async function loadStock(){
     const filtered = filterGroups(grouped);
     renderList(filtered, rows.length);
   }catch(e){
+    console.error(e);
     currentGroups = [];
     byIdLocal('list').innerHTML = `
       <div class="card" style="box-shadow:none;border:none;padding:0;color:var(--err)">
